@@ -1,0 +1,282 @@
+{ 	[server] game_precache
+
+	local reg.effect.name	EFFECT_ID
+	local reg.effect.flags	EFFECT_ACTIONTYPE
+	local reg.effect.script	EFFECT_SCRIPT
+
+	setvard game.effect.removeondeath 1
+
+	registereffect
+
+	setvard game.effect.id		EFFECT_ID
+	setvard game.effect.displayname	EFFECT_NAME
+	setvard game.effect.flags	EFFECT_ACTIONTYPE
+}
+
+{ 	[server] game_activate
+
+	
+
+	if ( !$get(ent_me,isalive) ) removescript 
+	if $get(ent_me,isalive)
+
+	if ( DOT_EFFECT ) callevent 0.1 dot_start
+}
+
+{	[shared] effect_die
+
+	setvard BE_EFFECT_ACTIVE 0
+
+	if ( local.effect.clientscript != 0 )
+	{
+		clientevent remove ent_me local.effect.clientscript
+		
+	}
+	if ( effect.clientscript != 0 )
+	{
+		clientevent remove all effect.clientscript
+		
+	}
+
+	if ( DOT_EFFECT ) 
+	{
+		callexternal ext_remove_effect EFFECT_ID
+	}
+	removescript
+}
+
+{ [server] resist_check 
+
+	if ( PARAM1 equals 'PARAM1' ) setvard PARAM1 DOT_TYPE
+
+	if !BE_DID_RESIST_CHECK
+	setvard BE_DID_RESIST_CHECK 1
+
+	setvard RESISTED_EFFECT 0
+
+	if ( !$can_damage(ent_me,PARAM2) )
+	{
+		if $get(PARAM2,isplayer)
+		setvard RESISTED_EFFECT 1
+		callevent be_resist_effect PARAM1 "immune_player"
+		local EXIT_SUB 1
+	}
+	if !EXIT_SUB
+
+	
+	if ( $get(ent_me,scriptvar,'NPC_NO_PLAYER_DMG') )
+	{
+		if $get(PARAM2,isplayer)
+		setvard RESISTED_EFFECT 1
+		callevent be_resist_effect PARAM1 "immune_player"
+		local EXIT_SUB 1
+	}
+	if !EXIT_SUB
+
+	
+
+	
+	local LAST_RESIST $get(ent_me,scriptvar,'PLR_LAST_RESIST_TIME')
+	local LAST_RESIST_TYPE $get(ent_me,scriptvar,'PLR_LAST_RESIST_ELM')
+	add LAST_RESIST 10.0 
+	
+	if ( game.time < LAST_RESIST )
+	{
+		if PARAM1 equals LAST_RESIST_TYPE
+		callevent be_resist_effect "carry_over" $lcase(PARAM1)
+		local EXIT_SUB 1
+		
+	}
+	if !EXIT_SUB
+`
+	if ( PARAM1 equals cold )
+	{
+		local HE_RESISTS_STRING "is immune to cold attacks!"
+		local YOU_RESIST_STRING "You resist the ice magic!"
+		local IMMUNE_RATIO $get(ent_me,scriptvar,'IMMUNE_COLD')
+	}
+
+	if ( PARAM1 equals lightning )
+	{
+		local HE_RESISTS_STRING "is immune to electrical attacks!"
+		local YOU_RESIST_STRING "You resist the lightning magic!"
+		local IMMUNE_RATIO $get(ent_me,scriptvar,'IMMUNE_LIGHTNING')
+	}
+
+	if ( PARAM1 equals fire )
+	{
+		local HE_RESISTS_STRING "is immune to fire!"
+		local YOU_RESIST_STRING "You resist the fire magic!"
+		local IMMUNE_RATIO $get(ent_me,scriptvar,'IMMUNE_FIRE')
+	}
+
+	if ( PARAM1 equals poison )
+	{
+		local HE_RESISTS_STRING "is immune to poison!"
+		local YOU_RESIST_STRING "You resist the poison!"
+		local IMMUNE_RATIO $get(ent_me,scriptvar,'IMMUNE_POISON')
+	}
+
+	if ( PARAM1 equals acid )
+	{
+		local HE_RESISTS_STRING "is immune to acid!"
+		local YOU_RESIST_STRING "You resist the acid attack!"
+		local IMMUNE_RATIO $get(ent_me,scriptvar,'IMMUNE_ACID')
+	}
+
+	if ( $lcase(game.monster.name) contains maldora )
+	{
+		local HE_RESISTS_STRING "is immune to magic!"
+	}
+
+	local MY_NAME $get(ent_me,name)
+
+	if ( PARAM1 equals stun )
+	{
+		local EXIT_SUB 1 
+
+		if ( $get(ent_me,isplayer) )
+		{
+			if EFFECT_BLOCK_RESISTS
+			local CUR_WEAPON $get(ent_me,scriptvar,'PLR_ACTIVE_WEAPON')
+			if ( $get(CUR_WEAPON,scriptvar,'POLE_IN_BLOCK') == 1 ) local BLOCKED_ATTACK 1
+			if ( $get(CUR_WEAPON,scriptvar,'PARRY_ON') == 1 ) local BLOCKED_ATTACK 1
+			if ( BLOCKED_ATTACK )
+			{
+				callevent be_resist_effect "blocked"
+				playermessage ent_me $get(CUR_WEAPON,name) blocked stun impact.
+			}
+		}
+		if !RESISTED_EFFECT
+
+		local HE_RESISTS_STRING "resists the stun attack"
+		local HE_IMMUNE_STRING "is immune to stun attacks!"
+		local YOU_RESIST_STRING "You resist being stunned!"
+		local IMMUNE_RATIO $get(ent_me,scriptvar,'IMMUNE_STUN')
+
+		local RESISTANCE $get(ent_me,scriptvar,'IMMUNE_STUN')
+		if ( $get(ent_me,nopush) ) local RESISTANCE 100 
+
+		local STUN_ROLL $rand(1,100) 
+
+		if ( RESISTANCE isnot 'IMMUNE_STUN' )
+		{
+			
+			if ( RESISTANCE == 100 )
+			{
+				local RESISTED_STUN 1
+				playermessage PARAM2 MY_NAME HE_IMMUNE_STRING
+			}
+			if !RESISTED_STUN
+
+			
+			if STUN_ROLL <= RESISTANCE
+			playsound 0 10 SOUND_RESIST
+			setvard BE_RESIST_STRING "( "
+			strconc BE_RESIST_STRING STUN_ROLL /  $int(RESISTANCE) )
+			gplayermessage ent_me YOU_RESIST_STRING BE_RESIST_STRING
+			dplayermessage $get(PARAM2,id) MY_NAME HE_RESISTS_STRING BE_RESIST_STRING
+			local RESISTED_STUN 1
+		}
+		else
+		{
+			local RESISTANCE 0
+		}
+		
+		if ( RESISTED_STUN ) callevent be_resist_effect "stun_resist_roll" stun
+		if !RESISTED_STUN
+		playermessage ent_me You have been stunned! ( STUN_ROLL / RESISTANCE )
+	}
+	if !EXIT_SUB
+
+	
+
+	if ( IMMUNE_RATIO == 1 )
+	{
+		playermessage $get(PARAM2,id) MY_NAME HE_RESISTS_STRING
+		callevent 0.1 effect_die
+		setvard RESISTED_EFFECT 1
+		callevent be_resist_effect "immuned" $lcase(PARAM1)
+		local EXIT_SUB 1
+	}
+	if !EXIT_SUB
+
+	if ( IMMUNE_RATIO < 1 )
+	{
+		if IMMUNE_RATIO > 0
+		local IN_IMMUNE IMMUNE_RATIO
+		multiply IN_IMMUNE 100
+		local RESISTANCE 100
+		subtract RESISTANCE IN_IMMUNE
+		local ROLL $rand(1,100)
+		setvard BE_RESIST_STRING "( "
+		strconc BE_RESIST_STRING ROLL /  $int(RESISTANCE) )
+
+		if ( ROLL <= RESISTANCE )
+		{
+			gplayermessage ent_me YOU_RESIST_STRING BE_RESIST_STRING
+			dplayermessage $get(PARAM2,id) MY_NAME resists the PARAM1 magic. ( $int(RESISTANCE) )
+			callevent be_resist_effect "resist_roll" $lcase(PARAM1)
+		}
+	}
+}
+
+{ [server] dot_start
+
+	if !DOT_ABORT
+
+	if ( ACTIVE_SKILL equals 'ACTIVE_SKILL' )
+	{
+		local ACTIVE_WEAPON $get(DOT_ATTACKER,active_item)
+		setvard ACTIVE_SKILL $get(ACTIVE_WEAPON,scriptvar,WEAPON_PRIMARY_SKILL)
+	}
+	if ( ACTIVE_SKILL equals 'ACTIVE_SKILL' ) setvard ACTIVE_SKILL none
+
+	setvard BE_EFFECT_ACTIVE 1
+
+	
+
+	
+	
+}
+
+{ game_duplicated
+
+	add EFFECT_DUPLICATED 1
+
+	callevent effect_die
+}
+
+{ [server] dot_effect 
+
+	if game.serverside
+	
+	if BE_EFFECT_ACTIVE 
+	
+	local LAST_DMG $get(ent_me,scriptvar,'EXT_LAST_EFFECT_DMG') 
+	local TIME_DIFF game.time
+	subtract TIME_DIFF LAST_DMG 
+	if TIME_DIFF > 0.3
+	callexternal ent_me ext_set_effect_lastdmg 
+
+	local DMG_TYPE DOT_TYPE
+	stradd DMG_TYPE _effect 
+
+	
+
+	xdodamage $get(ent_me,id) direct DOT_DMG 100% DOT_ATTACKER DOT_ATTACKER ACTIVE_SKILL DMG_TYPE
+}
+
+{ be_resist_effect 
+
+	
+
+	if ( PARAM1 isnot 'carry_over' ) callexternal $get(ent_me,id) ext_set_last_resist $lcase(PARAM2)
+
+	setvard local.effect.damage 0
+	setvard local.effect.duration 0
+	setvard RESISTED 1
+	setvard RESISTED_EFFECT 1
+	setvard DOT_ABORT 1
+	callevent 0.1 effect_die
+}

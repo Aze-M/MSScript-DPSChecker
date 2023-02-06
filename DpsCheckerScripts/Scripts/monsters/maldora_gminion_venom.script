@@ -1,0 +1,11 @@
+{
+	const MINION_TYPE 4
+
+	
+	
+	
+	
+}
+
+#include monsters/maldora_gminion_random
+

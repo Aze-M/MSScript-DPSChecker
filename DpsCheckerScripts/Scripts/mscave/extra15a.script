@@ -1,0 +1,19 @@
+
+{ treasure_spawn
+
+	setvar	STORENAME bralwer_chest
+}
+
+#include items/base_treasurechest
+
+{ chest_additems
+
+	callevent add_gold 50 500 50
+
+	callevent add_great_item
+	if TC_NPLAYERS > 1
+	callevent add_great_item
+
+	if TC_NPLAYERS > 1
+	callevent add_great_item
+}

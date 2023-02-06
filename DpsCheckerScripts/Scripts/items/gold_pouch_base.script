@@ -1,0 +1,19 @@
+{
+	const GOLD_AMT 10
+	const SOUND_GOLD "misc/gold.wav"
+}
+
+{ game_spawn
+	name a|Pouch of GOLD_AMT coins
+	desc You find some gold coins...
+	setviewmodel none
+	setworldmodel none
+	setmodel none
+	weight 0
+	size 0
+	sethudsprite trade gold
+	setanimext blunt
+
+	setvard GOLD_VALUE GOLD_AMT
+}
+

@@ -1,0 +1,41 @@
+
+{ client_activate 
+
+	setvard FX_OWNER PARAM1
+	local FX_MODEL $getcl(FX_OWNER,model)
+	setvard FX_SEQ PARAM2
+	setvard FX_SKIN PARAM3
+	setvard FX_BODY PARAM4
+	setvard FX_NOBOUNCE PARAM5
+
+	setvard FX_FADE_START game.time
+	add FX_FADE_START 10.0
+
+	setvard FX_ANGLES $getcl(FX_OWNER,angles)
+	cleffect tempent model FX_MODEL $getcl(FX_OWNER,origin) setup_corpse
+	callevent 18.0 remove_script
+}
+
+{ remove_script
+	removescript
+}
+
+{ setup_corpse
+	cleffect tempent set_current_prop death_delay 15.0
+	
+ 	
+	cleffect tempent set_current_prop body FX_BODY
+	cleffect tempent set_current_prop framerate 1.0
+	cleffect tempent set_current_prop sequence FX_SEQ
+	cleffect tempent set_current_prop scale 1.0
+	cleffect tempent set_current_prop gravity 1
+	cleffect tempent set_current_prop skin FX_SKIN
+	cleffect tempent set_current_prop collide world
+	cleffect tempent set_current_prop frames 200
+	cleffect tempent set_current_prop rendermode texture
+	cleffect tempent set_current_prop renderamt 255
+	cleffect tempent set_current_prop angles FX_ANGLES
+	
+	if ( FX_NOBOUNCE == 1 ) cleffect tempent set_current_prop bouncefactor 0
+}
+

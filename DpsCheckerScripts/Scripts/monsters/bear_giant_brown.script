@@ -1,0 +1,25 @@
+
+{
+	setvar ANIM_IDLE	idle	
+	setvar ANIM_WALK	walk	
+	setvar ANIM_RUN	run	
+	setvard ANIM_ATTACK	attack	
+
+   const ATTACK_NORMAL_DAMAGE 	15
+   const ATTACK_STANDING_DAMAGE $randf(18,23)
+   const ATTACK_STOMPRANGE 	160
+   const ATTACK_STOMPDMG 	10
+   const ATTACK_HITCHANCE 	70%
+   const NPC_BASE_EXP		90
+}
+
+#include monsters/bear_base_giant
+
+{  npc_spawn
+
+   hp 200
+   
+   name a|Giant brown bear
+
+   setmodelbody	0 1	
+}

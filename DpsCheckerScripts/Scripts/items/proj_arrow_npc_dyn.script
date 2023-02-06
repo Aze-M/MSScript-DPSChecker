@@ -1,0 +1,24 @@
+#include items/proj_arrow_npc
+
+{ ext_lighten 
+	gravity PARAM1
+	if ( PARAM4 isnot 'PARAM4' ) setprop ent_me scale PARAM4
+	if PARAM2
+	effect glow ent_me PARAM3 64 -1 -1
+	clientevent new all effects/sfx_follow_glow_cl $get(ent_me,index) PARAM3 96 3.0
+}
+
+{ game_dodamage 
+
+	
+
+	local OUT_PAR1 PARAM1
+	local OUT_PAR2 PARAM2
+	local OUT_PAR3 PARAM3
+	local OUT_PAR4 PARAM4
+	callexternal ent_expowner ext_arrow_hit OUT_PAR1 OUT_PAR2 OUT_PAR3 OUT_PAR4
+}
+
+{ projectile_landed
+	callexternal ent_expowner ext_arrow_landed $get(ent_me,origin)
+}

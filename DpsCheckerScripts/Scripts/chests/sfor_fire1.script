@@ -1,0 +1,27 @@
+{
+	setvar STORENAME sfor_fire1
+}
+
+#include items/base_treasurechest
+
+{ chest_additems
+
+	callevent add_gold 10 500 10
+
+	addstoreitem STORENAME health_mpotion TC_NPLAYERS 0
+	addstoreitem STORENAME mana_mpotion TC_NPLAYERS 0
+	addstoreitem STORENAME mana_resist_fire 1 0
+
+	callevent get_chance_ultra_rare 10
+	if ( GIVE_PRIZE ) addstoreitem STORENAME smallarms_flamelick 1 0
+
+	callevent add_noob_item
+	callevent add_noob_item
+	callevent add_noob_item
+
+	if TC_NPLAYERS >= 1
+	callevent add_good_item
+
+	if TC_NPLAYERS >= 1
+	callevent add_great_item
+}

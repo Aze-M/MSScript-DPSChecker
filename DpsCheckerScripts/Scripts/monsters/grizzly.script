@@ -1,0 +1,29 @@
+
+{
+   setvard MOVE_RANGE 70
+   setvard ATTACK_RANGE 90
+   setvard ATTACK_HITRANGE 130
+
+   const ATTACK_DAMAGE '$rand(15,20)'
+   const ATTACK_HITCHANCE 60%
+   setvard NPC_GIVE_EXP	55
+   const RETALIATE_CHANGETARGET_CHANCE 50% 
+   
+   setvard DROP_ITEM1 skin_bear 	
+   setvard DROP_ITEM1_CHANCE 75%	
+}
+
+#include monsters/bear_base
+
+{  npc_spawn
+
+   	hp 200
+   	
+   	width 64
+   	height 95
+   	name a|Grizzly
+   	hearingsensitivity 5
+
+   	setmodel monsters/bear.mdl
+   	setmodelbody	0 1
+}

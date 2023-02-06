@@ -1,0 +1,72 @@
+
+
+{ [server]
+	const EFFECT_ID			effect_armor
+	const EFFECT_NAME		warmor
+	const EFFECT_ACTIONTYPE		normal
+	const EFFECT_SCRIPT		$currentscript
+
+	setvard game.effect.id		EFFECT_ID
+	setvard game.effect.displayname	EFFECT_NAME
+	setvard game.effect.type	EFFECT_ACTIONTYPE
+}
+
+#include effects/effect_base	allowduplicate
+
+{ [server] game_activate
+
+	
+
+	local HIDE_LEGS 0
+	local HIDE_HEAD 0
+	local HIDE_CHEST 0
+	local HIDE_ARMS 0
+
+	
+
+	if ( $get_token(PARAM1,0) equals legs ) local HIDE_LEGS 1
+	if ( $get_token(PARAM1,0) equals head ) local HIDE_HEAD 1
+	if ( $get_token(PARAM1,0) equals chest ) local HIDE_CHEST 1
+	if ( $get_token(PARAM1,0) equals arms ) local HIDE_ARMS 1
+	if ( $get_token(PARAM1,1) equals legs ) local HIDE_LEGS 1
+	if ( $get_token(PARAM1,1) equals head ) local HIDE_HEAD 1
+	if ( $get_token(PARAM1,1) equals chest ) local HIDE_CHEST 1
+	if ( $get_token(PARAM1,1) equals arms ) local HIDE_ARMS 1
+	if ( $get_token(PARAM1,2) equals legs ) local HIDE_LEGS 1
+	if ( $get_token(PARAM1,2) equals head ) local HIDE_HEAD 1
+	if ( $get_token(PARAM1,2) equals chest ) local HIDE_CHEST 1
+	if ( $get_token(PARAM1,2) equals arms ) local HIDE_ARMS 1
+	if ( $get_token(PARAM1,3) equals legs ) local HIDE_LEGS 1
+	if ( $get_token(PARAM1,3) equals head ) local HIDE_HEAD 1
+	if ( $get_token(PARAM1,3) equals chest ) local HIDE_CHEST 1
+	if ( $get_token(PARAM1,3) equals arms ) local HIDE_ARMS 1
+	if ( $get_token(PARAM1,4) equals legs ) local HIDE_LEGS 1
+	if ( $get_token(PARAM1,4) equals head ) local HIDE_HEAD 1
+	if ( $get_token(PARAM1,4) equals chest ) local HIDE_CHEST 1
+	if ( $get_token(PARAM1,4) equals arms ) local HIDE_ARMS 1
+	
+	
+
+	clientevent new all $currentscript HIDE_LEGS HIDE_HEAD HIDE_CHEST HIDE_ARMS $get(ent_me,index)
+}
+
+{ 	[shared] effect_die
+
+	
+
+}
+
+{	[client] client_activate
+
+	setvard sfx.npcid PARAM5
+
+	setmodelbody 0 0
+	setmodelbody 1 0
+	setmodelbody 2 0
+	setmodelbody 3 0
+
+	setmodelbody 0 PARAM1
+	setmodelbody 1 PARAM2
+	setmodelbody 2 PARAM3
+	setmodelbody 3 PARAM4
+}

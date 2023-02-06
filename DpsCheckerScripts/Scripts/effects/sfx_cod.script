@@ -1,0 +1,52 @@
+{
+	const SEAL_MODEL weapons/magic/seals.mdl
+	
+	const GLOW_COLOR (255,0,0)
+	const SEAL_SOUND ambience/pulsemachine.wav
+}
+
+{ client_activate 
+
+	setvard FX_ORIGIN PARAM1
+	setvard FX_DURATION PARAM2
+	setvard MODEL_OFS PARAM3
+	setvard FX_ACTIVE 1
+	setvard GLOW_RAD PARAM4
+
+	setvard SND_CHAN PARAM5
+
+	
+	
+
+	callevent FX_DURATION end_fx
+	cleffect light new FX_ORIGIN GLOW_RAD GLOW_COLOR FX_DURATION
+	cleffect tempent model SEAL_MODEL FX_ORIGIN setup_seal
+	
+}
+
+
+{ end_fx
+	
+	setvard FX_ACTIVE 0
+	callevent 0.5 remove_me
+}
+
+{ remove_me
+	removescript
+}
+
+{ setup_seal
+	local L_FX_DURATION FX_DURATION
+	multiply L_FX_DURATION 2.0
+
+	cleffect tempent set_current_prop death_delay L_FX_DURATION
+	cleffect tempent set_current_prop body MODEL_OFS
+    cleffect tempent set_current_prop bouncefactor 	0
+	cleffect tempent set_current_prop scale 	1.0
+	cleffect tempent set_current_prop framerate	1.0
+	cleffect tempent set_current_prop frames	FX_DURATION
+	cleffect tempent set_current_prop rendercolor 	(255,0,0)
+	cleffect tempent set_current_prop gravity 	0
+	cleffect tempent set_current_prop collide 	none
+}
+

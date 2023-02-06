@@ -1,0 +1,182 @@
+#scope server
+
+{ [server]
+	setvard PLR_RESIST_NAMES ''
+	setvard PLR_RESIST_TYPES ''
+	setvard PLR_RESIST_AMTS ''
+	setvard PLR_RESIST_ELEMENTS "fire;lightning;cold;earth;poison;acid;holy;dark;magic;slash;blunt;pierce;all"
+	setvard PLR_RESIST_VALUES "1.0;1.0;1.0;1.0;1.0;1.0;1.0;1.0;1.0;1.0;1.0;1.0;1.0"
+	const PLR_RESIST_RESET "1.0;1.0;1.0;1.0;1.0;1.0;1.0;1.0;1.0;1.0;1.0;1.0;1.0"
+}
+
+{ [server] ext_register_element 
+
+
+
+	if PLR_IN_WORLD
+
+	local RESIST_NAME PARAM1
+	local RESIST_TYPE PARAM2
+	local RESIST_AMT PARAM3
+
+	local FIND_NAME $get_find_token(PLR_RESIST_NAMES,RESIST_NAME)
+
+	if ( RESIST_TYPE equals remove )
+	{
+		
+		local EXIT_SUB 1
+		if ( FIND_NAME < 0 )
+		{
+		
+		}
+		if FIND_NAME > -1
+		token.del PLR_RESIST_NAMES FIND_NAME
+		token.del PLR_RESIST_TYPES FIND_NAME
+		token.del PLR_RESIST_AMTS FIND_NAME
+		callevent update_resistances
+	}
+	if !EXIT_SUB
+
+	multiply RESIST_AMT 0.01 
+
+	if ( FIND_NAME > -1 )
+	{
+		
+		local OLD_VALUE $get_token(PLR_RESIST_AMTS,FIND_NAME)
+		if ( OLD_VALUE == RESIST_AMT )
+		{
+			local EXIT_SUB 1 
+		}
+		else
+		{
+			token.set PLR_RESIST_AMTS FIND_NAME RESIST_AMT 
+		}
+	}
+	else
+	{
+		
+		token.add PLR_RESIST_NAMES RESIST_NAME
+		token.add PLR_RESIST_TYPES RESIST_TYPE
+		token.add PLR_RESIST_AMTS RESIST_AMT
+		
+	}
+	if !EXIT_SUB
+	callevent update_resistances
+}
+
+{ [server] update_resistances
+	if ( G_DEVELOPER_MODE ) gplayermessage ent_me update_resistances
+	setvard PLR_RESIST_UPDATE_FLAG 0
+	setvard OLD_RESISTANCES PLR_RESIST_VALUES 
+	setvard PLR_RESIST_VALUES PLR_RESIST_RESET 
+	calleventloop $get_token_amt(PLR_RESIST_NAMES) cat_resistances 
+	calleventloop $get_token_amt(PLR_RESIST_VALUES) apply_resistances 
+}
+
+{ [server] cat_resistances
+	local CUR_IDX game.script.iteration
+	local ITEM_RESIST_TYPE $get_token(PLR_RESIST_TYPES,CUR_IDX) 
+	local ITEM_RESIST_AMT $get_token(PLR_RESIST_AMTS,CUR_IDX) 
+	local ITEM_RESIST_AMT $neg(ITEM_RESIST_AMT) 
+	local CUR_RESIST_IDX $get_find_token(PLR_RESIST_ELEMENTS,ITEM_RESIST_TYPE) 
+	local CUR_RESIST_AMT $get_token(PLR_RESIST_VALUES,CUR_RESIST_IDX) 
+
+	
+
+	add CUR_RESIST_AMT ITEM_RESIST_AMT
+	if ( CUR_RESIST_AMT < 0 ) local CUR_RESIST_AMT 0
+	token.set PLR_RESIST_VALUES CUR_RESIST_IDX CUR_RESIST_AMT
+}
+
+{ [server] apply_resistances
+	local CUR_IDX game.script.iteration
+	local CUR_RESIST_TYPE $get_token(PLR_RESIST_ELEMENTS,CUR_IDX)
+	local CUR_RESIST_AMT  $get_token(PLR_RESIST_VALUES,CUR_IDX)
+	takedmg CUR_RESIST_TYPE CUR_RESIST_AMT
+
+	local OLD_RESIST_AMT $get_token(OLD_RESISTANCES,CUR_IDX)
+
+	if ( G_DEVELOPER_MODE ) gplayermessage ent_me oldval vs newval: [ CUR_RESIST_TYPE ] OLD_RESIST_AMT vs CUR_RESIST_AMT
+
+	if ( CUR_RESIST_AMT isnot OLD_RESIST_AMT )
+	{
+		
+		
+		multiply CUR_RESIST_AMT 100
+		subtract CUR_RESIST_AMT 100
+		local CUR_RESIST_AMT $neg(CUR_RESIST_AMT)
+		local CUR_RESIST_AMT $int(CUR_RESIST_AMT)
+		stradd CUR_RESIST_AMT "%"
+		if ( !ELM_REGISTER_SILENT )
+		{
+			gplayermessage ent_me Your resistance to CUR_RESIST_TYPE is now CUR_RESIST_AMT
+		}
+		setvard ELM_REGISTER_SILENT 0
+	}
+}
+
+{ game_death
+	
+	setvard PLR_RESIST_NAMES ''
+	setvard PLR_RESIST_TYPES ''
+	setvard PLR_RESIST_AMTS ''
+	setvard PLR_RESIST_WEAPON_IDS ''
+	setvard PLR_RESIST_WEAPON_TAGS ''
+	setvard PLR_CHECK_WEAPON_RESIST 0
+	setvard PLR_RESIST_VALUES PLR_RESIST_RESET
+}
+
+{ ext_register_weapon 
+	local WEAPON_ID PARAM1
+	local OUT_TAG PARAM2
+	local OUT_ELM PARAM3
+	local OUT_AMT PARAM4
+
+	if ( PARAM3 isnot remove )
+	{
+		if ( $get_find_token(PLR_RESIST_WEAPON_IDS,PARAM1) == -1 )
+		{
+			callevent ext_register_element OUT_TAG OUT_ELM OUT_AMT
+			token.add PLR_RESIST_WEAPON_IDS WEAPON_ID
+			token.add PLR_RESIST_WEAPON_TAGS OUT_TAG
+		}
+	}
+	else
+	{
+		callevent ext_register_element OUT_TAG remove
+		local WEAPON_IDX $get_find_token(PLR_RESIST_WEAPON_IDS,PARAM1)
+		token.del PLR_RESIST_WEAPON_IDS WEAPON_IDX
+		token.del PLR_RESIST_WEAPON_TAGS WEAPON_IDX
+	}
+
+	if ( $len(PLR_RESIST_WEAPON_IDS) >= 3 )
+	{
+		if !PLR_CHECK_WEAPON_RESIST
+		setvard PLR_CHECK_WEAPON_RESIST 1
+		callevent check_weapons_loop
+	}
+	else
+	{
+		setvard PLR_CHECK_WEAPON_RESIST 0
+	}
+}
+
+{ check_weapons_loop
+	if PLR_CHECK_WEAPON_RESIST
+	callevent 5.0 check_weapons_loop
+	if PLR_IN_WORLD
+	if $get(ent_me,isalive)
+	local N_RESIST_WEAPONS $get_token_amt(PLR_RESIST_WEAPON_IDS)
+	if ( N_RESIST_WEAPONS > 0 )	calleventloop $get_token_amt(PLR_RESIST_WEAPON_IDS) check_weapons
+	if ( $len(PLR_RESIST_WEAPON_IDS) < 3 ) setvard PLR_CHECK_WEAPON_RESIST 0
+}
+
+{ check_weapons
+	local CUR_WEAPON $get_token(PLR_RESIST_WEAPON_IDS,game.script.iteration)
+	if ( CUR_WEAPON equals PLR_LEFT_HAND ) local NO_REMOVE 1
+	if ( CUR_WEAPON equals PLR_RIGHT_HAND ) local NO_REMOVE 1
+	if !NO_REMOVE
+	callevent ext_register_element $get_token(PLR_RESIST_WEAPON_TAGS,CUR_WEAPON) remove
+	token.del PLR_RESIST_WEAPON_IDS CUR_WEAPON
+	token.del PLR_RESIST_WEAPON_TAGS CUR_WEAPON
+}

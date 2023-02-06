@@ -1,0 +1,42 @@
+{
+	const BASE_LEVEL_REQ 11
+
+	const VMODEL_IDX 6 
+	const PMODEL_FILE weapons/p_weapons4.mdl 
+	const PMODEL_IDX_FLOOR 11 
+	const PMODEL_IDX_HANDS 10 
+
+	const MELEE_DMG 200 
+	const MELEE_RANGE 110 
+	const MELEE_DMG_TYPE pierce
+
+	const POLE_MIN_RANGE 60 
+
+	const POLE_MIN_DMG_MULTI 0.5 
+	const POLE_MAX_DMG_MULTI 1.5 
+
+	const POLE_CAN_POKE1 1 
+	const POLE_CAN_POKE2 1 
+	const POLE_CAN_SWIPE 0 
+	const POLE_CAN_BLOCK 1 
+	const POLE_CAN_SPIN 0 
+	const POLE_CAN_REPEL 1 
+	const POLE_CAN_BACKHAND 0 
+
+	const POLE_CAN_POWER_THROW 1
+	const POLE_THROW_POWER 800 
+	const POLE_THOW_PROJECTILE proj_pole_trident 
+}
+
+#include items/polearms_base
+
+{ polearm_spawn
+
+	name  a|Trident
+	desc  A three pronged military fork
+	weight  10
+	size  2
+	value 400
+	sethudsprite trade 183
+} 
+

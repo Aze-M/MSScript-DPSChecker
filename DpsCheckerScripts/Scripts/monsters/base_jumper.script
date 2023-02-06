@@ -1,0 +1,81 @@
+
+
+
+#scope server
+{
+	const BJUMPER_FACTOR 5
+	const FREQ_NPC_JUMP $randf(2.0,5.0) 
+	const NPC_JUMPER_MAX_RANGE 600 
+}
+
+{ npcatk_hunt
+
+	if !SUSPEND_AI
+	if !NPC_MOVEMENT_SUSPENDED
+
+	if NPCATK_TARGET isnot unset
+
+	if NPC_JUMPER
+
+	if game.time > NPC_NEXT_JUMP_CHECK
+
+	local L_NEXT_JUMP FREQ_NPC_JUMP
+
+	setvard AS_ATTACKING game.time
+	add AS_ATTACKING 3.0
+
+	if ( NPCATK_TARGET isnot unset )
+	{
+		if $get(NPCATK_TARGET,range) < NPC_JUMPER_MAX_RANGE
+
+		local MY_Z $get(ent_me,origin.z)
+		local TARG_Z $get(NPCATK_TARGET,origin.z)
+		if ( $get(NPCATK_TARGET,isplayer) ) subtract TARG_Z 38 
+
+		local Z_DIFF TARG_Z
+		subtract Z_DIFF MY_Z
+
+		if ( Z_DIFF > ATTACK_RANGE )
+		{
+			callevent npcatk_jump Z_DIFF
+		}
+		else
+		{
+			local L_NEXT_JUMP 1.0 
+		}
+	}
+
+	setvard NPC_NEXT_JUMP_CHECK game.time
+	add NPC_NEXT_JUMP_CHECK L_NEXT_JUMP
+
+	callevent L_NEXT_JUMP npcatk_jump_cycle 
+}
+
+{ npcatk_jump 
+	if ( SOUND_NPC_JUMP isnot 'SOUND_NPC_JUMP' ) playsound 0 10 SOUND_NPC_JUMP
+	setvard NPC_UP_JUMP_STR PARAM1
+	multiply NPC_UP_JUMP_STR BJUMPER_FACTOR
+	if ( NPC_UP_JUMP_STR > 300 ) callevent 0.75 npcatk_jump_forward_adj
+	callevent npcatk_suspend_ai 1.0
+	setvard FWD_NPC_JUMP_STR $get(NPCATK_TARGET,range)
+	playanim critical ANIM_NPC_JUMP
+	setvard NPC_LAST_JUMP game.time
+	if !BJUMPER_CUSTOM_BOOST
+	callevent 0.1 npcatk_jump_boost
+}
+
+{ npcatk_jump_boost
+	addvelocity ent_me $relvel(0,FWD_NPC_JUMP_STR,NPC_UP_JUMP_STR)
+}
+
+{ npcatk_jump_forward_adj
+	addvelocity ent_me $relvel(0,FWD_NPC_JUMP_STR,0)
+}
+
+{ set_no_jump
+	setvard NPC_JUMPER 0
+}
+
+{ set_jump
+	setvard NPC_JUMPER 1
+}

@@ -1,0 +1,808 @@
+
+
+
+{
+	
+	setvard BC_AM_CHEST 1
+	
+	const NEWEST_CHARM item_charm_w2
+
+	const ULTRA_RARE_SINGLE 1%
+	const ULTRA_RARE_PPLAYER 5%
+
+	const RARE_SINGLE 5%
+	const RARE_PPLAYER 10%
+
+	const UNCOMMON_SINGLE 10%
+	const UNCOMMON_PPLAYER 30%
+	const UNCOMMON_COUNT_PPLAYER 0.25
+
+	const COMMON_COUNT_PPLAYER 0.5
+
+	const ORE_CHANCE 2000
+
+	const ANIM_IDLE idle
+	const ANIM_CLOSE close
+	const ANIM_OPEN open
+}
+
+{ game_precache
+	precachefile chests/black_chest
+}
+
+{ game_spawn
+
+	hp 1
+	invincible  2
+	name a|Treasure Chest
+	width 20
+	height 30
+	nopush 1 
+	setmodel	misc/treasure.mdl
+	callevent	treasure_spawn
+	setidleanim	ANIM_IDLE
+
+	if ( MAP_VERIFY isnot 'MAP_VERIFY' )
+	{
+		if !G_DEVELOPER_MODE
+		setvard NOT_VERIFIED 1
+		callevent 0.1 tele_out
+	}
+
+	callevent 0.1 check_stock_chest
+
+	setvard IMMUNE_PUSH 1
+}
+
+{ game_postspawn
+	
+	
+	if ( PARAM4 contains set_chest_sprite_in )
+	{
+		callevent 0.1 chest_sprite_in
+		local EXIT_SUB 1
+	}
+
+	if ( PARAM4 contains set_chest_glow )
+	{
+		callevent 0.1 chest_glow
+		local EXIT_SUB 1
+	}
+
+	if !EXIT_SUB	
+	if PARAM4 isnot none
+	setvard BC_MAPPER_ITEMS PARAM4 
+}
+
+{ chest_sprite_in
+	clientevent new all effects/sfx_sprite_in $get(ent_me,origin) xflare1.spr 20 4.0
+	playsound 0 10 amb/quest1.wav
+}
+
+
+{ [server] check_stock_chest
+
+	if game.serverside 
+
+	if ( BC_INSTANT_SPAWN ) callevent 1.0 spawn_black_chest
+
+	if ( GM_VERIFY )
+	{
+		if $get(GAME_MASTER,scriptvar,'GM_MAP_VERIFY') isnot 1
+		deleteent ent_me
+	}
+}
+
+
+{ [server] tele_out
+
+	
+	setvard MY_POS $get(ent_me,origin)
+	if ( FIXED_POS isnot 'FIXED_POS' ) setvard MY_POS FIXED_POS
+	setorigin ent_me (20000,20000,20000)
+	callevent 0.5 verify_map
+}
+
+{ [server] verify_map
+
+	if ( VERIFY_BY_NAME )
+	{
+		local VER_NAME $get_by_name(VERIFY_NAME)
+		if !$get(VER_NAME,exists)
+		local EXIT_SUB 1
+	}
+	if !EXIT_SUB
+
+	local L_MAP_NAME $lcase(game.map.name)
+	
+	if ( L_MAP_NAME equals MAP_VERIFY )
+	{
+		setvard NOT_VERIFIED 0
+		setorigin ent_me MY_POS
+	}
+}
+
+{ [server] trade_success
+
+	
+	volume		10
+	playrandomsound	2	Items/creak.wav
+	playanim		hold	ANIM_OPEN
+
+}
+{ [server] trade_done
+
+	setvard LAST_USED_CHEST $get(BCT_USER_ID,scriptvar,'PL_LAST_CHEST')
+	if ( LAST_USED_CHEST isnot $get(ent_me,id) )
+	{
+		callexternal BCT_USER_ID ext_chest_lastused $get(ent_me,id)
+	}
+	setvard IN_USE 0
+	playanim	once	ANIM_CLOSE
+	setidleanim	ANIM_IDLE
+}
+
+{ [server] game_playerused
+
+	
+	if game.serverside
+
+	callexternal PARAM1 ext_remove_afk
+
+	setvard TC_CHEST_USER PARAM1
+	setvard CHEST_USER PARAM1
+
+	if ( BC_SPAWN_ON_USE )
+	{
+		if !BC_BLACK_CHEST_SPAWNED
+		callevent 1.0 spawn_black_chest
+	}
+
+	if ( !BCT_STOCKED )
+	{
+		setvard BCT_STOCKED 1
+		createstore STORENAME
+		callevent chest_additems
+	}
+
+	setvard BCT_USER_ID PARAM1
+
+	if !IN_USE
+
+	setvard LAST_USED_CHEST $get(PARAM1,scriptvar,'PL_LAST_CHEST')
+
+	if ( LAST_USED_CHEST equals $get(ent_me,id) )
+	{
+		if LAST_USED_CHEST isnot 0 
+		dplayermessage PARAM1 "You must wait a moment before using this chest again."
+		local EXIT_SUB 1
+	}
+	if !EXIT_SUB
+
+	setvard IN_USE 1
+	callevent 10.0 reset_use 
+
+	setvard CHEST_TARGET PARAM1
+	if ( !ADDED_QUALITY )
+	{
+		setvard ADDED_QUALITY 1
+		callevent add_quality_items CHEST_TARGET 
+	}
+	callevent 0.1 offer_goodies 
+
+	
+	if ( !CHECKED_FOR_ORE )
+	{
+		if !NO_ORE
+
+		if $item_exists(ent_lastused,item_gaxe_handle)
+		if !$item_exists(ent_lastused,item_ore_lorel)
+		local L_ORE_CHANCE ORE_CHANCE
+		callevent get_players 20
+		if ( TC_NPLAYERS > 1 )
+		{
+			if TC_NPLAYERS < 100
+			local DIVIDE_CHANCE TC_NPLAYERS
+			multiply DIVIDE_CHANCE 3
+			divide L_ORE_CHANCE DIVIDE_CHANCE
+		
+		}
+		local L_ORE_CHANCE $int(L_ORE_CHANCE)
+		setvard CHECKED_FOR_ORE 1
+		local ORE_ROLL $rand(1,1)
+	
+		if ORE_ROLL == 1
+		local N_PLAYERS game.playersnb
+		if N_PLAYERS > 0
+		addstoreitem STORENAME item_ore_lorel 1 0
+	}
+}
+
+{ offer_goodies
+	offerstore STORENAME CHEST_TARGET inv trade
+	callevent	chest_used
+}
+
+   
+{ [server] game_struck
+   
+	volume 10
+	playsound 2 debris/wood2.wav
+}
+
+{ chest_additems 
+
+	if !NO_BOLTS
+
+	local L_MAP_NAME $lcase(game.map.name)
+	if L_MAP_NAME isnot edana
+	callevent get_chance 5 2 40 100
+	if ( GIVE_PRIZE ) addstoreitem STORENAME proj_bolt_wooden 25 0 0 25
+	callevent get_chance 2 5 30 100
+	if ( GIVE_PRIZE ) addstoreitem STORENAME proj_bolt_iron 25 0 0 25
+	callevent get_chance 1 5 20 100
+	if ( GIVE_PRIZE ) addstoreitem STORENAME proj_bolt_silver 25 0 0 25
+
+	if ( $item_exists(TC_CHEST_USER,bows_crossbow_heavy33) )
+	{
+		callevent get_chance 2 5 30 100
+		if ( GIVE_PRIZE ) addstoreitem STORENAME proj_bolt_steel 25 0 0 25
+	}
+}
+
+{ [server] get_chance_ultra_rare 
+	local HP_REQ PARAM1
+	callevent get_chance 1 3 50 HP_REQ
+}
+
+{ [server] get_chance_rare 
+	local HP_REQ PARAM1
+	callevent get_chance 2 5 100 HP_REQ
+}
+
+{ [server] get_chance_uncommon 
+	local HP_REQ PARAM1
+	callevent get_chance 5 20 100 HP_REQ
+}
+
+{ [server] get_chance 
+
+	
+	
+	
+	
+
+	
+
+	local PCHANCE_SINGLE_PLAYER PARAM1
+	local PCHANCE_PER_PLAYER PARAM2
+
+	local D_ROLL $rand(1,100)
+	local F_ROLL 100	
+	subtract F_ROLL D_ROLL
+
+	local HP_REQ PARAM4
+	if ( HP_REQ == 0 ) local HP_REQ 20
+	if ( TC_NPLAYERS == 0 ) callevent get_players HP_REQ
+
+	local N_PLAYERS TC_NPLAYERS
+
+	if ( game.cvar.ms_singleplayer == 1 )
+	{
+		if !game.central
+		local N_PLAYERS 4
+	}
+
+	
+	
+	if ( N_PLAYERS > 10 ) local N_PLAYERS 1
+
+	if ( N_PLAYERS <= 1 ) 
+	{
+		local FINAL_CHANCE PCHANCE_SINGLE_PLAYER
+	}
+
+	if ( TC_NONE_WORTHY ) local FINAL_CHANCE PCHANCE_SINGLE_PLAYER
+
+	if ( N_PLAYERS > 1 )
+	{
+		local FINAL_CHANCE PCHANCE_PER_PLAYER
+		multiply FINAL_CHANCE N_PLAYERS
+	}
+
+	if ( FINAL_CHANCE < PCHANCE_SINGLE_PLAYER ) local FINAL_CHANCE PCHANCE_SINGLE_PLAYER
+
+	setvard GIVE_PRIZE 0
+
+	local MAX_CHANCE PARAM3
+	if ( MAX_CHANCE isnot 'PARAM3' ) capvar FINAL_CHANCE 0 MAX_CHANCE 
+
+
+
+	setvard TC_CHANCE FINAL_CHANCE
+
+	if F_ROLL <= FINAL_CHANCE
+
+	setvard GIVE_PRIZE 1
+}
+
+{ [server] get_quantity 
+	
+	
+	
+	
+	
+
+	local HP_REQ PARAM4
+	if ( HP_REQ equals 'PARAM4' ) local HP_REQ 20
+	callevent get_players HP_REQ
+
+	local MIN_ITEMS PARAM1
+	local MAX_ITEMS PARAM2
+	local PER_PLAYER PARAM3
+	local N_PLAYERS TC_NPLAYERS
+
+	multiply PER_PLAYER N_PLAYERS
+	if ( PER_PLAYER < 1 ) local PER_PLAYER 0
+	setvard GIVE_QUANTITY $int(PER_PLAYER)
+	add GIVE_QUANTITY MIN_ITEMS
+	capvar GIVE_QUANTITY MIN_ITEMS MAX_ITEMS
+
+}
+
+{ [server] add_gold 
+
+	
+	
+	
+
+	if ( game.playersnb <= 9 )
+	{
+		if $int(G_FAKE_PLAYERS) < 2
+		
+		gold PARAM1
+		local EXIT_SUB 1
+	}
+	if !EXIT_SUB
+
+	if ( TC_NPLAYERS == 0 ) callevent get_players
+	if ( TC_NPLAYERS == 0 ) setvard TC_NPLAYERS game.playersnb 
+
+	local BTADD_MAX_AMT PARAM2
+	local BTADD_SIZE PARAM3
+
+	callevent get_players BTADD_SIZE 
+
+
+
+	local ITEM_NAME gold_pouch_
+	stradd ITEM_NAME BTADD_SIZE
+
+	
+	local DEST_AMOUNT TC_NPLAYERS
+	multiply DEST_AMOUNT BTADD_SIZE 
+	if ( DEST_AMOUNT > BTADD_MAX_AMT ) local DEST_AMOUNT BTADD_MAX_AMT 
+
+	
+	local TOTAL_BAGS DEST_AMOUNT
+	divide TOTAL_BAGS BTADD_SIZE
+	local TOTAL_BAGS $int(TOTAL_BAGS)
+
+	if ( TOTAL_BAGS < 1 ) local TOTAL_BAGS 1
+	addstoreitem STORENAME ITEM_NAME TOTAL_BAGS 0	
+}
+
+
+{ [server] get_players 
+
+
+	if ( game.time < TC_NEXTSCAN )
+	{
+		if TC_NPLAYERS_100 > 0
+		if ( PARAM1 < 200 ) setvard TC_NPLAYERS TC_NPLAYERS_100
+		if ( PARAM1 >= 200 ) setvard TC_NPLAYERS TC_NPLAYERS_200
+		if ( PARAM1 >= 300 ) setvard TC_NPLAYERS TC_NPLAYERS_300
+		if ( PARAM1 >= 400 ) setvard TC_NPLAYERS TC_NPLAYERS_400
+		if ( PARAM1 >= 500 ) setvard TC_NPLAYERS TC_NPLAYERS_500
+		if ( PARAM1 >= 600 ) setvard TC_NPLAYERS TC_NPLAYERS_600
+		if ( PARAM1 >= 800 ) setvard TC_NPLAYERS TC_NPLAYERS_800
+		if ( PARAM1 >= 1000 ) setvard TC_NPLAYERS TC_NPLAYERS_1000
+	
+		local EXIT_SUB 1
+	}
+	if !EXIT_SUB
+
+	setvard TC_NEXTSCAN game.time
+	add TC_NEXTSCAN 20.0
+
+	
+	setvard TC_NPLAYERS_100 0
+	setvard TC_NPLAYERS_200 0
+	setvard TC_NPLAYERS_300 0
+	setvard TC_NPLAYERS_400 0
+	setvard TC_NPLAYERS_500 0
+	setvard TC_NPLAYERS_600 0
+	setvard TC_NPLAYERS_800 0
+	setvard TC_NPLAYERS_1000 0
+
+	setvard TC_BY_STAT 0
+	setvard TC_HP_REQ PARAM1
+	if ( TC_HP_REQ equals 'PARAM1' ) setvard TC_HP_REQ 20
+	getplayersnb TC_LPLAYERS
+	setvard TC_NPLAYERS 0
+	calleventloop $get_token_amt(TC_LPLAYERS) get_players_loop
+
+	
+
+	
+	setvard TC_NONE_WORTHY 0
+	if ( TC_NPLAYERS == 0 )
+	{
+		setvard TC_NONE_WORTHY 1
+		if ( !AM_BLACK_CHEST ) setvard TC_NPLAYERS 1 
+	}
+	if ( G_FAKE_PLAYERS > 1 ) setvard TC_NPLAYERS G_FAKE_PLAYERS
+
+	
+
+	
+	setvard TC_NPLAYERS_HALF TC_NPLAYERS
+	divide TC_NPLAYERS_HALF 2
+	setvard TC_NPLAYERS_HALF $int(TC_NPLAYERS_HALF)
+	setvard TC_NPLAYERS_QUART TC_NPLAYERS_HALF
+	divide TC_NPLAYERS_QUART 2
+	setvard TC_NPLAYERS_QUART $int(TC_NPLAYERS_QUART)
+	if ( TC_NPLAYERS_HALF == 0 ) setvard TC_NPLAYERS_HALF 1
+	if ( TC_NPLAYERS_QUART == 0 ) setvard TC_NPLAYERS_QUART 1
+}
+
+{ [server] get_players_by_stat 
+	
+
+	
+	setvard TC_NPLAYERS_100 0
+	setvard TC_NPLAYERS_200 0
+	setvard TC_NPLAYERS_300 0
+	setvard TC_NPLAYERS_400 0
+	setvard TC_NPLAYERS_500 0
+	setvard TC_NPLAYERS_600 0
+	setvard TC_NPLAYERS_800 0
+	setvard TC_NPLAYERS_1000 0
+
+	setvard TC_BY_STAT 1
+	setvard TC_STAT PARAM1
+	setvard TC_STAT_REQ PARAM2
+	setvard TC_HP_REQ 20
+	getplayersnb TC_LPLAYERS
+	setvard TC_NPLAYERS 0
+	calleventloop $get_token_amt(TC_LPLAYERS) get_players_loop
+	
+
+	
+	setvard TC_NONE_WORTHY 0
+	if ( TC_NPLAYERS == 0 )
+	{
+		setvard TC_NONE_WORTHY 1
+		if ( !AM_BLACK_CHEST ) setvard TC_NPLAYERS 1 
+	}
+
+	if ( G_FAKE_PLAYERS > 1 ) setvard TC_NPLAYERS G_FAKE_PLAYERS
+
+	
+}
+
+{ [server] get_players_loop
+
+	local TC_LOOP_COUNT game.script.iteration
+	local CUR_PLAYER $get_token(TC_LPLAYERS,TC_LOOP_COUNT)
+	local FAILED_TEST 0
+
+	
+
+	
+	
+	if ( $get(CUR_PLAYER,scriptvar,IS_AFK) )
+	{
+		local FAILED_TEST 1
+	
+	}
+
+	if ( AM_BLACK_CHEST )
+	{
+		if $get(CUR_PLAYER,scriptvar,PL_TIME) < 10
+		local FAILED_TEST 1
+	
+	}
+
+	
+	if ( !$get(CUR_PLAYER,scriptvar,PL_BEEN_ATTACKED) )
+	{
+		local FAILED_TEST 1
+	
+	}
+
+	
+
+	
+	if ( !FAILED_TEST )
+	{
+		local CUR_MAXHP $get(CUR_PLAYER,maxhp)
+		if ( CUR_MAXHP >= 20 ) add TC_NPLAYERS_100 1
+		if ( CUR_MAXHP >= 200 ) add TC_NPLAYERS_200 1
+		if ( CUR_MAXHP >= 300 ) add TC_NPLAYERS_300 1
+		if ( CUR_MAXHP >= 400 ) add TC_NPLAYERS_400 1
+		if ( CUR_MAXHP >= 500 ) add TC_NPLAYERS_500 1
+		if ( CUR_MAXHP >= 600 ) add  TC_NPLAYERS_600 1
+		if ( CUR_MAXHP >= 800 ) add TC_NPLAYERS_800 1
+		if ( CUR_MAXHP >= 1000 ) add TC_NPLAYERS_1000 1
+	}
+
+	if ( CUR_MAXHP < TC_HP_REQ )
+	{
+		local FAILED_TEST 1
+	
+	}
+
+	if ( TC_BY_STAT )
+	{
+		if $get(CUR_PLAYER,TC_STAT) < TC_STAT_REQ
+	
+		local EXIT_SUB 1
+	}
+	if !EXIT_SUB
+
+	if !FAILED_TEST
+
+	add TC_NPLAYERS 1
+
+}
+
+{ [server] spawn_black_chest
+
+	if !NOT_VERIFIED
+	
+	setvard BC_BLACK_CHEST_SPAWNED 1
+	callevent 1.0 spawn_black_chest2 
+}
+
+{ [server] spawn_black_chest2
+
+	
+	createnpc chests/black_chest BLACK_CHEST_LOC BC_ITEM_LIST BC_ITEM_CHANCES BC_REQ_PLAYERS BC_ITEM_NAMES BC_REQ_STAT BC_REQ_STAT_LEVEL BC_REQ_HP $get(ent_me,angles) BC_MIN_HP
+}
+
+#include [server] monsters/debug
+
+
+{ [server] add_noob_item 
+
+	if ( PARAM1 startswith 'PARAM' ) local PARAM1 100
+
+	local ROLL 100
+	local A_RAND $rand(1,100)
+	subtract ROLL A_RAND
+
+	if ROLL < PARAM1
+	local RND_LIST $rand(1,G_NOOB_SETS)
+	if ( RND_LIST == 1 ) local ITEM_LIST G_NOOB_ITEMS1
+	if ( RND_LIST == 2 ) local ITEM_LIST G_NOOB_ITEMS2
+	if ( RND_LIST == 3 ) local ITEM_LIST G_NOOB_ITEMS3
+	if ( RND_LIST == 4 ) local ITEM_LIST G_NOOB_ITEMS4
+	if ( RND_LIST == 5 ) local ITEM_LIST G_NOOB_ITEMS5
+	local N_ITEMS $get_token_amt(ITEM_LIST)
+	subtract N_ITEMS 1
+	local R_ITEM $rand(0,N_ITEMS)
+	local P_ITEM $get_token(ITEM_LIST,R_ITEM)
+
+	addstoreitem STORENAME P_ITEM 1 0
+}
+
+{ [server] add_good_item  
+
+	if ( PARAM1 startswith 'PARAM' ) local PARAM1 100
+
+	local ROLL 100
+	local A_RAND $rand(1,100)
+	subtract ROLL A_RAND
+
+	if ROLL < PARAM1
+	local RND_LIST $rand(1,G_GOOD_SETS)
+	if ( RND_LIST == 1 ) local ITEM_LIST G_GOOD_ITEMS1
+	if ( RND_LIST == 2 ) local ITEM_LIST G_GOOD_ITEMS2
+	if ( RND_LIST == 3 ) local ITEM_LIST G_GOOD_ITEMS3
+	if ( RND_LIST == 4 ) local ITEM_LIST G_GOOD_ITEMS4
+	if ( RND_LIST == 5 ) local ITEM_LIST G_GOOD_ITEMS5
+	local N_ITEMS $get_token_amt(ITEM_LIST)
+	subtract N_ITEMS 1
+	local R_ITEM $rand(0,N_ITEMS)
+	local P_ITEM $get_token(ITEM_LIST,R_ITEM)
+
+	addstoreitem STORENAME P_ITEM 1 0
+}
+
+{ [server] add_great_item  
+
+	if ( PARAM1 startswith 'PARAM' ) local PARAM1 100
+
+	local ROLL 100
+	local A_RAND $rand(1,100)
+	subtract ROLL A_RAND
+
+	if ROLL < PARAM1
+	local RND_LIST $rand(1,G_GREAT_SETS)
+	if ( RND_LIST == 1 ) local ITEM_LIST G_GREAT_ITEMS1
+	if ( RND_LIST == 2 ) local ITEM_LIST G_GREAT_ITEMS2
+	if ( RND_LIST == 3 ) local ITEM_LIST G_GREAT_ITEMS3
+	if ( RND_LIST == 4 ) local ITEM_LIST G_GREAT_ITEMS4
+	if ( RND_LIST == 5 ) local ITEM_LIST G_GREAT_ITEMS5
+	local N_ITEMS $get_token_amt(ITEM_LIST)
+	subtract N_ITEMS 1
+	local R_ITEM $rand(0,N_ITEMS)
+	local P_ITEM $get_token(ITEM_LIST,R_ITEM)
+
+	addstoreitem STORENAME P_ITEM 1 0
+
+}
+
+{ [server] add_epic_item   
+
+	if $get(CHEST_USER,maxhp) > PARAM2
+
+	if ( PARAM1 startswith 'PARAM' ) local PARAM1 100
+
+	local ROLL 100
+	local A_RAND $rand(1,100)
+	subtract ROLL A_RAND
+	
+	if ROLL < PARAM1
+
+	local N_EPICS $g_get_array_amt(G_ARRAY_EPIC)
+	local RND_PICK $rand(0,N_EPICS)
+	local RND_ITEM $g_get_array(G_ARRAY_EPIC,RND_PICK)
+
+	addstoreitem STORENAME RND_ITEM 1 0
+}
+
+{ reset_quality
+	setvard ADDED_QUALITY 0
+}
+
+{ [server] assemble_list
+
+	getplayersnb PLAYER_LIST
+	setvard SORTED_LIST "unset;"
+	token.del SORTED_LIST 0
+
+	calleventloop 10 sort_list
+
+	if ( game.debug > 4 ) calleventloop $get_token_amt(SORTED_LIST) debug_return
+}
+
+{ [server] debug_return
+
+	local CUR_PLAYER $get_token(SORTED_LIST,game.script.iteration)
+
+}
+
+{ [server] sort_list
+
+	
+
+	
+	setvard PLAYERS_DETECT $get_token_amt(PLAYER_LIST)
+
+	if PLAYERS_DETECT > 0
+	setvard CUR_HIGH 0
+	calleventloop PLAYERS_DETECT find_highest
+	token.add SORTED_LIST HIGHEST_HP
+	token.del PLAYER_LIST HIGHEST_IDX
+	if PLAYERS_DETECT == 1
+	
+	token.add SORTED_LIST PLAYER_LIST
+}
+
+{ [server] find_highest
+
+
+	
+
+	local L_LOOP_COUNT game.script.iteration
+	add L_LOOP_COUNT START_IDX
+	
+	local CUR_PLAYER $get_token(PLAYER_LIST,L_LOOP_COUNT)
+	local CUR_MAXHP $get(CUR_PLAYER,maxhp)
+	if ( CUR_MAXHP > CUR_HIGH )
+	{
+		setvard HIGHEST_HP CUR_PLAYER
+		setvard CUR_HIGH CUR_MAXHP
+		setvard HIGHEST_IDX L_LOOP_COUNT
+	}
+}
+
+{ reset_use
+	setvard IN_USE 0
+}
+
+{
+repeatdelay 30.0
+	setvard IN_USE 0
+	setvard LAST_USED_CHEST 0
+}
+
+{ [server] offer_felewyn_symbol 
+
+	
+	local L_FEL_QUEST $get_quest_data(CHEST_USER,f)
+	if L_FEL_QUEST isnot complete
+	if $get_token(L_FEL_QUEST,0) equals 1
+
+	if $rand(1,1) <= PARAM1
+
+
+	local RND_ITEM "item_s"
+	stradd RND_ITEM $rand(1,5)
+
+	if ( $get_find_token(L_FEL_QUEST,RND_ITEM) == -1 )
+	{
+		addstoreitem STORENAME RND_ITEM 1 0
+		token.add L_FEL_QUEST RND_ITEM
+		quest set CHEST_USER f L_FEL_QUEST
+	}
+}
+
+
+{ [server] add_noob_arrows 
+
+	local ARROW_LIST G_NOOB_ARROWS
+	local BUNDLE_SIZE PARAM1
+	if ( BUNDLE_SIZE startswith 'PARAM' ) local BUNDLE_SIZE 15
+
+	local N_ARROW_NAMES $get_token_amt(ARROW_LIST)
+	subtract N_ARROW_NAMES 1
+	local ARROW_NAME $get_token(ARROW_LIST,$rand(0,N_ARROW_NAMES))
+	addstoreitem STORENAME ARROW_NAME BUNDLE_SIZE 0 0 BUNDLE_SIZE
+
+
+}
+
+{ [server] add_good_arrows 
+	local ARROW_LIST G_GOOD_ARROWS
+	local BUNDLE_SIZE PARAM1
+	if ( BUNDLE_SIZE startswith 'PARAM' ) local BUNDLE_SIZE 15
+
+	local N_ARROW_NAMES $get_token_amt(ARROW_LIST)
+	subtract N_ARROW_NAMES 1
+	local ARROW_NAME $get_token(ARROW_LIST,$rand(0,N_ARROW_NAMES))
+	if ( ARROW_NAME contains proj_bolt ) local BUNDLE_SIZE 25
+	addstoreitem STORENAME ARROW_NAME BUNDLE_SIZE 0 0 BUNDLE_SIZE
+
+
+}
+
+{ [server] add_great_arrows 
+	local ARROW_LIST G_GREAT_ARROWS
+	local BUNDLE_SIZE PARAM1
+	if ( BUNDLE_SIZE startswith 'PARAM' ) local BUNDLE_SIZE 15
+
+	local N_ARROW_NAMES $get_token_amt(ARROW_LIST)
+	subtract N_ARROW_NAMES 1
+	local ARROW_NAME $get_token(ARROW_LIST,$rand(0,N_ARROW_NAMES))
+	if ( ARROW_NAME contains proj_bolt ) local BUNDLE_SIZE 25
+	addstoreitem STORENAME ARROW_NAME BUNDLE_SIZE 0 0 BUNDLE_SIZE
+
+
+}
+
+{ [server] add_epic_arrows 
+	local ARROW_LIST G_EPIC_ARROWS
+	local BUNDLE_SIZE PARAM1
+	if ( BUNDLE_SIZE startswith 'PARAM' ) local BUNDLE_SIZE 15
+
+	local N_ARROW_NAMES $get_token_amt(ARROW_LIST)
+	subtract N_ARROW_NAMES 1
+	local ARROW_NAME $get_token(ARROW_LIST,$rand(0,N_ARROW_NAMES))
+	if ( ARROW_NAME contains proj_bolt ) local BUNDLE_SIZE 25
+	addstoreitem STORENAME ARROW_NAME BUNDLE_SIZE 0 0 BUNDLE_SIZE
+
+
+}

@@ -1,0 +1,24 @@
+#scope server
+{
+	setvar CHECK_CONFLICTS 1
+
+	const NOTICE_THIS_CONFLICT 1
+	setvar NOTICE_THIS_CONFLICT 2
+}
+
+#include monsters/externals
+
+{ game_spawn
+	name a|Conflict Checker
+	setmodel monsters/skeleton.mdl
+	width 32
+	height 32
+	hp 10
+	race beloved
+	setidleanim idle1
+	setmoveanim idle1
+	playanim once idle1
+}
+
+#include [server] monsters/debug
+

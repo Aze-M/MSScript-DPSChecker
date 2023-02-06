@@ -1,0 +1,234 @@
+#scope server
+{
+
+	setvard IMMUNE_POISON 1
+
+	setvar NPC_GIVE_EXP 200
+
+	const ANIM_IDLE idle
+	const ANIM_ATTACK attack1
+	const ANIM_GROW raise
+	setvard ANIM_DEATH lower
+	const ATTACK_HITRANGE 200
+
+	const DMG_ATK 100
+	const DOT_ATK 50
+
+	const SOUND_ATTACK1 tentacle/te_roar1.wav
+	const SOUND_ATTACK2 tentacle/te_roar1.wav
+	const SOUND_STRUCK1 debris/flesh1.wav
+	const SOUND_STRUCK2 debris/flesh2.wav
+	const SOUND_STRUCK3 debris/flesh3.wav
+	const SOUND_PAIN1 tentacle/te_alert1.wav
+	const SOUND_PAIN2 tentacle/te_alert2.wav
+	const SOUND_DEATH tentacle/te_move2.wav
+
+}
+
+{ game_spawn
+	name a|Poison Vine
+	setmodel monsters/deadlyvine.mdl
+	width 32
+	height 64
+	hp 1000
+	race demon
+	blood none
+	nopush 1
+	setvard IMMUNE_VAMPIRE 1 
+	hearingsensitivity 11
+	setidleanim ANIM_GROW
+	setmoveanim ANIM_GROW
+	playanim once ANIM_IDLE
+	setvard VINE_SUSPEND 1
+	setprop ent_me rendermode 2
+	setprop ent_me renderamt 0
+	skilllevel NPC_GIVE_EXP
+	takedmg lighting 2.0
+	callevent 2.0 grow_in
+	setsubmodel 0 1
+}
+
+{ grow_in
+	setprop ent_me rendermode 0
+	setprop ent_me renderamt 255
+	
+	setidleanim ANIM_IDLE
+	setmoveanim ANIM_IDLE
+	setvard VINE_SUSPEND 0
+	playanim critical ANIM_RAISE
+	playsound 1 10 tentacle/te_move1.wav
+}
+
+{ game_death
+	if !QUIET_DEATH
+	playanim critical ANIM_DEATH
+	playsound 1 10 SOUND_DEATH
+	clearfx
+}
+
+
+{ game_heardsound
+	if $get(ent_me,isalive)
+	if !VINE_SUSPEND
+	local HEARD_ID $get(ent_lastheard,id)
+	
+	if $get(ent_me,relationship,HEARD_ID) equals enemy
+	setvard NPCATK_TARGET HEARD_ID
+	setmovedest NPCATK_TARGET 9999
+	if $get(HEARD_ID,range) < ATTACK_HITRANGE
+	playanim once ANIM_ATTACK
+}
+
+{ game_struck
+	if $get(ent_me,isalive)
+	playsound 0 5 SOUND_STRUCK1 SOUND_STRUCK2 SOUND_STRUCK3 SOUND_STRUCK1 SOUND_STRUCK2 SOUND_STRUCK3 SOUND_PAIN1 SOUND_PAIN2
+
+	if !VINE_SUSPEND
+	if $get(ent_laststruck,range) < ATTACK_HITRANGE
+	setvard NPCATK_TARGET $get(ent_laststruck,id)
+	setmovedest NPCATK_TARGET 9999
+	playanim once ANIM_ATTACK
+}
+
+{ frame_attack
+	setvard SWING_ATTACK 1
+	playrandomsound 0 10 SOUND_ATTACK1 SOUND_ATTACK2
+	dodamage NPCATK_TARGET ATTACK_HITRANGE DMG_ATK 100% pierce
+}
+
+{ game_dodamage
+	if PARAM1
+	if ( SWING_ATTACK )
+	{
+		applyeffect PARAM2 effects/effect_burn 5.0 $get(ent_me,id) DOT_ATK
+		addvelocity PARAM2 $relvel(-200,-300,110)
+	}
+	setvard SWING_ATTACK 0
+}
+
+
+{ game_postspawn 
+
+	callevent 0.1 npcatk_set_skill
+
+
+
+	
+	setvard NEW_NAME PARAM1
+	if ( NEW_NAME isnot 'default' )
+	{
+		name NEW_NAME
+		setvard NPC_CUSTOM_NAME 1
+		setvard NPC_CUSTOM_NAME_STRING NEW_NAME
+	}
+
+	setvard NPC_DMG_MULTI 1
+	if ( PARAM2 > 1 )
+	{
+		setvard NPC_DMG_MULTI PARAM2
+		dmgmulti PARAM2
+		local CREAT_ADJ 1
+	}
+
+	setvard NPC_HP_MULTI 1
+	if ( PARAM3 > 1 )
+	{
+		setvard NPC_HP_MULTI PARAM3
+		local CREAT_ADJ 1
+	}
+
+	if ( CREAT_ADJ ) dbg Adjusted: $get(ent_me,name) dmgmulti NPC_DMG_MULTI hpmulti NPC_HP_MULTI
+
+	setvard NPC_DO_EVENTS PARAM4
+	if PARAM4 isnot 'none'
+	calleventloop $get_token_amt(NPC_DO_EVENTS) npcatk_do_events
+}
+
+{ npcatk_set_skill
+	if game.serverside
+
+	
+
+	setvard NPC_EXP_ORIGINAL NPC_GIVE_EXP
+
+	if ( NPC_BASE_EXP isnot 'NPC_BASE_EXP' ) setvard NPC_GIVE_EXP NPC_BASE_EXP 
+	
+	if ( NPC_EXP_MULTI isnot 'NPC_EXP_MULTI' ) multiply NPC_GIVE_EXP NPC_EXP_MULTI
+
+	setvard NPC_EXP_ADJ NPC_GIVE_EXP
+
+	if ( NO_EXP_MULTI ) skilllevel NPC_GIVE_EXP
+
+	if !NO_EXP_MULTI
+	
+	
+	
+	local TOTAL_MULTI 0
+	if ( NPC_DMG_MULTI > 1 )
+	{
+		add TOTAL_MULTI NPC_DMG_MULTI 
+		subtract TOTAL_MULTI 1
+	}
+	if ( NPC_HP_MULTI > 1 )
+	{
+		add TOTAL_MULTI NPC_HP_MULTI 
+		subtract TOTAL_MULTI 1
+	}
+	if ( TOTAL_MULTI > 0 ) multiply TOTAL_MULTI 0.5 
+	add TOTAL_MULTI G_EXP_MULTI 
+	
+
+	
+	
+	
+	if ( NPC_DMG_MULTI >= NPC_HP_MULTI )
+	{
+		local ADJ_RATIO NPC_HP_MULTI
+		divide ADJ_RATIO NPC_DMG_MULTI
+	}
+	else
+	{
+		local ADJ_RATIO NPC_DMG_MULTI
+		divide ADJ_RATIO NPC_HP_MULTI
+	}
+	
+	if ( ADJ_RATIO < 0.25 ) local OVER_ADJUST 1
+
+	if ( OVER_ADJUST )
+	{
+		local MSG_TITLE "MAP ERROR: "
+		stradd MSG_TITLE $get(ent_me,name)
+		infomsg all MSG_TITLE "HP/DMG multipliers cannot be more than 4x one another, or XP will not be adjusted"
+		local EXIT_SUB 1
+	}
+	if !EXIT_SUB
+
+	
+	if ( NPC_ADJ_FLAGS isnot 'NPC_ADJ_FLAGS' )
+	{
+		if ( NPC_ADJ_FLAGS contains speed_x2 ) add TOTAL_MULTI 1
+		if ( NPC_ADJ_FLAGS contains speed_x3 ) add TOTAL_MULTI 1.5
+		if ( NPC_ADJ_FLAGS contains speed_x4 ) add TOTAL_MULTI 2
+		if ( NPC_ADJ_FLAGS contains demon_blood ) add TOTAL_MULTI 1
+	}
+
+	if ( TOTAL_MULTI > 1 ) multiply NPC_GIVE_EXP TOTAL_MULTI
+
+	if ( NPC_GIVE_EXP != 0 ) skilllevel NPC_GIVE_EXP
+
+	setvard NPC_EXP_FINAL NPC_GIVE_EXP
+
+	if ( NPC_EXP_ADJ != NPC_EXP_FINAL )
+	{
+	
+	}
+}
+
+{ npcatk_do_events 
+	local N_EVENT game.script.iteration
+	local EVENT_NAME $get_token(NPC_DO_EVENTS,N_EVENT)
+	add N_EVENT 1
+	if ( N_EVENT <= $get_token_amt(NPC_DO_EVENTS) )	local NEXT_EVENT $get_token(NPC_DO_EVENTS,N_EVENT)
+
+	callevent EVENT_NAME NEXT_EVENT
+}

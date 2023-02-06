@@ -1,0 +1,7 @@
+
+{ [server]
+	const DOT_MESSAGE "You have been overcome by noxious spores!"
+	const DOT_RESIST_MESSAGE "You resist the worst of the spores."
+}
+
+#include effects/greater_poison

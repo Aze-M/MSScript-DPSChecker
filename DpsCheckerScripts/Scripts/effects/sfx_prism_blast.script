@@ -1,0 +1,110 @@
+
+{
+	const EFFECT_ELEMENTS "acid;fire;cold;poison;dark;lightning;holy"
+	const EFFECT_COLORS "(64,255,64);(255,64,0);(128,128,255);(0,255,0);(255,0,255);(255,255,0);(255,255,255)"
+}
+
+{ client_activate 
+	setvard FX_ORIGIN PARAM1
+	setvard FX_AOE PARAM2
+	local L_COLOR PARAM3
+	setvard FX_ACTIVE 1
+
+	local L_IDX $get_find_token(EFFECT_ELEMENTS,PARAM3)
+	setvard FX_COLOR $get_token(EFFECT_COLORS,L_IDX)
+
+	setvard DO_LIGHT 1
+	if ( DO_LIGHT )
+	{
+		setvard FX_LIGHT_RAD $math(multiply,FX_AOE,1.5)
+		setcallback render enable
+		cleffect light new FX_ORIGIN FX_LIGHT_RAD FX_COLOR 0.5
+		setvard FX_LIGHT_ID game.script.last_light_id
+	}
+
+	sound.play3d magic/dburst_large_sdr_darkness.wav 10 FX_ORIGIN
+
+	if ( DO_SPRITES )
+	{
+		
+		
+		setvard BALL_ROT 0
+		setvard BALL_COL_IDX 0
+		setvard BALL_SPD 400
+		array.create ARRAY_SPR_COLORS
+		array.create ARRAY_SPR_POS
+		calleventloop 17 setup_bawls
+	}
+	else
+	{
+		setvard CIRCLE_RAD 0
+		local L_N_CIRCLES $get_token_amt(EFFECT_COLORS)
+		setvard CIRCLE_DIST_INC FX_AOE
+		divide CIRCLE_DIST_INC L_N_CIRCLES
+		
+		setvard CIRCLE_COUNT 0
+		setvard CIRCLE_COUNT_MAX L_N_CIRCLES
+		callevent do_circles
+	}
+
+	callevent 1.0 end_fx
+}
+
+{
+repeatdelay 0.01
+	if FX_ACTIVE
+	if CUR_SIZE <= 1
+	add CUR_SIZE 0.02
+	if ( CUR_SIZE > 1 ) setvard CUR_SIZE 1
+}
+
+{ game_prerender
+
+	if FX_ACTIVE
+	if DO_LIGHT
+	
+	
+	
+	
+	cleffect light FX_LIGHT_ID FX_ORIGIN $ratio(CUR_SIZE,0,FX_LIGHT_RAD) FX_COLOR 0.5
+	
+}
+
+{ do_circles
+	if CIRCLE_COUNT < CIRCLE_COUNT_MAX
+	callevent 0.1 do_circles
+	callevent beam_circle
+	add CIRCLE_COUNT 1
+}
+
+{ beam_circle
+	add CIRCLE_RAD CIRCLE_DIST_INC
+	setvard CIRCLE_ROT 0
+	
+	
+	calleventloop 16 draw_circle_loop
+}
+
+{ draw_circle_loop
+
+	local L_BEAM_START FX_ORIGIN
+	vectoradd L_BEAM_START $relpos($vec(0,CIRCLE_ROT,0),$vec(0,CIRCLE_RAD,0))
+	add CIRCLE_ROT 22.5
+
+	local L_BEAM_END FX_ORIGIN
+	vectoradd L_BEAM_END $relpos($vec(0,CIRCLE_ROT,0),$vec(0,CIRCLE_RAD,0))
+
+	
+	cleffect beam_points L_BEAM_START L_BEAM_END 3dmflagry.spr 1.0 30 0.2 1 30 30 $clcol(FX_COLOR) 
+}
+
+{ end_fx
+	setvard FX_ACTIVE 0
+	callevent 2.0 remove_fx
+}
+
+{ remove_fx
+	removescript
+}
+
+

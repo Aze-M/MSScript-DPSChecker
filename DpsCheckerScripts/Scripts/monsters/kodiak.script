@@ -1,0 +1,39 @@
+
+{
+	setvar ANIM_IDLE	idle	
+	setvar ANIM_WALK	walk	
+	setvar ANIM_RUN	run	
+	setvard ANIM_ATTACK	attack	
+
+   const ATTACK_NORMAL_DAMAGE 	50
+   const ATTACK_STANDING_DAMAGE $randf(18,33)
+   const ATTACK_STOMPRANGE 	225
+   const ATTACK_STOMPDMG 	60
+   const ATTACK_HITCHANCE 	70%
+	const NPC_BASE_EXP 500
+   
+
+	setvard CAN_FLEE 0
+}
+
+#include monsters/bear_base_giant
+
+{  npc_spawn
+
+   hp 2000
+   
+   name a|Kodiak
+
+	takedmg fire 0.5
+
+   setmodelbody	0 2 
+}
+
+{ game_death
+
+	if ( $lcase(game.map.name) equals bloodrose ) giveitem item_bearclaw
+
+	local FINDLE_ID $get_by_name(npc_findlebind)
+	if $get(FINDLE_ID,isalive)
+	callexternal FINDLE_ID da_bear_died
+}

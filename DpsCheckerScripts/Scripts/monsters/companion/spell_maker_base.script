@@ -1,0 +1,114 @@
+
+
+
+#scope server
+
+{
+	
+	const SPELL_MAKER_HEIGHT 64
+	const GLOW_AMT 50
+}
+
+{ game_spawn
+
+	name a|Spell Spawner
+	race beloved
+	invincible	1
+	fly 1
+	gravity 0
+	setmodel	SPAWNER_MODEL
+	setsolid	none
+	setidleanim	ANIM_IDLE
+	setmoveanim	ANIM_IDLE
+
+	if ( MODEL_OFSET isnot 'MODEL_OFSET' ) setmodelbody 0 MODEL_OFSET
+
+	if ( ANIM_IDLE isnot '' ) playanim loop ANIM_IDLE
+
+	if ( SOUND_SPAWN isnot 'SOUND_SPAWN' ) playsound 0 10 SOUND_SPAWN
+
+	if ( FX_GLOW ) effect glow ent_me GLOW_COLOR GLOW_AMT REMOVE_DELAY REMOVE_DELAY
+}
+
+{ eventname game_dynamically_created
+
+   setvard MY_OWNER $get(PARAM1,id) 
+   setvard SPELL_TO_GRANT PARAM2
+
+	if ( SPELL_TO_GRANT isnot 'none' )
+	{
+		setvard ITEM_CREATED_ME PARAM3
+		setvard MY_SPAWN_HEIGHT PARAM4
+		setvard ITEM_TO_REMOVE PARAM5
+		
+		eventname game_dynamically_created
+		
+		setangle face.y $get(MY_OWNER,angles.yaw)
+	}
+
+	if ( SPAWNER_MODEL isnot 'none' )
+	{
+		setvard FADE_LEVEL 255
+		setvard FADE_RATE REMOVE_DELAY
+		mulitiply FADE_RATE 0.1
+		
+		callevent stick_to_owner
+	}
+
+	if ( SHOW_FX ) callevent 0.1 show_fx
+	if ( SPELL_TO_GRANT isnot 'none' ) callevent 0.1 remove_scroll 
+
+	callevent REMOVE_DELAY me_vanish
+}
+
+{ show_fx
+	clientevent new all FX_SCRIPT $get(ent_me,index) $get(MY_OWNER,index) EXTRA_PARAM1 EXTRA_PARAM2 EXTRA_PARAM3
+}
+
+{ remove_scroll
+
+	callexternal ITEM_TO_REMOVE clear_hands 
+	callevent 0.1 grant_spell
+}
+
+{ grant_spell
+
+	if ( SPELL_TO_GRANT isnot 'none' ) offer MY_OWNER SPELL_TO_GRANT
+	callevent 0.1 restore_scroll
+}
+
+{ restore_scroll
+
+	if ( ITEM_CREATED_ME isnot 'none' ) offer MY_OWNER ITEM_CREATED_ME
+}
+
+{ me_vanish
+
+	setalive 0
+	deleteent ent_me 
+}
+
+{ stick_to_owner
+
+	subtract FADE_LEVEL FADE_RATE
+
+	if FADE_LEVEL > 0
+	callevent 0.1 stick_to_owner
+
+	
+
+	setprop ent_me rendermode 1
+	setprop ent_me renderamt $int(FADE_LEVEL)
+
+   	setangle face.yaw $get(MY_OWNER,angles.yaw)
+
+	local OWNER_POS $get(MY_OWNER,origin)
+	local OWNER_X $vec.x(OWNER_POS)
+	local OWNER_Y $vec.y(OWNER_POS)
+	local Z_POS $get_ground_height(OWNER_POS)
+	add Z_POS SPELL_MAKER_HEIGHT
+	
+	setorigin ent_me (OWNER_X,OWNER_Y,Z_POS)
+}
+
+

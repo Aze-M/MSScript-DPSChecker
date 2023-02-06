@@ -1,0 +1,39 @@
+#scope server
+{ [shared]
+	const REAVER_NAME "a|Fire Reaver"
+	const REAVER_MAXHP 4000
+	const REAVER_XP 1500
+	const REAVER_SKIN 0
+	const FREQ_ERRUPT 20.0
+
+	const BLOOD_COLOR red
+
+	const FIREBALL1_SCRIPT monsters/summon/fire_ball_guided
+	const FIREBALL2_SCRIPT monsters/summon/fire_ball_guided
+	const FIREBALL1_DURATION 15.0
+	const FIREBALL2_DURATION 15.0
+
+	const BOMB_DMG_TYPE blunt
+}
+
+{ game_precache
+
+	precachefile monsters/summon/fire_ball_guided
+	precache xfireball3.spr
+}
+
+#include monsters/swamp_reaver
+
+{ npc_post_spawn
+	setvard DOT_EFFECT effects/effect_burn 
+	setvard DOT_DURATION 5.0 
+	setvard DOT_DMG 45.0 
+	setvard ERRUPT_TYPE fire
+	setvard BREATH_TYPE fire
+	setvard PROJECTILE_SCRIPT proj_fire_bomb
+	setvard DOT_ACID_BOMB 200
+	setvard EFFECT_ACID_BOMB effects/effect_burn
+}
+
+
+

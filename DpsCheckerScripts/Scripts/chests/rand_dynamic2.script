@@ -1,0 +1,114 @@
+
+#scope server
+
+#include chests/base_treasurechest_array
+
+{ chest_additems
+	setvard CHEST_TIER $get(CHEST_USER,maxhp)
+	divide CHEST_TIER 500
+	if ( 10 equals 10 )
+	{
+		local L_NPLAYERS game.playersnb
+		if L_NPLAYERS > 0
+		multiply L_NPLAYERS 2.5
+		add CHEST_TIER L_NPLAYERS
+	}
+
+
+
+	if ( BC_USE_TRACKER )
+	{
+		if ( !CHEST_FOUND )
+		{
+			setvard CHEST_FOUND 1
+			add G_CHEST_TRACKER 1
+		}
+		local L_GMULTI $math(multiply,G_CHEST_TRACKER,2)
+	}
+	else
+	{
+		local L_GMULTI CHEST_TIER
+	}
+	local L_GOLD_TO_ADD $get(CHEST_USER,scriptvar,'PLR_TOTAL_DMG')
+	multiply L_GOLD_TO_ADD L_GMULTI
+	if ( 10 equals 10 ) multiply L_GOLD_TO_ADD game.playersnb
+
+	callevent add_gold $int(L_GOLD_TO_ADD)
+}
+
+{ chest_add_quality_items
+	if ( BC_USE_TRACKER )
+	{
+		calleventloop G_CHEST_TRACKER add_items_self_adj
+	}
+	else
+	{
+		calleventloop $int(CHEST_TIER) add_items_self_adj
+	}
+}
+
+{ add_items_self_adj
+
+
+
+	if ( CHEST_TIER < 2 )
+	{
+		local L_TYPE $func(get_type,30,30,30)
+		if ( L_TYPE == 1 )	callevent add_great_item 100%
+		else if ( L_TYPE == 2 ) callevent add_good_pot 100%
+		else if ( L_TYPE == 3 )  callevent add_good_arrows 100%
+	}
+	if ( CHEST_TIER >= 2 )
+	{
+		if CHEST_TIER < 3
+		local L_TYPE $func(get_type,10,25,65)
+		if ( L_TYPE == 1 )	callevent add_good_pot 100%
+		else if ( L_TYPE == 2 ) callevent add_epic_item 100%
+		else if ( L_TYPE == 3 )  callevent add_great_arrows 100%
+	}
+	if ( CHEST_TIER >= 3 )
+	{
+		if CHEST_TIER < 4
+		local L_TYPE $func(get_type,10,35,55)
+		if ( L_TYPE == 1 )	callevent add_great_pot 100%
+		else if ( L_TYPE == 2 ) callevent add_epic_item 100%
+		else if ( L_TYPE == 3 )  callevent add_epic_arrows 100%
+	}
+	if ( CHEST_TIER >= 4 )
+	{
+		if CHEST_TIER < 5
+		local L_TYPE $func(get_type,5,40,55)
+		if ( L_TYPE == 1 )	callevent add_epic_pot 100%
+		else if ( L_TYPE == 2 ) callevent add_epic_item 100%
+		else if ( L_TYPE == 3 )  callevent add_epic_arrows 100%
+	}
+	if ( CHEST_TIER >= 5 )
+	{
+		local L_TYPE $func(get_type,10,40,50)
+		if ( L_TYPE == 1 )	callevent add_epic_pot 100%
+		else if ( L_TYPE == 2 ) callevent add_epic_item 100%
+		else if ( L_TYPE == 3 )  callevent add_epic_arrows 100%
+	}
+}
+
+{ get_type 
+	
+	local L_ROLL $rand(1,100)
+	if ( L_ROLL <= PARAM1 )
+	{
+		return 1
+	
+		exitevent
+	}
+	if ( L_ROLL > PARAM1 )
+	{
+		if L_ROLL <= PARAM2
+	
+		return 2
+		exitevent
+	}
+
+
+
+	return 3
+}

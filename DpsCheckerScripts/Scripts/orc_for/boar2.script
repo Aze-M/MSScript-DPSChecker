@@ -1,0 +1,30 @@
+{
+	const BOAR_WIDTH2 32
+	const BOAR_HEIGHT2 75
+
+	const BOAR_SIZE 2
+	const BOAR_SKIN 0
+	const BOAR_MODEL monsters/boar2.mdl
+
+	setvard NPC_GIVE_EXP 125
+
+	const DMG_GORE1 60
+	const DMG_GORE2 $randf(10.0,15.0)
+	const DMG_GORE3 $randf(10.0,15.0)
+	const DMG_CHARGE $rand(50,100)
+
+	const ATTACK_HITCHANCE	70%
+
+	setvard FLEE_CHANCE 10%
+}
+
+#include monsters/boar2
+
+{ npc_post_spawn
+	
+	setvard DROP_ITEM1 skin_boar_heavy 	
+	setvard DROP_ITEM1_CHANCE 50%		
+
+	setvard ATTACK_RANGE 90
+	setvard ATTACK_HITRANGE 100
+}

@@ -1,0 +1,64 @@
+{ client_activate
+	setvard FX_OWNER PARAM1
+	setvard CUR_ANG PARAM2
+	setvard CUR_VEL PARAM3
+	setvard CUR_ORG PARAM4
+	setcallback render enable
+	setvard IS_ACTIVE 1
+	
+	cleffect tempent model weapons/projectiles.mdl CUR_ORG setup_cre update_cre
+	callevent 3.0 end_fx
+}
+
+{ sv_update_vel
+	setvard CUR_ANG PARAM1
+	setvard CUR_VEL PARAM2
+	setvard CUR_ORG PARAM3
+	setvard UPDATE_VEL 1
+}
+
+{ update_cre
+	if ( IS_ACTIVE )
+	{
+		if ( UPDATE_VEL )
+		{
+			cleffect tempent set_current_prop angles CUR_ANG
+			cleffect tempent set_current_prop velocity CUR_VEL
+			
+			setvard UPDATE_VEL 0
+
+		}
+
+	}
+	else
+	{
+		cleffect tempent set_current_prop origin $vec(20000,0,0)
+	}
+}
+
+
+{ end_fx
+	setvard IS_ACTIVE 0
+	callevent 0.2 remove_fx
+}
+
+{ remove_fx
+	removescript
+}
+
+{ setup_cre
+	cleffect tempent set_current_prop origin $getcl(FX_OWNER,origin)
+	cleffect tempent set_current_prop rendermode add
+	cleffect tempent set_current_prop renderamt 255
+	cleffect tempent set_current_prop death_delay 	10.0
+	cleffect tempent set_current_prop scale 1.0
+	cleffect tempent set_current_prop gravity 	0
+	cleffect tempent set_current_prop angles CUR_ANG
+	cleffect tempent set_current_prop velocity CUR_VEL 
+	cleffect tempent set_current_prop collide 	none
+	cleffect tempent set_current_prop body 	71
+	
+	cleffect tempent set_current_prop framerate 1.0
+	cleffect tempent set_current_prop frames 16
+	cleffect tempent set_current_prop sequence 11 
+}

@@ -1,0 +1,67 @@
+
+{
+	const MODEL_HANDS      		none
+	
+	const MODEL_WORLD      		none 
+	const ITEM_NAME			firemana
+	const PROJ_DAMAGETYPE		fire
+	const PROJ_DAMAGESTAT		spellcasting
+
+	const PROJ_DAMAGE		0
+	const PROJ_AOE_RANGE		250
+	const PROJ_AOE_FALLOFF		0
+	const PROJ_STICK_DURATION	0  
+	const PROJ_SOLIDIFY_ON_WALL	0  
+	const PROJ_COLLIDEHITBOX	64 
+
+	
+
+	
+	
+	
+}
+
+#include items/proj_base
+
+{  projectile_spawn
+
+	name 		an|Explosion
+	weight 		500
+	size 		10
+	value		5
+	gravity		0.7
+	groupable	25
+   
+	sethudsprite hand arrows
+	sethudsprite trade ITEM_NAME
+	sethand any
+	effect glow ent_me (255,75,0) 128 1 -1
+}
+
+
+{  game_tossprojectile
+
+	
+	
+    	
+}
+
+{  projectile_landed
+
+
+}
+
+{  game_hitnpc
+	
+	
+	if ( PROJ_GENERIC_FREEZE == 1 ) 
+	{
+		applyeffect ent_laststruckbyme effects/effect_frostbite 5
+		setvarg PROJ_GENERIC_FREEZE 0
+	}
+	if ( PROJ_GENERIC_STUN == 1 ) 
+	{
+		applyeffect ent_laststruckbyme effects/effect_stun 5
+		setvarg PROJ_GENERIC_STUN 0
+	}
+}

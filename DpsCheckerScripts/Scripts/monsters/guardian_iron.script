@@ -1,0 +1,737 @@
+
+
+#scope server
+
+{ [shared]
+
+	
+	setvar ANIM_WALK walk
+	setvar ANIM_IDLE idle
+	setvard ANIM_RUN run
+	setvard ANIM_DEATH die
+	setvard ANIM_ATTACK ready_attack1
+
+	
+	const ANIM_RAWR rawr
+	const ANIM_ATTACK1 attack1
+	const ANIM_ATTACK2 attack2
+	const ANIM_ATTACK1_READY ready_attack1
+	const ANIM_ATTACK2_READY ready_attack2
+	const ANIM_DRAW_SWORD draw
+	const ANIM_RECHARGE recharge
+	const ANIM_REACH reach
+	const ANIM_STOMP stomp
+	const ANIM_SMASH smash
+}
+
+
+{ [server]
+
+	
+	setvard CAN_FLEE 0
+	setvar IS_UNHOLY 1
+	setvard NPC_NO_ATTACK 1
+	if ( $lcase(game.map.name) contains shad_pal )
+	{
+		setvard NPC_IS_BOSS 1
+		setvard NPC_GIVE_EXP 10000
+	}
+	else
+	{
+		setvard NPC_GIVE_EXP 5000
+	}
+
+	setvard ATTACK_MOVERANGE 140
+	setvard ATTACK_RANGE 200
+	setvard ATTACK_HITRANGE 300
+
+	
+	const GUARDIAN_TYPE 1
+	const GUARDIAN_BEAM_SWORD 1
+	const DMG_ELEF_TYPE lightning_effect
+	const PITCH_SWORD_OFF 100
+	const FREQ_CL_REFRESH 30.0
+	setvard GAME_PUSH_RATIO 0.25
+
+	const MAX_CHARGE_LEVEL 50
+	const CHARGE_DROP_RATE 1.0
+	const GUARDIAN_CL_SCRIPT monsters/guardian_iron_cl
+	const BATTERY_LIFE 60.0 
+	const STANCE_RANGE 500
+	const MAX_RECHARGE_RANGE 400 
+
+	const DMG_SWING_ZAP 700
+	const DMG_SWING_BLADE 400
+	const DMG_REACH 500
+	const DOT_REACH 100
+	const DMG_SMASH 400
+
+	const SWIPE_AOE 384
+	const SMASH_AOE 128
+
+	const FREQ_STOMP $randf(10.0,20.0)
+	const FREQ_REACH $randf(10.0,20.0)
+	const FREQ_SMASH $randf(10.0,30.0)
+
+	const SWORD_HILT_IDX 0
+	const SWORD_TIP_IDX 1
+	const RHAND_IDX 2
+	const LHAND_IDX 3
+
+	
+	const SOUND_STEP1_START monsters/guardian/joint_move1.wav
+	const SOUND_STEP2_START monsters/guardian/joint_move2.wav
+	const SOUND_STEP1_LAND monsters/guardian/step1.wav
+	const SOUND_STEP2_LAND monsters/guardian/step2.wav
+
+	const SOUND_ATTACK1 monsters/guardian/swing1.wav
+	const SOUND_ATTACK2 monsters/guardian/swing2.wav
+	const SOUND_SWING weapons/swinghuge.wav
+
+	const SOUND_PAIN1 monsters/guardian/pain1.wav
+	const SOUND_PAIN2 monsters/guardian/pain2.wav
+	const SOUND_PAIN3 monsters/guardian/pain3.wav
+	const SOUND_STRUCK1 monsters/guardian/struck1.wav
+	const SOUND_STRUCK2 monsters/guardian/struck2.wav
+
+	const SOUND_RAWR monsters/guardian/rawr.wav
+	const SOUND_REACH monsters/guardian/sca_dragelec.wav
+
+	const SOUND_RECHARGE_START monsters/guardian/sca_dragelec.wav
+
+	const SOUND_SWORD_IDLE magic/bolt_loop.wav
+	const SOUND_SWORD_DRAW magic/elecidlepop.wav
+	const SOUND_SWORD_OFF magic/elecidle.wav
+	
+	const SOUND_DEATH monsters/guardian/death.wav
+
+	setvard IMMUNE_VAMPIRE 1
+
+	precache SOUND_DEATH
+	precache c-tele1.spr
+	precache flare1.spr
+}
+
+{ game_precache
+	precachefile GUARDIAN_CL_SCRIPT
+}
+
+#include monsters/base_monster_new
+
+
+{ npc_spawn
+	callevent guardian_spawn
+	catchspeech say_robocop robocop
+}
+
+{ guardian_spawn
+	name an|Iron Guardian
+	hp 10000
+	setmodel monsters/guardian.mdl
+	width 75
+	height 200
+
+	setbbox npcsize
+
+	takedmg all 0.5
+	takedmg poison 0.0
+	takedmg holy 1.25
+	setvard IMMUNE_STUN 100%
+	setmodelbody 0 0
+	race demon
+
+	blood none
+
+	hearingsensitivity 1
+
+	setmoveanim ANIM_WALK
+	setidleanim ANIM_IDLE
+	roam 1
+
+	if game.serverside
+	if ( G_GUARDIAN_CHARGER isnot 'G_GUARDIAN_CHARGER' )
+	{
+		setvard CHARGER_ORG G_GUARDIAN_CHARGER
+		setvard NEEDS_CHARGER 1
+	}
+
+	setvard CHARGE_LEVEL MAX_CHARGE_LEVEL
+	setvard ANIM_RATE 1.0
+
+	callevent refresh_fx
+
+	callevent 0.01 beam_init
+}
+
+{ npc_post_spawn
+	if ( $lcase(game.map.name) equals shad_palace )
+	{
+		if ( $filesize(trans2.dat) > -1 )
+		{
+			
+			setvard NPC_GIVE_EXP 1000
+			skilllevel NPC_GIVE_EXP
+		}
+	}
+}
+
+{ beam_init
+	effect beam ents lgtning.spr 10 ent_me 1 ent_me 2 (196,196,255) 0 30 -1
+	setvard SWORD_BEAM $get(ent_lastcreated,id)
+}
+
+{ frame_step1_start
+	playsound 0 10 SOUND_STEP1_START
+}
+
+{ frame_step2_start
+	playsound 0 10 SOUND_STEP2_START
+}
+
+{ frame_step1_land
+	playsound 0 10 SOUND_STEP1_LAND
+}
+
+{ frame_step2_land
+	playsound 0 10 SOUND_STEP2_LAND
+}
+
+{ frame_attack1_start
+	setvard IN_SWING 1
+	playsound 0 10 SOUND_ATTACK1 SOUND_ATTACK2
+}
+
+{ frame_attack2_start
+	setvard IN_SWING 1
+	playsound 0 10 SOUND_ATTACK1 SOUND_ATTACK2
+}
+
+{ frame_draw_flicker
+	callevent sword_on
+}
+
+{ frame_smash
+	setvard ANIM_ATTACK ready_attack2
+	setvard SMASH_POINT $get(ent_me,attachpos,LHAND_IDX)
+	vectorset SMASH_POINT z $get_ground_height(SMASH_POINT)
+	vectoradd SMASH_POINT $relpos($vec(0,game.monster.angles.yaw,0),$vec(0,96,0))
+
+	clientevent update all CL_SCRIPT_IDX smash_fx SMASH_POINT
+	setvard SMASH_ATTACK 1
+	dodamage SMASH_POINT SMASH_AOE DMG_SMASH 100% 0 reflective blunt
+}
+
+{ frame_attack1_go
+	if !NPC_NO_ATTACK 
+	local TARGS_IN_RANGE $get_tsphere(enemy,ATTACK_HITRANGE)
+	if TARGS_IN_RANGE isnot none
+	playanim critical ANIM_ATTACK1
+}
+
+{ frame_attack2_go
+	if !NPC_NO_ATTACK 
+	local TARGS_IN_RANGE $get_tsphere(enemy,ATTACK_HITRANGE)
+	if TARGS_IN_RANGE isnot none
+	playanim critical ANIM_ATTACK2
+}
+
+{ frame_attack1_strike
+	callevent melee_attack
+	setvard ANIM_ATTACK ANIM_ATTACK2_READY
+	setidleanim ANIM_ATTACK
+	if $rand(1,3) == 1
+	setvard ANIM_ATTACK ANIM_ATTACK2 
+}
+
+{ frame_attack2_strike
+	callevent melee_attack
+	setvard ANIM_ATTACK ANIM_ATTACK1_READY
+	setidleanim ANIM_ATTACK
+	if $rand(1,3) == 1
+	setvard ANIM_ATTACK ANIM_ATTACK1 
+}
+
+{ frame_rawr_done
+	callevent RAWR_EVENT
+}
+
+{ frame_reach_start
+	setvard AS_ATTACKING game.time
+	add AS_ATTACKING 5.0
+}
+
+{ frame_reach_strike
+	callevent npcatk_resume_ai
+	if !ATTEMPTING_RECHARGE  
+	playsound 0 10 SOUND_REACH
+	clientevent update all CL_SCRIPT_IDX grab_fx $get(REACH_TARGET,index)
+	setvard ANIM_ATTACK ANIM_ATTACK1
+	dodamage REACH_TARGET 1024 DMG_REACH 100% DMG_ELEF_TYPE
+	if $get_takedmg(REACH_TARGET,lightning) < 0.9
+	applyeffect REACH_TARGET effects/effect_shock_dmg 5.0 $get(ent_me,id) DOT_REACH
+	addvelocity REACH_TARGET $relvel(0,-3000,110)
+}
+
+{ frame_stomp_start
+
+	setvard AS_ATTACKING game.time
+	add AS_ATTACKING 10.0
+
+	playsound 0 10 SOUND_STEP1_START
+	setvard DOING_STOMP 1
+
+	setvard NEXT_STOMP game.time
+	add NEXT_STOMP FREQ_STOMP
+
+	
+	setvard NUDGE_NEAR 1
+	callevent nudge_loop
+	callevent 4.0 end_nudge_loop 
+}
+
+{ nudge_loop
+	if NUDGE_NEAR
+	callevent 0.5 nudge_loop
+	setvard NUDGE_POINT $get(ent_me,svbonepos,13) 
+	vectorset NUDGE_POINT z $get_ground_height(NUDGE_POINT)
+	setvard NUDGE_TARGETS $get_tsphere(enemy,64,NUDGE_POINT)
+	if NUDGE_TARGETS isnot none
+	calleventloop $get_token_amt(NUDGE_TARGETS) affect_nudge_targets
+}
+
+{ end_nudge_loop
+	setvard NUDGE_NEAR 0
+	setvard DOING_STOMP 0
+	setvard ANIM_ATTACK ready_attack1
+}
+
+{ affect_nudge_targets
+	local CUR_TARG $get_token(NUDGE_TARGETS,game.script.iteration)
+	addvelocity CUR_TARG $relvel(0,200,110)
+}
+
+{ frame_stomp
+	setvard ANIM_ATTACK ready_attack1
+	setvard DOING_STOMP 0
+	setvard NUDGE_NEAR 0
+	setvard STOMP_POINT $get(ent_me,svbonepos,13) 
+	vectorset STOMP_POINT z $get_ground_height(STOMP_POINT)
+	setvard STOMP_TARGETS $get_tsphere(enemy,256,STOMP_POINT)
+	clientevent update all CL_SCRIPT_IDX stomp_fx STOMP_POINT
+	if STOMP_TARGETS isnot none
+	calleventloop $get_token_amt(STOMP_TARGETS) affect_stomp_targets
+}
+
+{ affect_stomp_targets
+	local CUR_TARGET $get_token(STOMP_TARGETS,game.script.iteration)
+	local STUN_DUR 5.0
+	if ( ATTEMPTING_RECHARGE ) local STUN_DUR 10.0
+
+	applyeffect CUR_TARGET effects/effect_stun STUN_DUR 0 1
+	local TARG_ORG $get(CUR_TARGET,origin)
+	local TARG_ANG $angles(STOMP_POINT,TARG_ORG)
+	local NEW_YAW TARG_ANG
+	setvelocity CUR_TARGET $relvel($vec(0,NEW_YAW,0),$vec(0,1000,0))
+}
+
+{ melee_attack
+	setvard IN_SWING 0
+	playsound 0 10 SOUND_SWING
+	dodamage $get(ent_me,attachpos,1) SWIPE_AOE DMG_SWING_ZAP 100% 0 reflective DMG_ELEF_TYPE
+	dodamage $get(ent_me,attachpos,1) SWIPE_AOE DMG_SWING_BLADE 100% 0 reflective slash
+}
+
+{ game_damaged 
+	
+	if ( PARAM3 contains lightning )
+	{
+		effect glow ent_me (0,255,0) 64 1 1
+		if ( $get(ent_me,hp) < $get(ent_me,maxhp) ) givehp PARAM2
+		setdmg dmg 0
+		returndata 0
+		
+		
+		setvard CHARGE_LEVEL MAX_CHARGE_LEVEL
+		setvard NEXT_CHARGE_DROP game.time
+		add NEXT_CHARGE_DROP BATTERY_LIFE
+
+		if ATTEMPTING_RECHARGE
+		callevent recharge_done
+	}
+	else
+	{
+		if ( PARAM3 contains effect ) local EXIT_SUB 1 
+		if !EXIT_SUB
+		playsound 0 10 SOUND_STRUCK1 SOUND_STRUCK2 SOUND_STRUCK1 SOUND_STRUCK2 SOUND_STRUCK1 SOUND_STRUCK2 SOUND_PAIN1 SOUND_PAIN2 SOUND_PAIN3
+	}
+}
+
+
+{ cycle_up
+	roam 0
+
+	callevent refresh_fx
+
+
+	local GAME_TIME game.time
+
+	setvard NEXT_SMASH GAME_TIME
+	add NEXT_SMASH FREQ_SMASH
+
+	setvard NEXT_STOMP GAME_TIME
+	add NEXT_STOMP FREQ_STOMP
+
+	setvard NEXT_REACH GAME_TIME
+	add NEXT_REACH FREQ_REACH
+	
+
+	if !DID_INTRO
+	setvard DID_INTRO 1
+	setvard AS_ATTACKING GAME_TIME
+	add AS_ATTACKING 5.0
+	setmovedest NPCATK_TARGET 9999
+	callevent do_intro
+
+	if ( CL_SCRIPT_IDX > -1 )
+	{
+		callevent refresh_fx
+	}
+}
+
+{ cycle_down
+	roam 1
+}
+
+{ npc_selectattack
+	setvard AS_ATTACKING game.time
+	add AS_ATTACKING 3.0
+	if ( ANIM_RATE < 1.0 ) add AS_ATTACKING 5.0 
+}
+
+{ npcatk_hunt
+
+	if ( $get(ent_me,isalive) )
+	{
+		if ( game.time > NEXT_CL_REFRESH ) callevent refresh_fx
+		if ROBOCOP_MODE
+		if game.time > NEXT_ROBOCOP_SOUND
+		setvard NEXT_ROBOCOP_SOUND game.time
+		add NEXT_ROBOCOP_SOUND $randf(3.0,10.0)
+		if ( ROBOCOP_IDX > ROBOCOP_NSOUNDS ) setvard ROBOCOP_IDX 0
+		playsound 0 10 $get_array(ROBOCOP_ARRAY,ROBOCOP_IDX)
+		add ROBOCOP_IDX 1
+	}
+
+	if !SUSPEND_AI
+	if !ATTEMPTING_RECHARGE
+	if !DOING_RECHARGE
+	if !DOING_STOMP
+
+	if NPCATK_TARGET isnot unset
+
+	if ( $get(NPCATK_TARGET,range) > ATTACK_RANGE )
+	{
+		if !IN_SWING
+		if SWORD_STATE 
+		if game.time > NEXT_REACH
+		local TARG_ORG $get(NPCATK_TARGET,origin)
+		local HAND_ORG $get(ent_me,attachpos,LHAND_IDX)
+		local TRACE_LINE $get_traceline(HAND_ORG,TARG_ORG,worldonly)
+		if TRACE_LINE equals TARG_ORG
+		setvard NEXT_REACH game.time
+		add NEXT_REACH FREQ_REACH
+		setvard REACH_TARGET NPCATK_TARGET
+		callevent do_reach
+		local EXIT_SUB 1
+	}
+	if !EXIT_SUB
+
+	if ( game.time > NEXT_STOMP )
+	{
+		setvard ANIM_ATTACK ANIM_STOMP
+		setvard NEXT_STOMP game.time
+		add NEXT_STOMP FREQ_STOMP
+		local EXIT_SUB 1
+	}
+	if !EXIT_SUB
+
+	if ( game.time > NEXT_SMASH )
+	{
+		setvard ANIM_ATTACK ANIM_SMASH
+		setvard NEXT_SMASH game.time
+		add NEXT_SMASH FREQ_STOMP
+	}
+}
+
+{ do_intro
+	playanim critical ANIM_RAWR
+	playsound 0 10 SOUND_RAWR
+
+	if ( NEEDS_CHARGER )
+	{
+		
+		callevent 1.5 do_recharge
+		callevent 0.1 intro_musak 
+	}
+	else
+	{
+		callevent 1.5 draw_sword
+	}	
+}
+
+
+{ intro_musak
+	callexternal players ext_play_music all 99999 media/Suspense07.mp3 1024
+}
+
+
+{ do_recharge
+
+	callevent npcatk_suspend_ai
+	setvard ATTEMPTING_RECHARGE 0
+	callevent refresh_fx
+	callevent do_recharge_fx
+
+}
+
+
+
+{ do_recharge_fx
+	callevent 8.0 recharge_done
+
+	setvard AS_ATTACKING game.time
+	add AS_ATTACKING 10.0
+
+	setmovedest CHARGER_ORG 9999
+
+	setvard DOING_RECHARGE 1
+	setidleanim ANIM_RECHARGE
+	setmoveanim ANIM_RECHARGE
+	playanim critical ANIM_RECHARGE
+	roam 0 
+	clientevent update all CL_SCRIPT_IDX recharge_fx CHARGER_ORG
+	callevent do_recharge_loop
+}
+
+{ do_recharge_loop
+	if DOING_RECHARGE
+	callevent 0.1 do_recharge_loop
+	if CHARGE_LEVEL < MAX_CHARGE_LEVEL
+	add CHARGE_LEVEL 1
+	callevent update_anim_speed
+}
+
+{ recharge_done
+	callevent npcatk_resume_ai
+	setvard NEXT_CHARGE_DROP game.time
+	add NEXT_CHARGE_DROP BATTERY_LIFE
+	setvard DOING_RECHARGE 0
+	setvard CHARGE_LEVEL MAX_CHARGE_LEVEL
+	setvard DID_FIRST_CHARGE 1
+	setanim.framerate 1.0
+	setvard ANIM_RATE 1.0
+	setmovedest NPCATK_TARGET ATTACK_MOVERANGE
+	setvard NPC_FORCED_MOVEDEST 1
+	callevent draw_sword
+	setidleanim ANIM_IDLE
+	setmoveanim ANIM_RUN
+
+	local GAME_TIME game.time
+
+	setvard NEXT_SMASH GAME_TIME
+	add NEXT_SMASH FREQ_SMASH
+
+	setvard NEXT_STOMP GAME_TIME
+	add NEXT_STOMP FREQ_STOMP
+
+	setvard NEXT_REACH GAME_TIME
+	
+}
+
+{ draw_sword
+	local CUR_TARG NPCATK_TARGET
+	callevent npcatk_suspend_ai 1.0
+	setmovedest CUR_TARG 9999
+	playanim critical ANIM_DRAW_SWORD
+	callevent 5.0 sword_on 
+}
+
+{ sword_on
+	if !SWORD_STATE
+	setvard AS_ATTACKING game.time
+	add AS_ATTACKING 2.0
+	clientevent update all CL_SCRIPT_IDX sword_on 1
+	setvard FLICKER_IN_COUNT 10
+	setvard FLICKER_DELAY 0
+	setvard FLICKER_MODE 1
+	setvard SWORD_STATE 1
+	callevent sword_flicker_loop
+	playsound 0 10 SOUND_SWORD_DRAW
+	if ( SOUND_SWORD_IDLE isnot none) svplaysound 1 5 SOUND_SWORD_IDLE
+	setvard NPC_NO_ATTACK 0
+}
+
+{ sword_flicker_loop
+	if ( FLICKER_IN_COUNT == 0 )
+	{
+		setmodelbody 1 SWORD_STATE
+		if GUARDIAN_BEAM_SWORD
+		if ( SWORD_STATE )
+		{
+			effect beam update SWORD_BEAM brightness 200
+		}
+		else
+		{
+			effect beam update SWORD_BEAM brightness 0
+		}
+	}
+	if FLICKER_IN_COUNT >= 1
+	setmodelbody 1 FLICKER_MODE
+	if ( FLICKER_MODE )
+	{
+		setmodelbody 1 1
+		setvard FLICKER_MODE 0
+	}
+	else
+	{
+		setmodelbody 1 0
+		setvard FLICKER_MODE 1
+	}
+	subtract FLICKER_IN_COUNT 1
+	add FLICKER_DELAY 0.01
+	callevent FLICKER_DELAY sword_flicker_loop
+}
+
+{ sword_off
+	setvard NPC_NO_ATTACK 1
+	setvard SWORD_STATE 0
+	setvard FLICKER_IN_COUNT 10
+	setvard FLICKER_DELAY 0
+	setvard FLICKER_MODE 1
+	callevent sword_flicker_loop
+	playsound 0 10 SOUND_SWORD_OFF 0.8 PITCH_SWORD_OFF
+	if ( SOUND_SWORD_IDLE isnot none ) svplaysound 1 0 SOUND_SWORD_IDLE
+	clientevent update all CL_SCRIPT_IDX sword_flicker_out
+}
+
+{ sword_off_instant 
+	clientevent update all CL_SCRIPT_IDX sword_flicker_out
+	if ( GUARDIAN_BEAM_SWORD )
+	{
+		effect beam update SWORD_BEAM brightness 0
+		effect beam update SWORD_BEAM remove 0.1
+	}
+	if ( SOUND_SWORD_IDLE isnot none ) svplaysound 1 0 SOUND_SWORD_IDLE
+	setmodelbody 1 0
+	setvard SWORD_STATE 0
+}
+
+{
+repeatdelay CHARGE_DROP_RATE
+
+	if NEEDS_CHARGER
+	if DID_FIRST_CHARGE
+	if !ATTEMPTING_RECHARGE
+
+	if game.time > NEXT_CHARGE_DROP
+	subtract CHARGE_LEVEL 1
+	if ( ANIM_RATE > 0.3 )
+	{
+		callevent update_anim_speed
+	
+	}
+	else
+	{
+		callevent sword_off
+		callevent do_recharge
+	}
+}
+
+{ update_anim_speed
+	setvard ANIM_RATE CHARGE_LEVEL
+	divide ANIM_RATE MAX_CHARGE_LEVEL
+	setvard BASE_FRAMERATE ANIM_RATE
+	setanim.framerate ANIM_RATE
+}
+
+{ game_death
+	callevent sword_off_instant
+	clientevent update all CL_SCRIPT_IDX remove_fx
+	if ( $lcase(game.map.name) equals shad_palace )
+	{
+		
+		
+		callexternal players ext_set_map shad_palace from_aluhandra2 from_shad_palace
+	}
+}
+
+
+{ refresh_fx
+	setvard NEXT_CL_REFRESH game.time
+	add NEXT_CL_REFRESH FREQ_CL_REFRESH
+
+	clientevent update all CL_SCRIPT_IDX end_fx
+	clientevent new all GUARDIAN_CL_SCRIPT $get(ent_me,index) 1 SWORD_STATE FREQ_CL_REFRESH
+	setvard CL_SCRIPT_IDX game.script.last_sent_id
+}
+
+{ do_reach
+	callevent npcatk_suspend_ai 2.0
+	playanim critical ANIM_REACH
+	playsound 0 10 SOUND_SWING
+	clientevent update all CL_SCRIPT_IDX grab_sprite_on
+}
+
+{ game_dodamage
+	if ( SMASH_ATTACK )
+	{
+		if $get(PARAM2,isalive)
+		if $get(PARAM2,range) < ATTACK_HITRANGE
+		applyeffect PARAM2 effects/heavy_stun 10.0 $get(ent_me,id) 1
+	}
+	setvard SMASH_ATTACK 0
+}
+
+
+
+{ npcatk_suspend_ai
+	setvard OVERRIDE_SUSPEND_AI game.time
+	add OVERRIDE_SUSPEND_AI 45.0
+}
+
+{
+repeatdelay 5.0
+	if SUSPEND_AI
+	if game.time > OVERRIDE_SUSPEND_AI
+	callevent npcatk_resume_ai
+}
+
+{ say_robocop
+	if !ROBOCOP_MODE
+	setvard ROBOCOP_MODE 1
+	playmp3 all 1:05 robocop_remix.mp3
+	array.create ROBOCOP_ARRAY
+	array.add ROBOCOP_ARRAY monsters/guardian/robocop_comequietortrouble.wav
+	array.add ROBOCOP_ARRAY monsters/guardian/robocop_deadoralive.wav
+	array.add ROBOCOP_ARRAY monsters/guardian/robocop_robocop_arrest.wav
+	array.add ROBOCOP_ARRAY monsters/guardian/robocop_dropit.wav
+	array.add ROBOCOP_ARRAY monsters/guardian/robocop_intro.wav
+	array.add ROBOCOP_ARRAY monsters/guardian/robocop_lookingforme.wav
+	array.add ROBOCOP_ARRAY monsters/guardian/robocop_miranda.wav
+	array.add ROBOCOP_ARRAY monsters/guardian/robocop_drop_arrest.wav
+	array.add ROBOCOP_ARRAY monsters/guardian/robocop_stayoutoftrouble.wav
+	array.add ROBOCOP_ARRAY monsters/guardian/robocop_thankyou_gnight.wav
+	array.add ROBOCOP_ARRAY monsters/guardian/robocop_youareunderarrest1.wav
+	array.add ROBOCOP_ARRAY monsters/guardian/robocop_youarewantedformurder.wav
+	array.add ROBOCOP_ARRAY monsters/guardian/robocop_yourmovecreep.wav
+	setvard ROBOCOP_NSOUNDS $get_array_amt(ROBOCOP_ARRAY)
+	setvard ROBOCOP_IDX 0
+	subtract ROBOCOP_NSOUNDS 1
+	setvard NPC_FIGHTS_NPCS 1
+	if ( G_DEVELOPER_MODE )
+	{
+		race human
+		setvard NPC_NO_PLAYER_DMG 1
+	}
+}
+

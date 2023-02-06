@@ -1,0 +1,28 @@
+{
+   setvard MOVE_RANGE 70
+   setvard ATTACK_RANGE 90
+   setvard ATTACK_HITRANGE 200
+
+   const ATTACK_DAMAGE '$rand(10,15)'
+   const ATTACK_HITCHANCE 60%
+   const NPC_BASE_EXP	50
+   const RETALIATE_CHANGETARGET_CHANCE 50% 
+   
+   setvard DROP_ITEM1 skin_bear 	
+   setvard DROP_ITEM1_CHANCE 75%	
+}
+
+#include monsters/bear_base
+
+{  npc_spawn
+
+   	hp 180
+   	
+   	width 64
+   	height 95
+   	name a|Brown Bear
+   	hearingsensitivity 3
+
+   	setmodel monsters/bear.mdl
+   	setmodelbody	0 1 
+}

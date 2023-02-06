@@ -1,0 +1,89 @@
+#scope server
+
+{
+   const VALID_DAMAGE_TYPES "blunt;fire"
+   const OBJECT_NAME a|web
+   const MAP_TRIGGER break_web1
+   const DAMAGE_THRESHOLD 100 
+
+   
+   const SOUND_STRUCK1 debris/flesh1.wav 
+   const SOUND_STRUCK2 debris/flesh2.wav
+   const SOUND_STRUCK3 debris/flesh3.wav
+
+   
+   const SOUND_RESIST1 weapons/bullet_hit1.wav
+   const SOUND_RESIST2 weapons/bullet_hit2.wav
+   const SOUND_RESIST3 weapons/ric1.wav
+
+   
+   const SOUND_BREAK debris/bustflesh1.wav
+
+   
+   
+   
+   
+
+   
+}
+
+{ game_spawn
+   hp 99999
+   name OBJECT_NAME
+   setvard PLAYING_DEAD 1 
+
+   
+   
+   
+}
+
+{ game_damaged 
+
+   if !AM_BROKE
+   
+   setvard VALID_DAMAGE 0
+   setvard INC_DAMAGE_TYPE PARAM3
+   calleventloop $get_token_amt(VALID_DAMAGE_TYPES) check_type
+   
+   if ( !VALID_DAMAGE )
+   {
+      if game.time > NEXT_IMMUNE_WARN
+      setvard NEXT_IMMUNE_WARN game.time
+      add NEXT_IMMUNE_WARN 5.0 
+      dplayermessage PARAM1 The $get(ent_me,name) seems resistant to this weapon.
+      playrandomsound 0 10 SOUND_RESIST1 SOUND_RESIST2 SOUND_RESIST3
+   }
+
+   if ( VALID_DAMAGE )
+   {
+      if ( PARAM2 >= DAMAGE_THRESHOLD )
+      {
+         playsound 0 10 SOUND_BREAK
+         usetrigger MAP_TRIGGER
+         invincible 1
+         setvard AM_BROKE 1
+         callevent 0.1 remove_me 
+      }
+      else
+      {
+         playrandomsound 0 10 SOUND_STRUCK1 SOUND_STRUCK2 SOUND_STRUCK3
+         dplayermessage PARAM1 The $get(ent_me,name) budges, but it seems it must be struck with more force. ( $int(PARAM2) of DAMAGE_THRESHOLD )
+		 
+         setdmg dmg 0
+         hp 9999
+      }
+   }
+}
+
+{ check_type
+   local CUR_TYPE $get_token(VALID_DAMAGE_TYPES,game.script.iteration)
+   if INC_DAMAGE_TYPE startswith CUR_TYPE 
+   setvard VALID_DAMAGE 1
+}
+
+#include [server] monsters/debug
+
+{ remove_me
+   deleteent ent_me
+   removescript
+}

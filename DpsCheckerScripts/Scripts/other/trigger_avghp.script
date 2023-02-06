@@ -1,0 +1,32 @@
+
+{
+	setcallback touch enable
+}
+
+{ game_touch
+	
+	if $get(PARAM1,isplayer)
+	local HP_MIN $get_token(PARAM2,0)
+	local HP_MAX $get_token(PARAM2,1)
+
+	local HP_PRESENT game.players.totalhp
+	divide HP_PRESENT game.players
+
+
+
+	if ( G_DEVELOPER_MODE ) messageall green HP_PRESENT vs HP_MIN - HP_MAX
+
+	if ( HP_PRESENT >= HP_MIN )
+	{
+		if HP_PRESENT <= HP_MAX
+		local DO_TRIGGER 1
+	}
+
+	if ( DO_TRIGGER )
+	{
+		usetrigger PARAM3
+	}
+	setcallback touch disable
+	removescript
+	deleteent ent_me
+}

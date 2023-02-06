@@ -1,0 +1,49 @@
+{
+	const BASE_LEVEL_REQ 3
+
+	const VMODEL_IDX 3 
+	const PMODEL_FILE weapons/p_weapons4.mdl 
+	const PMODEL_IDX_FLOOR 19 
+	const PMODEL_IDX_HANDS 18 
+
+	const MELEE_DMG 160 
+	const MELEE_RANGE 110 
+	const MELEE_DMG_TYPE pierce
+
+	const POLE_MIN_RANGE 70 
+
+	const POLE_MIN_DMG_MULTI 0.5 
+	const POLE_MAX_DMG_MULTI 1.65 
+
+	const POLE_CAN_POKE1 1 
+	const POLE_CAN_POKE2 1 
+	const POLE_CAN_SWIPE 0 
+	const POLE_CAN_BLOCK 0 
+	const POLE_CAN_SPIN 0 
+	const POLE_CAN_REPEL 0 
+	const POLE_CAN_BACKHAND 0 
+
+	const POLE_CAN_THROW 1 
+
+	const SOUND_HITWALL1 weapons/dagger/daggermetal1.wav
+	const SOUND_HITWALL2 weapons/dagger/daggermetal2.wav
+
+	const POLE_THROW_POWER 600 
+	const POLE_THOW_PROJECTILE proj_pole_spear 
+	const POLE_THROW_RECHARGE_TIME 1.0 
+	const POLE_THROW_MAX_CHARGE_TIME 3.0 
+}
+
+
+#include items/polearms_base
+
+{ polearm_spawn
+
+	name  a|Spear
+	desc  A sturdy throwing spear
+	weight  10
+	size  2
+	value 20
+	sethudsprite trade 181
+} 
+

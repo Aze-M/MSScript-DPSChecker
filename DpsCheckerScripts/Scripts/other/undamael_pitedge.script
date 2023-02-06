@@ -1,0 +1,29 @@
+
+{
+	setcallback touch enable
+}
+
+{ game_touch
+
+	if PARAM1 equals UNDAMAEL_ID
+	if game.time > LAST_TOUCH
+	
+	callexternal UNDAMAEL_ID ext_pitedge_touch
+	setvard LAST_TOUCH game.time
+	add LAST_TOUCH 0.1
+}
+
+{ undamael_spawn
+	setvard UNDAMAEL_ID $get_by_name(undamael)
+}
+
+{ [server] bd_debug  
+
+	if ( RAND_ID equals 'RAND_ID' )
+	{
+		name pitedge
+		setvard RAND_ID $rand(1000,9999)
+	}
+}
+
+#include [server] monsters/debug

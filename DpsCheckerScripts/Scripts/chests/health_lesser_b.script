@@ -1,0 +1,18 @@
+
+{
+   eventname treasure_spawn
+
+   gold		0
+   setvar	STORENAME health_lesser_b
+}
+
+#include items/base_treasurechest
+
+{
+   eventname chest_additems
+   
+   
+   addstoreitem	STORENAME 	health_mpotion	2      0
+   addstoreitem	STORENAME 	mana_mpotion	2	0
+	
+}

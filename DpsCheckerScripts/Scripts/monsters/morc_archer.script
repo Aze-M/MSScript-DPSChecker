@@ -1,0 +1,50 @@
+{
+   setvard DROP_GOLD 1			
+   setvard DROP_GOLD_AMT $rand(10,18)	
+   setvard NPC_GIVE_EXP 45
+   setvard DROP_ITEM1 bows_longbow 
+   setvard DROP_ITEM1_CHANCE 10%	  
+   setvard DROP_ITEM2 proj_arrow_jagged 60 
+   setvard DROP_ITEM2_CHANCE 10%	  
+
+   setvard ANIM_ATTACK shootorcbow	
+   setvard FLINCH_CHANCE 45%
+
+   const AIM_RATIO 50			
+   const ARROW_DAMAGE_LOW 20
+   const ARROW_DAMAGE_HIGH 35
+   setvard MOVE_RANGE 5000
+   setvard ATTACK_RANGE 5500
+   const ATTACK_SPEED 900
+   const ATTACK_CONE_OF_FIRE 2
+
+   setvard DROPS_CONTAINER 1
+   setvard CONTAINER_DROP_CHANCE 5% 
+   setvard CONTAINER_SCRIPT chests/quiver_of_frost_arrows
+
+	setvard IMMUNE_COLD 1
+
+	precache monsters/morc.mdl 
+}
+
+#include monsters/orc_base_ranged
+#include monsters/orc_base
+
+{
+   eventname orc_spawn
+
+   hp 160
+   
+   name a|Marogar Archer
+   hearingsensitivity 2
+   setstat parry 30
+   takedmg all .8
+   takedmg fire 1.5
+   takedmg cold	0.1
+
+   precache monsters/morc.mdl 
+   setmodel monsters/morc.mdl
+   setmodelbody	0 1		
+   setmodelbody	1 4		
+   setmodelbody	2 2		
+}

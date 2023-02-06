@@ -1,0 +1,29 @@
+#scope server
+{
+	
+	setvard NPC_GIVE_EXP 200
+
+	
+	const DMG_ARROW 75
+	const DMG_SWIPE 30
+	const SKELE_GOLD 25
+
+	const SKELE_START_LIVES $rand(1,2)
+
+	const C_SKELE_PUSH_STRENGTH 100
+}
+
+#include monsters/skeleton_archer_base
+
+{ skele_spawn
+	name an|Elite Skeletal Archer
+	hp 600
+
+	setmodel monsters/skeleton_boss1.mdl
+	width 32
+	height 80
+
+	setmodelbody 0 1 
+	setmodelbody 1 10 
+	setmodelbody 2 0 
+}

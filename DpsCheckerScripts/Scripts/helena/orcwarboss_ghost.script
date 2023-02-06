@@ -1,0 +1,76 @@
+
+{
+   setvard DROP_GOLD 1			
+   setvard DROP_GOLD_AMT $rand(50,250)	
+   setvard NPC_GIVE_EXP 200
+
+   setvard ANIM_ATTACK battleaxe_swing1_L 
+   setvard FLINCH_CHANCE 35%
+
+   setvard DROP_ITEM1 axes_greataxe
+   setvard DROP_ITEM1_CHANCE 100%
+   setvar INFERNAL 0
+
+   const ATTACK_ACCURACY 80%
+   const ATTACK_DMG_LOW 5
+   const ATTACK_DMG_HIGH 150
+}
+
+{
+   setvard MOVE_RANGE 64
+   setvard ATTACK_RANGE 150
+   setvard ATTACK_HITRANGE 225
+   const ORC_SHIELD 0
+}
+
+
+   
+   
+{  swing_axe
+
+	callevent baseorc_yell
+
+   	local L_DMG $randf(ATTACK_DMG_LOW,ATTACK_DMG_HIGH)
+   	dodamage ent_lastseen ATTACK_HITRANGE L_DMG ATTACK_ACCURACY
+
+	if ( INFERNAL == 1 ) applyeffect ent_laststruckbyme effects/effect_burn 5 ent_me $rand(30,60)
+}
+
+{ swing_sword
+
+	callevent swing_axe
+}
+
+#include monsters/orc_base
+
+{  orc_spawn
+
+   	hp 1250
+	
+	width 32
+	height 60
+	name the|Ghost Graznux the Warboss
+   	hearingsensitivity 8
+   	setstat parry 30
+	setstat swordsmanship 10 25 20
+	takedmg all .8
+	invincible 0
+	rendermode	5		
+	renderamt	255
+
+	setprop ent_me rendermode 5
+	setprop ent_me renderamt 200
+
+   	setmodelbody	0 2		
+   	setmodelbody	1 3		
+   	setmodelbody	2 5		
+}
+
+{ warboss_godoff
+
+ name Graznux the Warboss
+ invincible 0
+ saytextrange 1024
+ saytext What have you done to me!?
+}
+

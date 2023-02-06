@@ -1,0 +1,7 @@
+#include other/lure
+
+{ game_spawn
+
+	takedmg all 0.0
+	hp 1000
+}

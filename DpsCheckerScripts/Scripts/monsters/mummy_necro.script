@@ -1,0 +1,51 @@
+#scope server
+{
+	
+	setvar ANIM_WALK walk
+	setvar ANIM_RUN walk2
+	setvar ANIM_IDLE idle1
+
+	
+	setvard NPC_GIVE_EXP 1000
+	setvard ATTACK_RANGE 80 
+	setvard ATTACK_HITRANGE 96
+	setvard ATTACK_MOVERANGE 80 
+	setvard ANIM_ATTACK steelpipe
+	setvard FLINCH_DAMAGE_THRESHOLD 50 
+	setvard FLINCH_HEALTH_RATIO 0.75 
+
+	
+	const AURA_TYPE 3
+	const ATTACK_TYPE melee
+	const ATTACK_HITCHANCE 80
+	const DMG_STEELPIPE 400
+	const MUMMY_STARTING_LIVES 1
+	const MUMMY_MELEE_DMG_TYPE blunt
+	const MUMMY_IS_NECRO 1
+	setvard MUMMY_STUN_CHANCE 20%
+	const DMG_AURA 100
+	const FREQ_MUMMY_SUMMON 15.0
+	const MUMMY_SUMMON_SCRIPT monsters/wraith_summoned
+}
+
+#include monsters/mummy_base
+
+{ game_precache
+	precachefile monsters/wraith_summoned
+}
+
+{ mummy_spawn
+
+	name a|Mummified Necromonger
+	hp 7000
+	takedmg holy 1.5
+
+	setmodelbody 0 0 
+	setmodelbody 1 1 
+	setmodelbody 2 4 
+	setmodelbody 3 2 
+}
+
+{ game_death
+	callexternal all ext_master_died $get(ent_me,id)
+}

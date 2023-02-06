@@ -1,0 +1,110 @@
+
+#scope client
+
+{
+	const GLOW_RAD 128
+	const GLOW_COLOR (255,128,64)
+
+	const V_OFS -26
+	const FOOT_BONE 4
+}
+
+{ client_activate 
+
+	setcallback render enable
+
+	setvard MY_OWNER PARAM1
+	setvard FX_RADIUS PARAM2
+	setvard FX_DURATION PARAM3
+	setvard OWNER_NPC PARAM4
+
+	subtract FX_RADIUS 24 
+
+
+	
+	
+	callevent FX_DURATION remove_fx 
+
+	setvard OWNER_FEET $getcl(MY_OWNER,bonepos,FOOT_BONE)
+	setvard FX_ACTIVE 1
+	cleffect tempent sprite weapons/projectiles.mdl OWNER_FEET setup_flame_circle update_flame_circle
+
+	cleffect light new $getcl(MY_OWNER,origin) GLOW_RAD GLOW_COLOR 1.0
+	setvard LIGHT_ID game.script.last_light_id
+}
+
+{ game_prerender
+
+	
+	if $getcl(MY_OWNER,exists)
+	cleffect light LIGHT_ID $getcl(MY_OWNER,origin) GLOW_RAD GLOW_COLOR 1.0
+}
+
+{ remove_fx
+	setvard FX_ACTIVE 0
+	callevent 0.1 remove_fx2
+}
+
+{ remove_fx2
+	removescript
+}
+
+
+
+{ update_flame_circle
+	if ( FX_ACTIVE )
+	{
+		
+		
+		
+	
+		
+
+		setvard OWNER_FEET $getcl(MY_OWNER,origin)
+		if ( !OWNER_NPC )
+		{
+			if ( $getcl(MY_OWNER,ducking) ) vectoradd OWNER_FEET z 21
+			vectoradd OWNER_FEET z V_OFS
+		}
+		else
+		{
+			vectoradd OWNER_FEET z 16
+		}
+
+		
+		
+		
+		
+		
+
+		cleffect tempent set_current_prop origin OWNER_FEET
+	}
+	else
+	{
+		cleffect tempent set_current_prop rendermode 5
+		cleffect tempent set_current_prop renderamt 0
+		cleffect tempent set_current_prop death_delay $neg(FX_DURATION)
+		cleffect tempent set_current_prop fadeout 0
+		cleffect tempent set_current_prop origin $vec(10000,10000,10000)
+	}
+}
+
+{ setup_flame_circle
+	cleffect tempent set_current_prop death_delay FX_DURATION
+	cleffect tempent set_current_prop body 51
+	cleffect tempent set_current_prop framerate 0.5
+	cleffect tempent set_current_prop sequence 8
+	cleffect tempent set_current_prop rendermode add
+	cleffect tempent set_current_prop renderamt 100
+	cleffect tempent set_current_prop scale 2.5
+	cleffect tempent set_current_prop gravity 0
+	cleffect tempent set_current_prop collide none
+
+	cleffect tempent set_current_prop frames 11
+	
+	cleffect tempent set_current_prop angles $vec(0,90,0)
+	cleffect tempent set_current_prop velocity $vec(0,0,0)
+	cleffect tempent set_current_prop movetype 0
+	
+	
+}

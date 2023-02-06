@@ -1,0 +1,314 @@
+
+
+
+#scope server
+
+{
+	const FREQ_GUIDED $randf(15.0,30.0)
+	const DMG_GUIDED 300
+	const DOT_PUNCH 100
+	const DMG_PUNCH 200
+	const DMG_DBL_PUNCH 100
+
+	setvard NPC_GIVE_EXP 3000
+
+	const LEFT_FIST_INDEX 0
+	const RIGHT_FIST_INDEX 1
+
+	const SOUND_STRUCK1	weapons/cbar_hitbod1.wav
+	const SOUND_STRUCK2	weapons/cbar_hitbod1.wav
+	const SOUND_STRUCK3	weapons/cbar_hitbod1.wav
+	const SOUND_PAIN	monsters/troll/trollpain.wav
+	const SOUND_ATTACK	monsters/troll/trollattack.wav
+	const SOUND_DEATH	monsters/troll/trolldeath.wav
+	const SOUND_WALK1	monsters/troll/step1.wav
+	const SOUND_WALK2	monsters/troll/step2.wav
+	const SOUND_IDLE	monsters/troll/trollidle2.wav
+	setvard DROP_GOLD 		1
+	setvard DROP_GOLD_MIN		500
+	setvard DROP_GOLD_MAX		600
+	setvar ANIM_IDLE idle0
+	setvar ANIM_RUN	run
+	setvar ANIM_WALK	walk
+	setvard ANIM_DEATH	die_fall
+	setvard ANIM_ATTACK	throw_rock	
+	const ANIM_PUNCH hit_down
+	const ANIM_DBLPUNCH double_punch
+	const ANIM_THROW throw_rock
+	const ROCK_RANGE 800
+	const SWING_RANGE 130
+	setvard ATTACK_RANGE 800
+	setvard ATTACK_HITRANGE	200
+	setvard MOVE_RANGE	400
+	const MELE_RANGE 128
+	const MELE_HITRANGE 164
+	setvard CAN_FLINCH	1
+	setvar FLINCH_CHANCE 33
+	setvard FLINCH_ANIM flinch2
+	setvard FLINCH_DELAY 2.0
+	setvard CAN_HUNT	1
+	setvard HUNT_AGRO	1
+    const AIM_RATIO 25
+    const ATTACK_SPEED 500
+	const ROCK_DAMAGE '$rand(400,600)'
+	setvard PROJ_SHOCK_DOT 100
+	setvard PROJ_SHOCK_DMG 400
+
+	const BALL_SCRIPT monsters/summon/guided_lball_alt
+	const BALL_DURATION 10.0
+	const ANIM_WARCRY idle2
+	const MELEE_RANGE 200
+	const DMG_BALL 400
+
+	precache SOUND_DEATH
+}
+
+{ game_precache
+	precachefile BALL_SCRIPT
+}
+
+#include monsters/base_monster_new
+
+{ [shared] npc_spawn
+
+	hp 6000
+	width 100
+	height 125
+	race orc
+	name a|Shadahar Lightning Djinn
+	roam 1
+	takedmg all .7
+	takedmg poison 1.2
+	takedmg acid 2.0
+	takedmg lightning 0
+	setmodel monsters/troll_shad.mdl
+	setidleanim idle1
+	setmoveanim ANIM_WALK
+	hearingsensitivity 10
+
+	setvard COMBAT_REPOS 0
+
+	callevent 10.0 random_idle
+
+	clientevent new all effects/sfx_follow_glow_cl $get(ent_me,index) (255,255,0) 128 15.0
+}
+
+{ npc_selectattack
+	if ( $get(NPCATK_TARGET,range) > MELEE_RANGE )
+	{
+		setvard ANIM_ATTACK rock_throw
+	}
+	else
+	{
+		local RND_MELEE $rand(1,2)
+		if ( RND_MELEE == 1 ) setvard ANIM_ATTACK hit_down
+		if ( RND_MELEE == 2 ) setvard ANIM_ATTACK double_punch
+	}
+}
+
+{ rock_pickup
+
+	setmodelbody 1 1	
+}
+
+{ rock_throw
+
+	local ME_POS $get(ent_me,origin)
+	local MY_Z $vec.z(ME_POS)
+	local TARGET_POS $get(HUNT_LASTTARGET,origin)
+	local TARGET_Z $vec.z(TARGET_POS)
+	local TARGET_Z_DIFFERENCE TARGET_Z
+	subtract TARGET_Z_DIFFERENCE MY_Z
+
+	local FIN_ATTACK_SPEED ATTACK_SPEED
+	local AIM_ANGLE $get(HUNT_LASTTARGET,range)		
+	divide AIM_ANGLE AIM_RATIO				
+	if ( TARGET_Z_DIFFERENCE > 200 )
+	{
+		
+		divide TARGET_Z_DIFFERENCE 2
+		divide AIM_ANGLE 2
+		add FIN_ATTACK_SPEED TARGET_Z_DIFFERENCE
+	}
+	setangle add_view.x AIM_ANGLE			
+	
+	
+	
+	
+
+	tossprojectile view FIN_ATTACK_SPEED ROCK_DAMAGE 0.75 proj_troll_lightning (0,0,96)
+	add COMBAT_REPOS 1
+	
+
+	setmodelbody 1 0		
+
+	
+	if COMBAT_REPOS > 4
+	setvard COMBAT_REPOS 0
+	callevent chicken_run 5.0 "combat_repos"
+}
+
+{ cycle_up
+
+	setvard NEXT_GUIDED game.time
+	add NEXT_GUIDED FREQ_GUIDED
+
+	if !DID_WARCRY
+	playanim critical ANIM_WARCRY
+	setvard DID_WARCRY 1
+}
+
+{ npcatk_hunt
+
+	if NPCATK_TARGET isnot none
+	if $cansee(NPCATK_TARGET)
+
+	if game.time > NEXT_GUIDED
+	if $cansee(NPCATK_TARGET)
+	setvard LAUNCH_GUIDED_COUNT 2
+	setvard NEXT_GUIDED game.time
+	add NEXT_GUIDED FREQ_GUIDED	
+	playanim critical double_punch_slow
+}
+
+{ game_dodamage
+
+	if ( MELEE_STRIKE )
+	{
+		if $get(PARAM2,exists)
+		if $get(PARAM2,relationship,ent_me) equals enemy
+		if $get(PARAM2,range) < ATTACK_HITRANGE
+		addvelocity PARAM2 PUSH_VEL
+		if $rand(1,4) == 1
+		applyeffect PARAM2 effects/effect_shock_dmg 5.0 $get(ent_me,id) DOT_PUNCH
+		effect glow ent_me (255,255,0) 64 1 1
+	}
+	setvard MELEE_STRIKE 0
+}
+
+{ npcatk_targetvalidate
+
+	
+	if $cansee(PARAM1)
+	setvard ANIM_ATTACK ANIM_DBLPUNCH
+	setvard ATTACK_RANGE SWING_RANGE
+	if ( $get(PARAM1,range) <= ROCK_RANGE )
+	{
+		if $get(PARAM1,range) > ATTACK_RANGE
+		setvard AS_ATTACKING game.time
+		add AS_ATTACKING 10
+		playanim once ANIM_THROW
+	}
+	if ( $get(PARAM1,range) < ATTACK_RANGE ) setvard ANIM_ATTACK ANIM_DBLPUNCH
+}
+
+{ npc_struck
+   
+	volume 5
+	playsound 2 5 SOUND_PAIN
+	if ( $get(ent_laststruck,range) < MELE_RANGE ) setvard ANIM_ATTACK ANIM_DBLPUNCH
+}
+
+{ stomp_1	
+
+   playsound 2 8 SOUND_WALK1
+}
+
+{ stomp_2	
+
+   playsound 2 8 SOUND_WALK2
+}
+
+{ random_idle
+	callevent 10.0 random_idle
+	if !IS_HUNTING
+	if !$cansee(enemy)
+	if !IS_FLEEING
+	local ANIM_SELECT $rand(0,3)
+	if ( ANIM_SELECT == 0 ) setvar ANIM_IDLE idle0
+	if ( ANIM_SELECT == 1 ) setvar ANIM_IDLE idle1
+	if ( ANIM_SELECT == 2 ) setvar ANIM_IDLE idle2
+	if ( ANIM_SELECT == 3 ) setvar ANIM_IDLE idle3
+	if ( ADVANCED_SEARCHING ) setvar ANIM_IDLE idle0
+	playanim once ANIM_IDLE
+}
+
+{ warcry	
+
+	playsound 2 10 SOUND_IDLE
+}
+
+{ my_target_died
+	setvard DID_WARCRY 0
+	if !$cansee(player)
+	playanim critical idle2
+}
+
+{ game_damaged_other
+
+	if PARAM1 equals HUNT_LASTTARGET
+	if PARAM2 > 1
+
+	setvard COMBAT_REPOS 0
+}
+
+{ attack_1 
+
+	setvard MELEE_STRIKE 1
+
+	setmodelbody 1 0	
+
+	setvar PUSH_VEL $relvel(10,300,110)
+	dodamage NPCATK_TARGET ATTACK_HITRANGE DMG_DBL_PUNCH 75% blunt
+	
+	playsound 2 10 SOUND_ATTACK
+
+	if LAUNCH_GUIDED_COUNT >= 1
+	if ( LAUNCH_GUIDED_COUNT == 1 ) callevent spawn_guided_ball1
+	if ( LAUNCH_GUIDED_COUNT == 2 ) callevent spawn_guided_ball2
+	subtract LAUNCH_GUIDED_COUNT 1
+		
+}
+
+{ attack_2 
+
+	setvard MELEE_STIKE 1
+
+	setmodelbody 1 0	
+	setvar PUSH_VEL $relvel(10,600,110)
+
+	dodamage NPCATK_TARGET ATTACK_HITRANGE DMG_PUNCH 75% blunt
+	playsound 2 10 SOUND_ATTACK
+}
+
+{ spawn_guided_ball1
+	createnpc BALL_SCRIPT $get(ent_me,attachpos,LEFT_FIST_INDEX) $get(ent_me,id) DMG_BALL 256 20.0
+}
+
+{ spawn_guided_ball2
+	createnpc BALL_SCRIPT $get(ent_me,attachpos,RIGHT_FIST_INDEX) $get(ent_me,id) DMG_BALL 256 20.0
+}
+
+
+{ warcry	
+
+	playsound 2 10 SOUND_IDLE
+}
+
+{
+repeatdelay 15.0
+	
+	if $get(ent_me,isalive)
+	clientevent new all effects/sfx_follow_glow_cl $get(ent_me,index) (255,255,0) 128 14.9
+}
+
+{ set_sorcpal_djinn1
+	saytextrange 2048
+	setvard SPOT_SPEECH "You say smash? ME SMASH!!"
+}
+
+{ cycle_up
+	if SPOT_SPEECH isnot 'SPOT_SPEECH'
+	saytext SPOT_SPEECH
+	setvard SPOT_SPEECH 'SPOT_SPEECH'
+}

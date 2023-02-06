@@ -1,0 +1,145 @@
+
+{
+	const SOUND_HUM magic/pulsemachine_noloop.wav	
+	const HUM_LENGTH 1.7
+	const STUCKCHECK_FREQ 0.5
+	const BLAST_MODEL weapons/projectiles.mdl
+	const MODEL_BODY_OFS 1
+	const PROJ_ANIM_IDLE idle_iceball
+	const SOUND_ZAP1 debris/beamstart14.wav
+	const SOUND_ZAP2 debris/beamstart14.wav
+	const SOUND_ZAP3 debris/zap1.wav
+	const BALL_SPEED 100
+	const LIGHTNING_SPRITE lgtning.spr
+	const ATTACK_RADIUS 196
+
+	const FWD_SPEED 10
+}
+
+#include monsters/base_noclip
+
+{ eventname game_dynamically_created 
+
+	
+	
+	
+
+	
+	
+
+	
+	
+   	
+
+	 setvard MY_OWNER PARAM1
+	 setvard FREEZE_DURATION PARAM2
+
+	
+
+	setvard PLAYER_SPAWNED $get(PARAM1,isplayer)
+	 
+	setprop	ent_me movetype const.movetype.noclip
+	setprop		ent_me solid 0
+	 
+	 setvard OWNER_ANGLES $get(MY_OWNER,angles)
+
+	 
+	 setangle face OWNER_ANGLES
+	 
+	 setvard FINAL_DEST $relpos(0,20000,0)
+	 
+	
+	 if ( PARAM3 isnot 'PARAM3' ) setvard FINAL_DEST PARAM3
+	
+	 
+
+	 setvard NPC_NOCLIP_DEST FINAL_DEST
+	 
+}
+
+{ game_spawn
+
+	name a|Freezing Sphere
+	hp 1
+	invincible 1
+	fly		1
+	gravity 0.0
+	fov 359
+	race beloved
+	width 1
+	height 1
+	setmonsterclip 0
+	setmodel BLAST_MODEL
+	setmodelbody 0 MODEL_BODY_OFS
+	setsolid not
+	setbbox none
+	setidleanim PROJ_ANIM_IDLE
+	setmoveanim PROJ_ANIM_IDLE
+	setanim.framerate 2
+	playanim	idle
+
+	setvard FREEZING 1
+
+	setvard ICE_OLD_POS $get(ent_me,origin)
+
+	callevent 0.1 freeze_loop
+	callevent 0.5 hum_loop
+
+	
+	
+	
+
+	setprop	ent_me movetype const.movetype.noclip
+	setprop		ent_me solid 0
+
+	callevent 10.0 remove_me
+}
+
+
+{ hum_loop
+
+	if FREEZING
+	callevent HUM_LENGTH hum_loop
+
+	playsound CHAN_BODY 10 SOUND_HUM
+}
+
+{ freeze_loop
+
+	if FREEZING
+
+
+	
+
+	callevent 0.1 freeze_loop
+
+	if $cansee(ally)
+	if $get(ent_lastseen,id) isnot IGNORE_TARGET
+	if $get(MY_OWNER,relationship,ent_lastseen) equals enemy
+	if $get(ent_lastseen,range) < ATTACK_RADIUS
+	if ( FX_SPAMMERS < MAX_FX_SPAMMERS ) 
+	{
+		local TARGET_ORG $get(ent_lastseen,origin)
+		
+		
+		
+		effect beam point LIGHTNING_SPRITE 60 $relpos(0,0,0) TARGET_ORG (200,200,255) 150 50 1.0
+		playrandomsound 0 10 SOUND_ZAP1 SOUND_ZAP2 SOUND_ZAP3
+	}
+	if ( $get(ent_lastseen,hp) <= 1500 )
+	{
+		applyeffect ent_lastseen effects/freeze_solid FREEZE_DURATION MY_OWNER
+	}
+	if ( $get(ent_lastseen,hp) >= 1500 )
+	{
+		if PLAYER_SPAWNED
+		local TARG_NAME $get(ent_lastseen,name)
+		playermessage MY_OWNER TARG_NAME is too strong to be affected.
+	}
+	setvard IGNORE_TARGET $get(ent_lastseen,id)
+}
+
+{ remove_me
+	setvard FREEZING 0
+	deleteent ent_me
+}

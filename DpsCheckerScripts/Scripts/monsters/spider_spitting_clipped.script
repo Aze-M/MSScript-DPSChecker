@@ -1,0 +1,6 @@
+{
+	const AM_CLIPPED 1
+}
+
+#include monsters/spider_spitting
+

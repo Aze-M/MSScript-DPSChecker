@@ -1,0 +1,7 @@
+
+{
+	const local.updatehourhand 1
+}
+
+#include worlditems/clock_base
+

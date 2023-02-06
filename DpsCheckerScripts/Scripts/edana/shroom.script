@@ -1,0 +1,11 @@
+{ spawn
+
+   hp 9999
+   race human
+   width 50
+   height 50
+   roam 0
+   name a|Shroom
+   setidleanim idle
+   setmodel misc/env_shroom4.mdl
+}

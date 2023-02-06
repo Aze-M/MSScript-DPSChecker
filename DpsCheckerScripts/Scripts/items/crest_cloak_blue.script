@@ -1,0 +1,30 @@
+{
+	const ARMOR_MODEL      	armor/p_armorvest.mdl
+	const ARMOR_BODY		13
+	const ARMOR_TEXT		"You feel the Orochiness."
+	const BARMOR_TYPE		leather
+	const BARMOR_PROTECTION	0%
+	const BARMOR_PROTECTION_AREA	"chest"
+	const BARMOR_REPLACE_BODYPARTS BARMOR_PROTECTION_AREA
+
+	const NEW_ARMOR_OFS 13
+}
+
+
+#include items/armor_base
+
+{  game_spawn
+
+   name 	Jacket of Orochi 3.0
+   desc 	Feel the re-re-revised Orochiness
+   weight 	0
+   size 	0
+   wearable     1 neck
+   value	1
+   
+   sethudsprite trade crestedana
+
+	setvard IS_WORN 1
+}
+
+

@@ -1,0 +1,29 @@
+
+{
+   setvard MOVE_RANGE 60
+   setvard ATTACK_RANGE 70
+   setvard ATTACK_HITRANGE 120
+ 
+   const ATTACK_DAMAGE '$rand(2.5,4)'  
+   const ATTACK_DAMAGE 6
+   const ATTACK_HITCHANCE 60%
+   const NPC_BASE_EXP	20
+  
+   setvard DROP_ITEM1 skin_bear 	
+   setvard DROP_ITEM1_CHANCE 50%	
+}
+
+#include monsters/bear_base
+
+{  npc_spawn
+
+   	hp 50
+   	
+   	width 40
+   	height 80
+   	name a|Black bear cub
+   	hearingsensitivity 2
+
+   	setmodel monsters/bearcub.mdl
+   	setmodelbody	0 2
+}

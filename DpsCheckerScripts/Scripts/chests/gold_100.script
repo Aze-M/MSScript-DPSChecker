@@ -1,0 +1,9 @@
+
+{
+   eventname treasure_spawn
+
+   gold		$rand(50,150)
+   setvar	STORENAME gold_100
+}
+
+#include items/base_treasurechest

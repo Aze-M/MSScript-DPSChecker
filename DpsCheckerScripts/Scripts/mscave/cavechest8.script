@@ -1,0 +1,34 @@
+{
+	const STORENAME eight
+}
+
+#include items/base_treasurechest
+
+{
+   eventname treasure_spawn
+
+   name a|Treasure Chest STORENAME
+   
+}
+
+{
+   eventname chest_additems
+
+	callevent add_gold 5 15 5
+   
+   addstoreitem  STORENAME      health_mpotion 	 1          0
+	callevent get_chance 5 50 100 50 
+	if ( GIVE_PRIZE ) addstoreitem STORENAME swords_nkatana 1 0
+   addstoreitem  STORENAME      item_log	 1          0
+
+	if ( G_DEVELOPER_MODE ) consolemsg G_DEV_PLAYER game.players.totalhp
+
+	if ( game.players.totalhp >= 800 )
+	{
+		callevent add_epic_arrows
+		callevent add_epic_arrows
+		callevent add_epic_arrows
+		callevent add_epic_arrows
+		callevent add_great_item
+	}
+}

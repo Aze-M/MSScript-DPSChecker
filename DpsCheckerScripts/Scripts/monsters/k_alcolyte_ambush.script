@@ -1,0 +1,21 @@
+{
+	const NPC_PROX_ACTIVATE 1			
+	const NPC_PROXACT_RANGE 512			
+	const NPC_PROXACT_EVENT ambush		
+	const NPC_PROXACT_IFSEEN 1			
+	const NPC_PROXACT_FOV 1				
+	const NPC_PROXACT_CONE 90			
+	const I_POUNCE 1
+}
+
+#include monsters/k_alcolyte
+
+{ npc_spawn
+	
+	roam 0
+}
+
+{ run_mode
+	roam 1
+}
+

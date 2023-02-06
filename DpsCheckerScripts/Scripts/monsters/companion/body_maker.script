@@ -1,0 +1,17 @@
+{ game_dynamically_created 
+
+	
+	
+
+	
+	
+	
+	
+}
+
+{ remove_me
+
+	removescript
+	deleteent ent_me
+}
+

@@ -1,0 +1,1136 @@
+
+
+
+
+
+
+
+
+#scope server
+#include [server] monsters/base_npc
+
+{
+	setvard NEW_AI 1
+	setvar HAS_AI 1
+
+	
+	
+	const NPC_FRUST_THRESHOLD 4 
+	const MAX_ADV_SEARCHTIME 45.0 
+	const HACK_ATTACK_DELAY 1.0 
+	const HACK_DAMAGE_DELAY 0.1 
+	const NPC_WANDER_RANGE 1024 
+
+	const NPC_SPAWN_PRED1 0.5 
+	const NPC_SPAWN_PRED2 0.75 
+
+	const CYCLE_TIME_BATTLE 0.1
+	const CYCLE_TIME_IDLE 2.0
+	const CYCLE_TIME_NPC 0.8
+
+	const NPC_RANGE_TYPE range 
+
+	const NPC_DELAY_RETALITATE $randf(5.0,10.0)
+}
+
+{ npcatk_post_load
+
+	setvard NPC_LASTSEEN_POS unset
+	setvard NPC_MOVEPROX game.monster.moveprox
+	setvard NPC_DBL_MOVEPROX NPC_MOVEPROX
+	multiply NPC_DBL_MOVEPROX 2.0
+
+	
+	if ( CYCLE_TIME == 0 ) setvard CYCLE_TIME CYCLE_TIME_IDLE 
+	if ( HEAR_RANGE_MAX == 0 ) setvard HEAR_RANGE_MAX 1024
+	if ( HEAR_RANGE_PLAYER == 0 ) setvard HEAR_RANGE_PLAYER 800
+	if ( RETALIATE_CHANCE == 0 ) setvard RETALIATE_CHANCE 75 
+	if ( CHASE_RANGE == 0 ) setvard CHASE_RANGE 4000 
+	setvard NPC_CHASE_RANGE CHASE_RANGE
+
+	
+	if ( NPC_MUST_SEE_TARGET equals 'NPC_MUST_SEE_TARGET' ) setvard NPC_MUST_SEE_TARGET 1
+	if ( CAN_RETALIATE equals 'CAN_RETALIATE' ) setvard CAN_RETALIATE 1 
+	if ( CAN_HEAR equals 'CAN_HEAR' ) setvard CAN_HEAR 1
+	if ( CAN_FLEE equals 'CAN_FLEE' ) setvard CAN_FLEE 1
+	if ( CAN_FLINCH equals 'CAN_FLINCH' ) setvard CAN_FLINCH 0
+	if ( FLINCH_DELAY equals 'FLINCH_DELAY' ) setvard FLINCH_DELAY 5.0
+	if ( ANIM_FLINCH isnot 'ANIM_FLINCH' ) setvard FLINCH_ANIM ANIM_FLINCH
+	if ( FLEE_DISTANCE == 0 ) setvard FLEE_DISTANCE 1000
+	if ( FLEE_TIME == 0 ) setvard FLEE_TIME 10.0
+	if ( FLEE_STUCKCHECK_FREQ == 0 ) setvard FLEE_STUCKCHECK_FREQ 1.0
+
+	
+   	setvard IS_FLEEING 0
+   	setvard HAVE_TARGET 0
+	
+	setvard NPCATK_TARGET unset			
+	setvard NPC_MOVEDEST_TARGET unset	
+	setvard SEARCH_ROTATION 0
+	setvard EXT_DAMAGE_ADJUSTMENT 1.0
+	setvard	EXT_HITCHANCE_ADJUSTMENT 1.0
+	setvard NPC_LOST_TARGET unset
+	setvard HUNT_LASTTARGET ¯NONE¯ 
+	
+	
+}
+
+{ npc_spawn 
+
+	callevent NPC_SPAWN_PRED1 npcatk_get_postspawn_properties
+	callevent NPC_SPAWN_PRED2 npcatk_hunt
+	
+	setvard MONSTER_ID $rand(1000,9999) 
+}
+
+{ npcatk_get_postspawn_properties
+
+	callevent npcatk_post_load
+
+	setvard NPC_HALF_HEIGHT $get(ent_me,height)
+	setvard NPC_HEIGHT NPC_HALF_HEIGHT 
+	multiply NPC_HALF_HEIGHT 0.5
+
+	setvard NPC_HALF_WIDTH $get(ent_me,width)
+	multiply NPC_HALF_WIDTH 0.5
+
+	if ( FLINCH_DAMAGE_THRESHOLD equals 'FLINCH_DAMAGE_THRESHOLD' )
+	{
+		setvard FLINCH_DAMAGE_THRESHOLD game.monster.maxhp
+		multiply FLINCH_DAMAGE_THRESHOLD 0.1
+	}
+	if ( FLINCH_HEALTH equals 'FLINCH_HEALTH' ) setvard FLINCH_HEALTH game.monster.maxhp
+	if ( FLINCH_DMG_REQ equals 'FLINCH_DMG_REQ' ) setvard FLINCH_DMG_REQ FLINCH_DAMAGE_THRESHOLD 
+
+	if ( MONSTER_WIDTH == 0 ) setvard MONSTER_WIDTH game.monster.moveprox
+	if ( ATTACK_MOVERANGE equals 'ATTACK_MOVERANGE' )
+	{
+		if ( MOVE_RANGE isnot 'MOVE_RANGE' )
+		{
+			setvard ATTACK_MOVERANGE MOVE_RANGE
+		}
+		else
+		{
+			setvard ATTACK_MOVERANGE MONSTER_WIDTH
+			setvard MOVE_RANGE MONSTER_WIDTH
+		}
+	}
+
+	if ( MOVE_RANGE equals 'MOVE_RANGE' )
+	{
+		if ( ATTACK_MOVERANGE isnot 'ATTACK_MOVERANGE' )
+		{
+			setvard MOVE_RANGE ATTACK_MOVERANGE
+		}
+		else
+		{
+			setvard MOVE_RANGE MONSTER_WIDTH
+		}
+	}
+
+	if ( ATTACK_MOVERANGE > 300 )
+	{
+		setvard NPC_RANGED 1
+	
+		setvard NPC_MAX_RANGE ATTACK_MOVERANGE
+	}
+	if ( ATTACK_RANGE equals 'ATTACK_RANGE' )
+	{
+		setvard ATTACK_RANGE MONSTER_WIDTH
+		multiply ATTACK_RANGE 2.5
+	}
+	if ( ATTACK_HITRANGE equals 'ATTACK_HITRANGE' ) 
+	{
+		setvard ATTACK_HITRANGE MONSTER_WIDTH
+		multiply ATTACK_HITRANGE 4.0
+	}
+
+	
+	setvard NPC_CLOSEIN_RANGE MONSTER_WIDTH
+	multiply NPC_CLOSEIN_RANGE 2.0 
+
+	setvard NPC_LAST_ORIGIN game.monster.origin
+
+	if ( NO_VICTORY_HEAL ) setvard NPC_STORE_HP game.monster.hp
+
+	setvard ORIG_MOVERANGE ATTACK_MOVERANGE
+}
+
+
+
+{ npcatk_hunt
+
+	callevent CYCLE_TIME npcatk_hunt
+
+	if !NPC_CUSTOM_HUNT
+	if !SUSPEND_AI
+	if !IS_FLEEING
+
+	if ( NPCATK_TARGET equals unset )
+	{
+		if ( $cansee(enemy) ) callevent npcatk_settarget $get(ent_lastseen,id) "saw_new_enemy"
+	}
+
+	if NPCATK_TARGET isnot unset
+
+	local MY_ORG $get(ent_me,origin)
+	local TARG_ORG $get(NPCATK_TARGET,origin)
+
+	
+	callevent npcatk_targetvalidate NPCATK_TARGET
+
+	
+	if ( NPCATK_TARGET equals unset )
+	{
+		callevent npcatk_clear_targets "no_longer_valid"
+	}
+	else
+	{
+		if ( $dist(MY_ORG,TARG_ORG) > NPC_CHASE_RANGE ) callevent npcatk_clear_targets "out_of_range"
+		callevent npcatk_check_for_victory NPCATK_TARGET
+	}
+
+	if NPCATK_TARGET isnot unset
+
+	
+	setvard NPC_CANSEE_TARGET $cansee(NPCATK_TARGET)
+
+	if ( !NPC_CANSEE_TARGET )
+	{
+		
+		if ( NPC_COULD_SEE_TARGET )
+		{
+			callevent npcatk_lost_sight 
+			setvard NPC_COULD_SEE_TARGET 0
+		}
+		if ( $cansee(enemy) )
+		{
+			local OLD_TARGET NPCATK_TARGET
+			callevent npcatk_settarget $get(ent_lastseen,id) "favor_new_enemy"
+			if ( OLD_TARGET isnot NPCATK_TARGET ) local EXIT_SUB 1 
+		}
+		if !EXIT_SUB
+
+		
+		if ( NPC_LASTSEEN_POS equals unset )
+		{
+			callevent npcatk_setmovedest NPCATK_TARGET ATTACK_MOVERANGE
+		}
+		else
+		{
+			if ( !NPC_IS_TURRET ) callevent npcatk_setmovedest NPC_LASTSEEN_POS 1
+			
+			
+			if ( $dist(MY_ORG,NPC_LASTSEEN_POS) <= NPC_DBL_MOVEPROX )
+			{
+				
+				
+				setvard NPC_LASTSEEN_POS $get(NPCATK_TARGET,origin)
+				vectoradd NPC_LASTSEEN_POS $relpos($vec(0,$randf(0.0,359.99),0),$vec(0,128,0))
+			}
+		}
+	}
+	else
+	{
+		
+		setvard NPC_COULD_SEE_TARGET 1 
+		setvard NPC_HUNTING_BLIND 0 
+		callevent npc_targetsighted NPCATK_TARGET 
+		callevent npcatk_setmovedest NPCATK_TARGET ATTACK_MOVERANGE
+		setvard NPC_LASTSEEN_POS TARG_ORG
+
+		if ( $cansee(enemy) )
+		{
+			
+			if CAN_RETALIATE 
+			if ( $get(NPCATK_TARGET,NPC_RANGE_TYPE) > $get(ent_lastseen,NPC_RANGE_TYPE) )
+			{
+				if $get(ent_lastseen,isplayer) 
+				callevent npcatk_settarget $get(ent_lastseen,id)
+			}
+		}
+	}
+	if !EXIT_SUB
+
+	
+	
+	if !NPC_NO_ATTACK
+	local TARG_RANGE $get(NPCATK_TARGET,NPC_RANGE_TYPE)
+	if ( TARG_RANGE < ATTACK_HITRANGE )
+	{
+		
+		
+		if ( NPC_MUST_SEE_TARGET )
+		{
+			if !NPC_CANSEE_TARGET
+			local EXIT_SUB 1
+		}
+		if !EXIT_SUB
+
+		
+		local FINAL_ATTACK_RANGE ATTACK_RANGE
+		if ( !NPC_NO_VADJ )
+		{
+			
+			setvard NPC_VADJSTING 0
+			if TARG_RANGE > ATTACK_RANGE
+			if $get(NPCATK_TARGET,range2D) < ATTACK_HITRANGE
+			local L_MY_Z_PLUS $vec.z(MY_ORG)
+			add L_MY_Z_PLUS NPC_HALF_HEIGHT
+			if ( $vec.z(TARG_ORG) > L_MY_Z_PLUS )
+			{
+				
+				local L_ATK_START MY_ORG
+				vectoradd L_ATK_START z NPC_HEIGHT
+				vectoradd L_ATK_START $relpos($vec(0,game.monster.angles.yaw,0),$vec(0,NPC_HALF_WIDTH,0))
+				if $dist(L_ATK_START,TARG_ORG) < ATTACK_HITRANGE
+				
+				local FINAL_ATTACK_RANGE ATTACK_HITRANGE
+				add FINAL_ATTACK_RANGE NPC_HEIGHT
+				setvard NPC_VADJSTING 1
+			}
+			
+
+			
+			
+			
+		}
+
+		
+
+		if TARG_RANGE < FINAL_ATTACK_RANGE
+		callevent npcatk_attack 
+	}
+}
+
+
+{ npcatk_setmovedest
+	if !NPC_NO_MOVE
+	setmovedest PARAM1 PARAM2
+}
+
+{ npcatk_target 
+
+	callevent npcatk_settarget PARAM1 PARAM2
+}
+
+{ npcatk_settarget 
+
+	
+
+	if !IS_FLEEING
+	local CHECK_TARGET $get(PARAM1,id)
+	local IS_PLAYER $get(CHECK_TARGET,isplayer)
+
+	local DEBUG_PROC PARAM2
+
+	
+
+	if CHECK_TARGET isnot NPCATK_TARGET
+
+	if ( G_SIEGE_MAP )
+	{
+		if NPC_IGNORE_PLAYERS
+		if IS_PLAYER
+		local EXIT_SUB 1
+	}
+
+	
+	if ( $get(PARAM1,relationship,ent_me) equals ally ) local EXIT_SUB 1 
+	if ( $get(PARAM1,scriptvar,'PLAYING_DEAD') == 1 ) local EXIT_SUB 1 
+
+	
+
+
+	
+	if ( !G_SIEGE_MAP )
+	{	
+		if ( $get(NPCATK_TARGET,isplayer) )
+		{
+			if ( CYCLE_TIME != CYCLE_TIME_BATTLE ) callevent cycle_up DEBUG_PROC
+			
+		}
+	}
+	if !EXIT_SUB
+
+	local OLD_ATTACK_TARGET NPCATK_TARGET
+
+	setvard NPC_ROAMING_HOME 0
+
+	
+	
+	setvard NPCATK_TARGET CHECK_TARGET
+
+	callevent npcatk_targetvalidate NPCATK_TARGET 
+
+	
+
+	if ( NPCATK_TARGET equals unset )
+	{
+		
+		
+		if ( $get(OLD_ATTACK_TARGET,isalive) )
+		{
+			if $get(OLD_ATTACK_TARGET,NPC_RANGE_TYPE) < 1024
+			
+			
+			setvard NPCATK_TARGET OLD_ATTACK_TARGET
+		}
+	}
+
+	if NPCATK_TARGET isnot unset
+
+	
+	if ( CYCLE_TIME != CYCLE_TIME_BATTLE )
+	{
+		if ( IS_PLAYER ) 
+		{
+			setvard CYCLED_UP 0
+			callevent cycle_up DEBUG_PROC
+			setvard HUNTING_PLAYER 1
+			
+			
+			
+		}
+		else
+		{
+			
+			if ( !NPC_FIGHTS_NPCS )
+			{
+				callevent cycle_npc PARAM2
+			}
+			else
+			{
+				callevent cycle_up PARAM2
+			}
+			
+		}
+	}
+
+	if ( game.monster.race equals hguard ) callevent cycle_up "hguard_saw_npc"
+
+	setvard NPC_LASTSEEN_POS $get(NPCATK_TARGET,origin)
+
+	if ( NPCATK_TARGET isnot OLD_ATTACK_TARGET ) callevent npc_found_new_target NPCATK_TARGET 
+	
+
+	
+
+	callevent npcatk_run "set_target"
+	setangle view.yaw NPCATK_TARGET
+	
+
+	
+	setvard IS_HUNTING 1 
+	setvard HUNT_LASTTARGET NPCATK_TARGET
+	setvard ENTITY_ENEMY NPCATK_TARGET
+
+	
+}
+
+{ npcatk_targetvalidate
+
+	
+	
+
+	local OLD_ATTACK_TARGET NPCATK_TARGET
+
+	if ( !$can_damage(NPCATK_TARGET) )
+	{
+		
+		if !$get(NPCATK_TARGET,scriptvar,'NPC_ATTACK_INVULN') 
+		setvard NPCATK_TARGET unset 
+	}
+
+	if ( !$get(NPCATK_TARGET,isalive) ) setvard NPCATK_TARGET unset
+
+	if ( $get(NPCATK_TARGET,scriptvar,'PLAYING_DEAD') == 1 )
+	{
+		
+		setvard NPCATK_TARGET unset
+		
+		
+	}
+
+	if ( $get(NPCATK_TARGET,relationship,ent_me) equals ally )
+	{
+		setvard NPCATK_TARGET unset
+	}
+
+	callevent npc_targetvalidate
+
+	if ( NPCATK_TARGET isnot unset )
+	{
+		setvard NPC_HAS_TARGET 1
+	}
+	else
+	{
+		if NPC_HAS_TARGET
+		setvard NPC_HAS_TARGET 0
+		if $get(OLD_ATTACK_TARGET,exists)
+		if !$get(OLD_ATTACK_TARGET,isalive)
+		callevent my_target_died OLD_ATTACK_TARGET
+	}
+}
+
+{ npcatk_check_for_victory 
+
+	local CHECK_TARGET PARAM1
+	if ( $get(CHECK_TARGET,scriptvar,'PLAYING_DEAD')  )
+	{
+		callevent npcatk_clear_targets "target_playing_dead"
+	}
+	if ( !$get(CHECK_TARGET,isalive) ) local TARGET_DEAD 1
+	if ( !$get(CHECK_TARGET,exists) ) local TARGET_DEAD 1
+	if TARGET_DEAD
+	
+	callevent npcatk_clear_targets "target_died"
+}
+
+{ npcatk_faceattacker 
+
+	if !SUSPEND_AI
+	if !I_R_FROZEN
+
+	
+	if !CANT_TURN
+	setvard NPC_FORCED_MOVEDEST 1 
+	if ( PARAM1 equals 'PARAM1' ) callevent npcatk_setmovedest NPCATK_TARGET 9999
+	if ( PARAM1 isnot 'PARAM1' )
+	{
+		local L_PARAM PARAM1
+		callevent npcatk_setmovedest L_PARAM 9999
+	}
+}
+
+{ npcatk_vanish 
+
+	callevent npcatk_suspend_ai "vanish"
+	setvard NPC_VANISHED_AT game.monster.origin
+	setorigin ent_me (20000,20000,20000)
+
+	if ( NPC_VANISH_RETURN_TIME equals 'NPC_VANISH_RETURN_TIME' ) setvard NPC_VANISH_RETURN_TIME PARAM1
+	
+	callevent NPC_VANISH_RETURN_TIME npcatk_vanish_return
+}
+
+{ npcatk_vanish_return
+
+	
+	setorigin ent_me NPC_VANISHED_AT
+	callevent npcatk_resume_ai
+	if ( NPC_STUCK_TELEPORT ) callevent $randf(0.1,1) npcatk_stuck_check_inally 
+	setvard NPC_STUCK_TELEPORT 0
+}
+
+
+{ npcatk_attack 
+
+	if !NPC_NO_ATTACK
+	callevent npc_selectattack 
+	if ( NPC_MOVEDEST_TARGET isnot NPCATK_TARGET ) callevent npcatk_faceattacker NPCATK_TARGET 
+	playanim once ANIM_ATTACK
+	setvard ATTACK_ANIMINDEX $get(ent_me,anim.index)
+}
+
+{ npcatk_attack_hack 
+	
+	
+	callevent npcatk_faceattacker
+	if !HACK_DELAYING_ATTACK
+	playanim once ANIM_ATTACK
+	setvard ATTACK_ANIMINDEX $get(ent_me,anim.index) 
+	setvard HACK_DELAYING_ATTACK 1
+	callevent HACK_DAMAGE_DELAY npcatk_attack_hack_dodamage 
+	callevent HACK_ATTACK_DELAY npcatk_attack_hack_reset
+}
+
+{ npcatk_attack_hack_reset 
+	setvard HACK_DELAYING_ATTACK 0
+}
+
+
+{ npcatk_lost_sight 
+
+	setvard NPC_HUNTING_BLIND 1
+
+	
+}
+
+
+
+
+
+{ npcatk_clear_targets
+
+	if PARAM1 !equals $get(ent_me,id)
+
+
+
+	setvard NPCATK_TARGET unset
+	setvard NPC_MOVEDEST_TARGET unset
+	setvard NPC_LOST_TARGET unset
+	
+	
+	setvard HUNT_LASTTARGET ¯NONE¯
+	setvard NPC_ROAMING_HOME 1
+	setvard IS_HUNTING 0 
+	setvard HUNTING_PLAYER 0
+
+	callevent npcatk_walk "clear_targets"
+	callevent cycle_down "clear_targets"
+
+	
+	
+}
+
+
+{ npcatk_flee		
+
+	
+
+	if $get(PARAM1,id) isnot $get(ent_me,id) 
+
+	if CAN_FLEE 
+	if !IS_FLEEING
+	if !CANT_FLEE
+	if !RE_FLEE_DELAY	
+
+	callevent npc_pre_flee	
+
+	if !ABORT_FLEE
+
+	setvard IS_FLEEING 1
+
+	callevent npcatk_run "flee"
+	playanim break
+	playanim critical ANIM_RUN 
+
+	callevent npcatk_store_target
+
+	setvard FLEE_TARGET PARAM1
+	setvard TOFLEE_DISTANCE PARAM2 
+	setvard FLEE_STUCK_COUNT 0
+
+	
+
+	
+	setvard NPC_FORCED_MOVEDEST 1	
+	
+	
+	setmovedest FLEE_TARGET FLEE_DISTANCE flee
+	if ( $cansee(FLEE_TARGET) )
+	{
+		local MY_YAW game.monster.angles.yaw
+		add MY_YAW 180
+		if ( MY_YAW > 359 ) subtract MY_YAW 359
+		setangle face $vec(0,MY_YAW,0)
+		
+	}
+
+	
+	
+	setvard FLEESTUCK_OLDPOS game.monster.origin
+
+	callevent FLEE_STUCKCHECK_FREQ npcatk_flee_stuck_check
+	local L_FLEE_TIME PARAM3
+	if ( L_FLEE_TIME < 1 )
+	{
+		local L_FLEE_TIME 5.0
+	}
+	if ( L_FLEE_TIME > 10.0 )
+	{
+		
+		local L_FLEE_TIME 10.0
+	}
+
+	callevent L_FLEE_TIME npcatk_stopflee
+}
+
+{ npcatk_flee_stuck_check
+
+	if IS_FLEEING
+	callevent FLEE_STUCKCHECK_FREQ npcatk_flee_stuck_check
+
+ 	callevent npcatk_setmovedest FLEE_TARGET FLEE_DISTANCE flee
+	if ( $cansee(FLEE_TARGET) )
+	{
+		local NPC_FLEE_YAW game.monster.angles.yaw
+		add NPC_FLEE_YAW 180
+		if ( NPC_FLEE_YAW > 359 ) subtract NPC_FLEE_YAW 359
+		setangle face $vec(0,NPC_FLEE_YAW,0)
+		playanim critical ANIM_RUN
+	}
+
+	if ( STUCK_COUNT > 2 ) callevent npcatk_stopflee "npcatk_flee_stuck_check"
+	
+
+
+}
+
+{ npcatk_stopflee 
+
+	if IS_FLEEING
+	if ( FLEE_STUCK_COUNT > 5 )	
+	{
+		
+		setvard RE_FLEE_DELAY 1
+		callevent 2.5 npcatk_reset_flee_delay
+	}
+	if ( $get(FLEE_TARGET,NPC_RANGE_TYPE) <= ATTACK_RANGE ) 
+	{
+		
+		setvard RE_FLEE_DELAY 1
+		callevent 10.0 npcatk_reset_flee_delay
+	}
+	
+	setvard IS_FLEEING 0
+	callevent npcatk_restore_target
+}
+
+{ npcatk_reset_flee_delay
+
+	setvard RE_FLEE_DELAY 0
+}
+
+
+
+{ chicken_run 
+
+	
+	
+
+	if !IS_FLEEING
+	if !CANT_FLEE 
+
+	callevent npc_pre_flee	
+
+	
+	setvard IS_FLEEING 1
+	setvard CHICKEN_RUN 1
+	callevent npcatk_store_target
+
+	callevent npcatk_run "chicken_run"
+
+	setvard CKN_STUCK_COUNTER 0
+
+	setvard FLEE_DIR $rand(1,359)
+
+	setvard NPC_FORCED_MOVEDEST 1
+	callevent npcatk_setmovedest $relpos($vec(0,FLEE_DIR,0),$vec(0,500,0)) 0
+	
+
+	setvard CKN_MY_OLD_POS $get(ent_me,origin)
+
+	callevent 0.5 chicken_run_stuckcheck
+
+	callevent PARAM1 chicken_run_end "time_up"
+}
+
+{ chicken_run_stuckcheck
+
+	if CHICKEN_RUN
+
+	local CKN_MOVE_DIST $dist(game.monster.origin,CKN_MY_OLD_POS)
+
+	if ( CKN_MOVE_DIST == 0 )
+	{
+		setvard FLEE_DIR $rand(1,359)
+		
+		
+		setvard NPC_FORCED_MOVEDEST 1
+		callevent npcatk_setmovedest $relpos($vec(0,FLEE_DIR,0),$vec(0,500,0)) 0
+		
+		playanim once ANIM_RUN
+		add CKN_STUCK_COUNTER 1
+	}
+	setvard CKN_MY_OLD_POS CKN_MY_POS
+
+	if ( CKN_MOVE_DIST > 0 ) setvard CKN_STUCK_COUNTER 0
+	if ( CKN_STUCK_COUNTER > 4 ) callevent chicken_run_end "stuck_during_chickenrun"
+
+	callevent 0.25 chicken_run_stuckcheck
+}
+
+{ chicken_run_end
+
+	if CHICKEN_RUN
+	
+
+	setvard CHICKEN_RUN 0
+	setvard IS_FLEEING 0
+	
+
+	callevent npcatk_restore_target
+}
+
+
+{  game_heardsound	
+
+	if !SUSPEND_AI
+	if !IS_FLEEING
+	if CAN_HEAR
+	if !NPC_HEARDSOUND_OVERRIDE
+
+	
+	
+
+	setvard I_HEARD $get(ent_lastheard,id) 
+	local HEARD_RANGE $get(ent_lastheard,NPC_RANGE_TYPE)
+
+	setvard HEARD_VERIFY 1
+	if ( NPC_VALIDATE_HEARING )
+	{
+		callevent npc_validate_heard
+	}
+	if HEARD_VERIFY
+	
+
+	local HEAR_RELATIONSHIP $get(I_HEARD,relationship,ent_me)
+
+	if ( PARAM1 equals danger )
+	{
+		
+		local DANGER_RADIUS PARAM3
+		if ( HEARD_RANGE <= DANGER_RADIUS )
+		{
+			
+			if I_HEARD isnot $get(ent_me,id)
+			setvard I_WILL_FLEE 1
+			callevent npcatk_check_if_scared_of I_HEARD 
+			if ( I_WILL_FLEE )
+			{
+				
+				callevent npcatk_flee I_HEARD DANGER_RADIUS 3.0
+			}
+		}
+	}
+
+	
+
+	if ( NPCATK_TARGET equals unset )
+	{
+		if ( PARAM1 isnot danger )
+		{
+			
+			if ( HEAR_RELATIONSHIP equals enemy )
+			{
+				if !NPC_IGNORE_PLAYERS
+				setvard HEARD_PLAYER $get(I_HEARD,isplayer)
+				if ( HEARD_PLAYER )
+				{
+					if ( game.monster.race equals hguard ) local EXIT_SUB 1
+					if ( NPC_IGNORE_PLAYERS ) local EXIT_SUB 1
+				}
+				if !EXIT_SUB
+				if HEARD_RANGE < HEAR_RANGE_MAX
+				if !$get(I_HEARD,scriptvar,'PLAYING_DEAD')
+				
+				
+				if !NPC_HUNTING_BLIND
+				setvard NPC_FORCED_MOVEDEST 1
+				callevent npcatk_setmovedest $get(I_HEARD,origin) ATTACK_MOVERANGE
+				if HEARD_PLAYER
+				callevent npc_heard_player 
+				if HEARD_RANGE < HEAR_RANGE_PLAYER
+				if ( CYCLE_TIME != CYCLE_TIME_BATTLE )
+				{
+					setvard CYCLED_UP 0
+					callevent cycle_up "heard_player"
+					
+					
+					
+					callevent 5.0 heard_cycle_down
+				}
+			}
+		}
+	}
+
+	callevent npc_heardsound 
+}
+
+{ game_struck 
+
+	if !SUSPEND_AI
+
+	
+
+	if ( NO_VICTORY_HEAL ) setvard NPC_STORE_HP game.monster.hp
+
+	local INC_PARAM PARAM1
+
+	if ( $get(NPCATK_TARGET,isplayer) ) local L_CHECK_PISSED 1
+	if ( NPCATK_TARGET equals unset ) local L_CHECK_PISSED 1
+
+	if ( L_CHECK_PISSED )
+	{
+		callevent npcatk_pissed INC_PARAM
+	}
+	else
+	{
+		if $get(ent_laststruck,id) isnot NPCATK_TARGET
+		callevent npcatk_retaliate INC_PARAM
+	}
+
+	
+	
+
+	callevent npcatk_checkflee INC_PARAM
+	callevent npcatk_checkflinch INC_PARAM
+	callevent npc_struck INC_PARAM $get(ent_laststruck,id) 
+}
+
+{ npcatk_pissed 
+
+	if !IS_FLEEING
+	if $get(ent_laststruck,relationship,ent_me) isnot ally
+	callevent npcatk_settarget $get(ent_laststruck,id) "struck_by_enemy"
+}
+
+{ npcatk_retaliate
+
+	if !IS_FLEEING
+	if CAN_RETALIATE
+
+	
+	local L_RETALIATE_CHANCE RETALIATE_CHANCE
+
+	if ( NPC_DELAY_RETALITATE > 0 )
+	{
+		if ( game.time < NPC_NEXT_RETALITATE )
+		{
+			setvard NPC_NEXT_RETALITATE game.time
+			add NPC_NEXT_RETALITATE NPC_DELAY_RETALITATE
+		}
+		else
+		{
+			local EXIT_SUB 1
+		}
+	}
+	if !EXIT_SUB
+
+	if ( !$get(NPCATK_TARGET,isplayer) )
+	{
+		if !$get(NPCATK_TARGET,scriptvar,'NPC_CRITICAL')
+		if !$get(NPCATK_TARGET,scriptvar,'IS_PET')
+		
+		local L_RETALIATE_CHANCE 101
+	}
+
+	if ( $rand(1,100) <= L_RETALIATE_CHANCE )  
+	{
+		
+		
+		
+		
+		
+		callevent npcatk_settarget $get(ent_laststruck,id) "NPC_RETALIATING"
+	}
+}
+
+{ reset_retaliate
+
+	setvard NPC_RETALIATING 0
+}
+
+{ npcatk_checkflee
+
+	if !CANT_FLEE
+
+	if ( FLEE_HEALTH > 0 )
+	{
+		if ( game.monster.hp < FLEE_HEALTH )
+		{
+			
+			if ( $rand(1,100) <= FLEE_CHANCE ) callevent npcatk_flee $get(ent_laststruck,id) FLEE_DISTANCE FLEE_TIME
+		}
+	}
+}
+
+{ npcatk_checkflinch 
+
+	if !SUSPEND_AI 
+
+	if ( CAN_FLINCH )
+	{
+		if !FLINCHED_RECENTLY
+		
+		if ( game.monster.hp < FLINCH_HEALTH )
+		{
+			if PARAM1 > FLINCH_DAMAGE_THRESHOLD
+			if ( $rand(1,100) <= FLINCH_CHANCE ) 
+			{
+				callevent npc_flinch 
+				playanim break
+				playanim critical FLINCH_ANIM
+				setvard AS_ATTACKING game.time
+			}
+			setvard FLINCHED_RECENTLY 1
+			callevent FLINCH_DELAY npcatk_reset_flinch
+		}
+	}
+}
+
+{ npcatk_reset_flinch
+
+	setvard FLINCHED_RECENTLY 0
+}
+
+{ game_reached_dest
+
+	
+
+	if !SUSPEND_AI
+
+	if ( CHICKEN_RUN )
+	{ 
+		
+		callevent npcatk_setmovedest $relpos(0,50,0) 0 "chicken_reachdest"
+		
+	}
+
+	
+}
+
+{ my_target_died 
+
+
+
+	if ( NO_VICTORY_HEAL ) hp NPC_STORE_HP
+	
+	
+}
+
+{ npcatk_suspend_ai 
+
+	
+
+	
+	if !SUSPEND_AI
+	callevent npcatk_store_target
+	setvard SUSPEND_AI 1
+	callevent PARAM1 npcatk_resume_ai
+}
+
+{ npcatk_resume_ai
+
+	
+
+	
+	if SUSPEND_AI
+	if ( NPC_STORE_TARGET isnot unset ) callevent npcatk_restore_target
+	setvard SUSPEND_AI 0
+}
+
+{ npcatk_store_target
+
+	setvard NPC_STORE_TARGET NPCATK_TARGET
+	setvard NPC_STORE_LOST_TARGET NPC_LOST_TARGET
+	
+	
+	
+}
+
+{ npcatk_restore_target
+
+	
+	
+	setvard NPCATK_TARGET NPC_STORE_TARGET
+	setvard NPC_LOST_TARGET NPC_STORE_LOST_TARGET
+
+	setvard NPC_STORE_TARGET unset
+	setvard NPC_STORE_LOST_TARGET unset
+	setvard NPC_STOREHUNTSTATE_ADVANCED unset
+	setvard NPC_STOREHUNTSTATE_MLK unset
+
+
+	
+
+	if ( NPCATK_TARGET equals unset )
+	{
+		if ( NPC_LOST_TARGET equals unset ) 
+		{
+			
+			setvard NPC_MOVEDEST_TARGET unset
+			callevent npcatk_walk "restore_walk"
+			local EXIT_SUB 1
+		}
+	}
+	if !EXIT_SUB
+
+	if NPCATK_TARGET isnot unset
+	callevent npcatk_settarget NPCATK_TARGET "restore_standard"
+
+
+
+}
+
+
+{ game_dodamage 
+
+	
+
+	if ( NPC_SCANNING_INALLY )
+	{
+		if $get(PARAM2,relationship,ent_me) is ally
+		callexternal $get(PARAM2,id) chicken_run 3.0 "ally_stuck"
+		setvard NPC_INALLY 1
+	}
+}
+
+{ npcatk_reset_ally_resp_delay
+	setvard ALLY_RESPONSE_DELAY 0
+}
+
+{ super_lure 
+
+
+	
+	local TARG_RACE game.monster.race
+	if ( PARAM2 isnot 'PARAM2' ) local TARG_RACE PARAM2
+
+	if game.monster.race equals TARG_RACE
+	if NPCATK_TARGET equals unset
+	if !NPC_MOVING_LAST_KNOWN
+	
+	callevent npcatk_setmovedest $get(PARAM1,origin) ATTACK_MOVERANGE "superlure"
+	callevent npcatk_settarget PARAM1 "super_lure"
+}
+
+{ cycle_up
+
+	if !CYCLED_UP
+	setvard CYCLED_UP 1
+	setvard CYCLE_TIME CYCLE_TIME_BATTLE
+	
+	callevent npc_alert 
+
+	if !NO_STEP_ADJ
+	if !NPC_DID_STEP_ADJ
+	setvard NPC_DID_STEP_ADJ 1
+	callevent adj_step_size	
+}
+
+{ cycle_down
+	setvard CYCLED_UP 0
+	setvard CYCLE_TIME CYCLE_TIME_IDLE
+}
+
+{ cycle_npc
+	setvard CYCLED_UP 0
+	setvard CYCLE_TIME CYCLE_TIME_NPC
+	callevent npc_alert 
+}
+
+{ heard_cycle_down
+
+	if !$get(NPCATK_TARGET,isplayer)
+	if !HUNTING_PLAYER
+	if !NPC_MOVING_LAST_KNOWN
+	
+	setvard HEARD_PLAYER 0
+	callevent cycle_down "heard+never_found"
+	if ( NPCATK_TARGET equals unset ) callevent npcatk_walk "heard_cycledown"
+}
+
+

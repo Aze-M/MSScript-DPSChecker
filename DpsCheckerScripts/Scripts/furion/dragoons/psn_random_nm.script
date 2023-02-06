@@ -1,0 +1,10 @@
+{
+	setvard WEAPON $rand(0,5)
+	
+	const ELEMENT 1
+	
+	
+	
+	
+}
+#include furion/dragoons/dragoon

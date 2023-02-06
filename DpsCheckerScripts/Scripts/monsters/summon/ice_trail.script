@@ -1,0 +1,10 @@
+{
+
+}
+
+{ game_dynamically_created
+
+	setvard MY_OWNER PARAM1
+	setvard DUR_FREEZE PARAM2
+	setvard DMG_FREEZE PARAM3
+}

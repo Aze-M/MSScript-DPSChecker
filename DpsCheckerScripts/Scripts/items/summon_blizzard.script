@@ -1,0 +1,141 @@
+
+#scope server
+
+
+{ [shared]
+	precache snow1.spr
+}
+
+{ [shared] snow_start  
+   
+   setvard SNOWING 1
+}
+
+
+{
+   eventname game_dynamically_created
+
+   setvard MY_OWNER PARAM1
+   setvard MY_ANGLES PARAM2
+   setvard MY_BASE_DMG PARAM3
+   setvard MY_BASE_DURATION PARAM4
+   
+
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+
+   setexpstat $get(ent_me,id) spellcasting
+   setexpstat ent_me spellcasting
+   setexpstat spellcasting
+
+   
+   
+
+   
+   
+
+   storeentity ent_expowner MY_OWNER	
+
+   setangle face.y PARAM2
+   multiply PARAM4 1.5
+   setvard TIME_LIVE PARAM4
+
+   add FX_SPAMMERS 1
+   
+   if ( FX_SPAMMERS >= MAX_FX_SPAMMERS ) consolemsg all Too many fx running, cannot create spell.
+   if ( FX_SPAMMERS >= MAX_FX_SPAMMERS ) playermessage PARAM1 Too many fx present: cannot create spell.
+   if ( FX_SPAMMERS < MAX_FX_SPAMMERS ) emitsound ent_me $get(ent_me,origin) 192 TIME_LIVE danger 192
+   if ( FX_SPAMMERS < MAX_FX_SPAMMERS ) clientevent new all $currentscript $get(ent_me,origin) TIME_LIVE 
+   if ( FX_SPAMMERS < MAX_FX_SPAMMERS ) callevent TIME_LIVE blizzard_death
+   if ( FX_SPAMMERS >= MAX_FX_SPAMMERS ) callevent blizzard_death
+   if ( FX_SPAMMERS < MAX_FX_SPAMMERS ) callevent snow_start
+}
+
+{ snow_attack	
+
+   repeatdelay 2
+
+   if SNOWING
+
+   
+   
+   
+   
+
+   local xoff $rand(-50,50)
+   local yoff $rand(-50,50)
+   local zoff $rand(-50,50)
+   setangle view (270,0,0)
+
+   
+   
+   
+
+   
+   
+   
+   tossprojectile view 1000 20 30 proj_blizzard $vec(zoff,xoff,128)
+}
+
+{ blizzard_death  
+
+   subtract FX_SPAMMERS 1
+
+   deleteent ent_me
+}
+
+
+{ [client]
+   const WIDTH 100
+   const HEIGHT 200
+
+}
+
+{ [client] client_activate 
+
+   setvard SNOW_CENTER PARAM1
+   callevent PARAM2 blizzard_end_cl 	
+}
+
+{ [client] blizzard_end_cl
+  removescript
+}
+
+{  [client]
+
+   repeatdelay 0.12
+
+   if !TOO_MUCH_SPAM
+
+   local NEGWIDTH WIDTH
+   multiply NEGWIDTH -1
+   setvar x $rand(NEGWIDTH,WIDTH)
+   setvar y $rand(NEGWIDTH,WIDTH)
+   vectoradd END_POS SNOW_CENTER $vec(x,y,256)
+   local SNOWFLAKE_MODEL snow1.spr
+   
+   cleffect tempent sprite SNOWFLAKE_MODEL END_POS setup_blizzardflake
+}
+
+{  [client] setup_blizzardflake
+   setvard vel $rand(-50,50)
+   cleffect tempent set_current_prop death_delay 	1
+   cleffect tempent set_current_prop bouncefactor 	0
+   cleffect tempent set_current_prop scale 		0.2
+   cleffect tempent set_current_prop gravity 		$randf(0.2,1.1)
+   cleffect tempent set_current_prop collide 		none
+   cleffect tempent set_current_prop velocity 		(vel,vel,-200)
+}

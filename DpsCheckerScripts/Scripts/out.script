@@ -1,0 +1,72 @@
+{ const BETA_TIMESTAMP "Thu 07/06/2006 15:36:16.93" } 
+
+{ game_playercmd
+
+  	if( PARAM1 equals 'test' ) playermessage ent_currentplayer You typed 'test' with game.event.params arguments
+	if( PARAM1 equals 'setweather' ) callexternal all game_playercmd_setweather PARAM2 PARAM3 PARAM4
+  	if( PARAM1 equals 'time' )
+	{
+		consolemsg ent_currentplayer == TIME: CURRENT_TIME == 
+		playermessage ent_currentplayer == TIME: CURRENT_TIME == 
+	}
+  	if( PARAM1 equals 'beta' ) callevent give_timestamp
+  	if( PARAM1 equals 'date' ) callevent give_timestamp
+  	if( PARAM1 equals 'betadate' ) callevent give_timestamp
+
+	if( PARAM1 equals 'startattack' ) callexternal $get_by_name(helena) manual_start PARAM2
+
+	
+  	if( PARAM1 equals 'settime' ) callevent set_time PARAM2 PARAM3
+}
+
+{ give_timestamp
+		consolemsg ent_currentplayer SC.DLL timestamp is BETA_TIMESTAMP
+		playermessage ent_currentplayer SC.DLL timestamp is BETA_TIMESTAMP
+}
+
+{ set_time 
+
+	if game.event.params >= 2
+
+	mod PARAM1 24
+	mod PARAM2 60
+
+	callevent time_getseconds			
+	local local.mstime.secs global.mstime.secs	
+
+	local l.secs $int(PARAM1)			
+	multiply l.secs 3600
+
+	local l.mins_to_secs $int(PARAM2)
+	multiply l.mins_to_secs 60
+	
+	add l.secs l.mins_to_secs
+
+	
+	
+	
+	
+
+	local l.daystart.secs global.mstime.secs	
+	divide l.daystart.secs 86400				
+	setvard l.daystart.secs $int(l.daystart.secs)
+	multiply l.daystart.secs 86400
+
+	local l.timefromdaystart global.mstime.secs	
+	subtract l.timefromdaystart l.daystart.secs
+
+	
+
+	if( l.secs < l.timefromdaystart ) add l.secs 86400
+
+	
+
+	local l.newtime l.daystart.secs
+	add l.newtime l.secs
+
+	
+
+	setvarg global.mstime.secs l.newtime
+
+	setvarg global.mstime.updateall 0	
+}

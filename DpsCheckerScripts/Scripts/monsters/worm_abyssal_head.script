@@ -1,0 +1,91 @@
+
+#scope server
+{
+	
+	setvard NPC_NO_HEALTH_BAR 1
+}
+
+{ game_dynamically_created 
+	setvard MY_OWNER PARAM1
+	
+	race $get(MY_OWNER,race)
+	setvard IS_ACTIVE 1
+	callevent snap_loop
+}
+
+{ game_spawn
+	name The|Abyssal Worm
+	setmodel monsters/abyssal_worm_hitbox.mdl
+	width 128
+	height 150
+	fly 1
+	gravity 0
+	hp 999999
+}
+
+{ debug_model
+	setmodelbody 0 1
+}
+
+{ snap_loop
+	if IS_ACTIVE
+	local L_POS $get(MY_OWNER,attachpos,1)
+	vectoradd L_POS z -75
+	setorigin ent_me L_POS
+	if ( G_DEVELOPER_MODE )
+	{
+		local L_BOX_MIN $get(ent_me,absmin)
+		local L_BOX_MAX $get(ent_me,absmax)
+
+		local L_BOX_EDGE1A L_BOX_MIN
+		local L_BOX_EDGE1B $vec($vec.x(L_BOX_MIN),$vec.y(L_BOX_MIN),$vec.z(L_BOX_MAX))
+		local L_BOX_EDGE2A L_BOX_MIN
+		local L_BOX_EDGE2B $vec($vec.x(L_BOX_MAX),$vec.y(L_BOX_MIN),$vec.z(L_BOX_MIN))
+		local L_BOX_EDGE3A L_BOX_MIN
+		local L_BOX_EDGE3B $vec($vec.x(L_BOX_MIN),$vec.y(L_BOX_MAX),$vec.z(L_BOX_MIN))
+		effect beam point lgtning.spr 3 L_BOX_EDGE1A L_BOX_EDGE1B (255,0,255) 200 0 0.1
+		effect beam point lgtning.spr 3 L_BOX_EDGE2A L_BOX_EDGE2B  (255,0,255) 200 0 0.1
+		effect beam point lgtning.spr 3 L_BOX_EDGE3A L_BOX_EDGE3B (255,0,255) 200 0 0.1
+	}
+
+	if ( !$get(MY_OWNER,isalive) )
+	{
+		setvard IS_ACTIVE 0
+		
+		deleteent ent_me
+	}
+	if IS_ACTIVE
+	callevent 0.01 snap_loop
+}
+
+
+{ game_damaged 	
+	if $get(PARAM1,relationship,ent_me) equals enemy
+
+	bleed ent_me yellow $rand(100,10000)
+
+	local L_HIT_CHANCE PARAM4
+	if ( $get(PARAM6,itemname) startswith proj )
+	{
+		
+		local L_HIT_CHANCE 100% 
+	}
+	xdodamage MY_OWNER direct PARAM2 L_HIT_CHANCE PARAM1 PARAM1 none PARAM3
+	setdmg dmg 0.0
+	setdmg hit 0.0
+	returndata 0
+}
+
+{ game_applyeffect 
+
+
+	local L_RETURN redirect
+	token.add L_RETURN MY_OWNER
+	returndata L_RETURN
+}
+
+{ ext_playsound
+
+	if ( game.event.params < 4 ) playsound PARAM1 PARAM2 PARAM3
+	else playsound PARAM1 PARAM2 PARAM3 PARAM4 PARAM5
+}

@@ -1,0 +1,113 @@
+
+{ 	[server]
+	const EFFECT_ID			player_haste
+	const EFFECT_NAME		"Haste"
+	const EFFECT_ACTIONTYPE		nostack
+	const EFFECT_SCRIPT		$currentscript
+
+	setvard game.effect.id		EFFECT_ID
+	setvard game.effect.displayname	EFFECT_NAME
+	setvard game.effect.type	EFFECT_ACTIONTYPE
+}
+
+#include effects/effect_base	allowduplicate
+
+{ [server] game_activate
+
+	local NEXT_HASTE $get(ent_me,scriptvar,'PLR_NEXT_HASTE')
+	if ( game.time < NEXT_HASTE )
+	{
+		local HASTE_DELAY NEXT_HASTE
+		subtract HASTE_DELAY game.time
+		local HASTE_DELAY $int(HASTE_DELAY)
+		stradd HASTE_DELAY s
+
+		dplayermessage ent_me Cannot repeat haste attack yet. ( HASTE_DELAY )
+		callevent effect_die
+		local EXIT_SUB 1
+	}
+	if !EXIT_SUB
+
+	setvard local.effect.duration 	PARAM1
+	setvard local.effect.startpos 	game.monster.origin
+	setvard CALLING_WEAPON PARAM3
+
+	setvard NO_DOWNTIME PARAM2
+
+	if ( PARAM2 equals 'PARAM2' ) setvard NO_DOWNTIME 0
+
+	
+
+	clientevent new ent_me $currentscript local.effect.duration
+	setvard local.effect.clientscript game.script.last_sent_id
+
+	callevent effect_start
+	if ( !NO_DOWNTIME ) callevent check_distance
+	callevent local.effect.duration haste_die NO_DOWNTIME
+}
+
+{ [shared] effect_die
+
+	
+}
+
+{ [shared] haste_die	
+
+
+	
+
+	if ( PARAM1 == 1 )
+	{
+		callevent 0.1 effect_die PARAM1
+		local EXIT_SUB 1
+	}
+	if !EXIT_SUB
+
+	setvard game.effect.movespeed 0%
+	setvard game.cleffect.move_scale.forward 	0
+	setvard game.cleffect.move_scale.right 		0
+	
+	callexternal CALLING_WEAPON turbo_off
+	callevent 3 effect_die
+}
+
+{ [server] effect_start
+
+	setvard game.effect.movespeed 500%
+    setvard game.effect.anim.framerate 3.0
+	if !NO_DOWNTIME
+    setvard game.effect.canjump 0
+	setvard game.effect.canduck 0
+	
+}
+
+{ [server] check_distance	
+
+	repeatdelay 1.0	
+
+	if $dist(local.effect.startpos,game.monster.origin) > 320
+	
+	clientevent update ent_me local.effect.clientscript haste_die
+	callevent haste_die
+}
+
+{ [server] game_duplicated
+
+	clientevent remove ent_me local.effect.clientscript
+	callevent effect_die
+}
+
+
+{ [client] client_activate
+
+	setvard game.cleffect.move_scale.forward 	3
+	setvard game.cleffect.move_scale.right 		3
+	callevent PARAM1 haste_die PARAM2
+}
+
+{ [client] effect_die
+
+	
+	if ( PARAM2 isnot 1 ) drainstamina ent_localplayer 99999
+	callexternal CALLING_WEAPON turbo_off
+}

@@ -1,0 +1,35 @@
+{
+	
+	
+	
+	
+}
+
+#include monsters/giantrat
+
+{
+   eventname npc_spawn
+
+   hp 4
+   
+   width 32
+   height 32
+   name an|Angry Giant Rat
+   roam 1
+   hearingsensitivity 10
+   setvard NPC_GIVE_EXP 3
+   race demon
+
+   setmodel monsters/giant_rat.mdl
+   setmodelbody 1 0
+   setidleanim ANIM_IDLE
+   setmoveanim ANIM_WALK
+}
+
+{ npc_post_spawn
+	
+	setvard HUNT_AGRO 1
+	setvard ORIG_HUNT_AGRO 1
+	setvard DROP_ITEM1 DROP_ITEM1 	
+	setvard DROP_ITEM1_CHANCE 0%	  	
+}

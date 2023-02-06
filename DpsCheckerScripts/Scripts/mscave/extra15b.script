@@ -1,0 +1,22 @@
+
+{ treasure_spawn
+
+	setvar	STORENAME stoner_chest
+}
+
+#include items/base_treasurechest
+
+{ chest_additems
+
+	callevent add_gold 100 2000 100
+
+	callevent add_great_item
+	if TC_NPLAYERS > 1
+	callevent add_epic_item
+
+	if TC_NPLAYERS > 1
+	callevent add_epic_item
+
+	if TC_NPLAYERS > 1
+	callevent add_epic_item
+}

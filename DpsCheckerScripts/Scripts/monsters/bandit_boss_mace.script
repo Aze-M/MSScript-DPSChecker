@@ -1,0 +1,12 @@
+{
+	const BOSS_TYPE 2
+ 	const BOSS_TYPE_OVERRIDE 1
+	
+	
+	
+	
+	
+	
+}
+
+#include monsters/bandit_boss

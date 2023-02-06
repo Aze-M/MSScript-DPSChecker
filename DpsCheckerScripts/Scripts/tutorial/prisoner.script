@@ -1,0 +1,209 @@
+#scope server
+{ [shared]
+	const NPC_MODEL npc/femhuman2.mdl
+
+	
+	
+	
+}
+
+{ [server]
+	setvard NO_JOB 1
+	setvard NO_RUMOR 1
+	setvard NO_HAIL 1
+
+	const SOUND_BECKON npc/vs_nwncomf4_say.wav
+	const SOUND_HI npc/vs_nwncomf4_hi.wav
+}
+
+#include monsters/base_npc
+#include monsters/base_chat
+
+{ [shared] npc_spawn
+	
+	name Kyra
+	hp 1
+	invincible 1
+	nopush 1
+
+	race human 
+	setvard PLAYING_DEAD 1 
+	setmodel NPC_MODEL
+	setmodelbody 0 0
+	setidleanim idle1
+
+	width 30
+	height 96
+	saytextrange 1024
+	catchspeech say_hi hail hello y0 j0 wassup greet gweets hi
+
+	menu.autopen 1
+
+	if game.serverside
+
+	
+	callevent 0.1 face_player
+	
+}
+
+{ face_player
+
+	
+	callevent 1.0 face_player
+
+	getplayersnb TOKEN_LIST 
+	setvard PLAYER_ID $get_token(TOKEN_LIST,0) 
+	if ( $get(PLAYER_ID,isalive) ) callevent face_speaker PLAYER_ID
+
+	
+	if ( $get(PLAYER_ID,range) < 96 ) 
+	{
+		if !SAID_GREETING
+		callevent player_greeting
+	}
+}
+
+{ game_menu_getoptions
+	
+	if !BUSY_CHATTING
+	if GET_YE_TORCH
+	if !GOT_YE_TORCH
+	local reg.mitem.title "Ask for torch"
+	local reg.mitem.type callback
+	local reg.mitem.callback say_torch
+	menuitem.register
+
+	callevent face_speaker $get(PARAM1,id) 
+
+	
+	
+
+	
+	
+}
+
+{ say_torch
+	local TORCH_RECIPIENT PARAM1
+	
+	if ( !$get(PARAM1,isplayer) ) local PARAM1 $get(ent_lastspoke,id)
+
+	playanim critical give_shot
+	offer TORCH_RECIPIENT item_torch
+	setvard GOT_YE_TORCH 1 
+	setvard CHAT_STEPS 5
+	setvard CHAT_STEP 0
+	setvard CHAT_STEP1 "Here, you can have it. Maybe you can light it."
+	setvard CHAT_STEP2 "Great! That's better."
+	setvard CHAT_STEP3 "I was feeling around the walls here"
+	setvard CHAT_STEP4 "One area was missing a stone, and made a hollow noise when I knocked on it."
+	setvard CHAT_STEP5 "Find it, and give it a whack with that torch!"
+	callevent chat_loop
+	setvard NO_HAIL 0
+}
+
+{ say_hi
+
+	if ( !WALL_BROKEN )
+	{
+		
+		saytext You have the torch, Adventurer. Find the weak spot.
+	}
+	else
+	{
+		
+		saytext Hurry! They will notice soon!
+		
+	}
+}
+
+{ player_greeting
+	setvard CHAT_STEPS 9
+	setvard CHAT_STEP 0
+	setvard CHAT_STEP1 "Hello, Adventurer!"
+	setvard CHAT_STEP2 "You've been out for quite a while."
+	setvard CHAT_STEP3 "I woke up a few minutes ago, with you on the other side of the cell."
+	setvard CHAT_STEP4 "We're in a holding cell, as you can see."
+	setvard CHAT_STEP5 "Last I saw were bandits before I was clocked on the head."
+	setvard CHAT_STEP6 "I overheard the guards speaking about an Orc invasion."
+	setvard CHAT_STEP7 "It's the perfect time to escape!"
+	setvard CHAT_STEP8 "It's so dark in here!"
+	setvard CHAT_STEP9 "I found this torch in a corner, but I can't seem to light it!"
+	callevent chat_loop
+	catchspeech say_torch torch
+	setvard GET_YE_TORCH 1
+	setvard SAID_GREETING 1
+
+	playsound 0 10 SOUND_HI
+}
+
+{ chat_loop
+	callevent convo_anim
+
+	if ( CHAT_STEP == 9 )
+	{
+		infomsg all "Communication" "Press the use key (Default e) on Kyra to bring up her chat menu."
+		callevent 10.0 summon_orcs 
+	}
+}
+
+
+{ summon_orcs
+	usetrigger orc_attack
+	callevent 1.0 orc_reaction
+}
+
+{ wall_broken
+
+	setvard WALL_BROKEN 1 
+
+	if ( BUSY_CHATTING ) callevent 5.0 wall_broken 
+
+	if !BUSY_CHATTING
+
+	if !SAID_WALL
+	setvard CHAT_STEPS 4
+	setvard CHAT_STEP 0
+	setvard CHAT_STEP1 "Great job! Now we can get out of here."
+	setvard CHAT_STEP2 "Though I think I'll hold back for now"
+	setvard CHAT_STEP3 "I'll distract them so you can escape."
+	setvard CHAT_STEP4 "Go on! I'll be fine!"
+	callevent chat_loop
+	setvard SAID_WALL 1
+}
+
+{ orc_reaction
+
+	if ( BUSY_CHATTING ) callevent 5.0 orc_reaction 
+	if !BUSY_CHATTING
+
+	if !DID_ORC_REACTION
+	setvard DID_ORC_REACTION 1
+
+	local MY_Z $get(ent_me,origin.z)
+	setmovedest $vec(2300,3360,MY_Z) 9999 
+	
+	playanim critical fear1
+
+	saytext By the gods! The orcs are attacking!
+}
+
+{
+repeatdelay $randf(5.0,10.0)
+
+	if ( !SAID_GREETING )
+	{
+		playsound 0 10 SOUND_BECKON
+		callevent bchat_mouth_move
+	}
+
+	
+
+	if !BUSY_CHATTING
+	local CHECK_ORCS $get_tsphere(enemy,256)
+	if CHECK_ORCS isnot none
+	local NEAREST_NME $get_token(CHECK_ORCS,0)
+	if $get(NEAREST_NME,race) equals orc
+	setmovedest NEAREST_NME 9999
+	
+
+}

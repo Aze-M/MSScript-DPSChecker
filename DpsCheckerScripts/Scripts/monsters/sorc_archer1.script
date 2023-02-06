@@ -1,0 +1,33 @@
+{
+	const ARROW_TYPE proj_arrow_npc
+	const FIN_EXP 120
+	setvard DROP_GOLD_AMT $rand(10,40)
+	const AM_SORC 1
+   setvard DROP_ITEM1 bows_longbow 
+   setvard DROP_ITEM1_CHANCE 9%	  
+   setvard DROP_ITEM2 proj_arrow_jagged 60 
+   setvard DROP_ITEM2_CHANCE 10%	  
+
+	const AM_SORC 1 
+}
+
+#include monsters/orc_sniper
+
+{ orc_spawn
+
+   hp 320
+   
+   name a|Shadahar Scout
+   hearingsensitivity 10
+   setstat parry 60
+   takedmg all .7
+
+	setmodel monsters/sorc.mdl
+
+	setvard DOING_KICK 0
+	setvard KICK_TYPE 1
+
+	setmodelbody 0 1 
+	setmodelbody 1 4 
+	setmodelbody 2 2 
+}

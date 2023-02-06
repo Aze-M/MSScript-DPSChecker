@@ -1,0 +1,12 @@
+#include other/trigger_base
+
+{ apply_damage
+
+	if $get(PARAM1,isplayer)
+	
+
+
+
+	
+	xdodamage PARAM1 direct EFFECT_DAMAGE 100% GAME_MASTER GAME_MASTER none lightning
+}

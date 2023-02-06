@@ -1,0 +1,108 @@
+{
+	setvar ANIM_IDLE idle1
+
+	const ANIM_OPEN_DOOR gluonshow
+}
+
+#include monsters/base_npc
+
+{ npc_spawn 
+
+	name an|Old Hag
+	setmodel npc/human2.mdl 
+	hp 1 
+
+	
+	width 32
+	height 96
+
+	invincible 1 
+
+	nopush 1 
+
+	race beloved 
+	
+	setmodelbody 0 0 
+	setmodelbody 1 1 
+	
+
+	setidleanim ANIM_IDLE
+	setmoveanim ANIM_IDLE 
+
+	saytextrange 1024 
+
+	menu.autoopen 1 
+
+	catchspeech say_hail hail hello y0 j0 wassup greet gweets 
+	catchspeech say_pretty pretty skull rat 
+}
+
+{ game_menu_getoptions 
+
+	if !GOT_RAT_SKULL
+
+	if ( $item_exists(PARAM1,item_ratskull) )
+	{
+		saytext My my, what a pretty skull you've found there...
+		callevent move_mouth
+		local reg.mitem.title "Offer Golden Rat Skull" 
+		local reg.mitem.type payment 
+		local reg.mitem.data item_ratskull 
+		local reg.mitem.callback got_rat_skull 
+		menuitem.register 
+	}
+	else
+	{
+		saytext No one gets by this door until I get my [pretty]!
+		callevent move_mouth
+		local reg.mitem.title "Your pretty?"
+		local reg.mitem.type callback 
+		local reg.mitem.callback say_pretty 
+		menuitem.register
+	}
+}
+
+{ say_hail
+	if ( !GOT_RAT_SKULL )
+	{
+		saytext No one gets by this door until I get my [pretty]!
+		callevent move_mouth
+	}
+	else
+	{
+		saytext Thank you for returning my pretty... I'll be sure to keep it safe, this time.
+	}
+}
+
+{ say_pretty
+	if ( !GOT_RAT_SKULL )
+	{
+		saytext Yes! My golden rat skull. Bloody thing grew legs and wandered off... Again!
+		saytext Find it for me, and I'll open this door - but not before!
+		callevent move_mouth
+	}
+	else
+	{
+		saytext Thank you. I've got my good eye on it now... It'll not wander off again.
+	}
+}
+
+{ move_mouth
+	
+	say [0.2] [0.2] [0.3] [0.1] [0.1] [0.2] [0.1] [0.1]
+	
+}
+
+{ got_rat_skull
+	setvard GOT_RAT_SKULL 1
+	saytext Finally! My pretty rat skull is returned to me! Alright... Here we go...
+	callevent move_mouth
+	playanim critical ANIM_OPEN_DOOR
+	callevent 0.25 open_door 
+	menu.autoopen 0 
+}
+
+{ open_door
+	
+	usetrigger hag_door
+}

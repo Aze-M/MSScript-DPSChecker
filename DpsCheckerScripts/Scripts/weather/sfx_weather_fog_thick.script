@@ -1,0 +1,18 @@
+#include weather/sfx_weather_base
+
+
+{ [client] weather_start
+
+	setcallback render enable
+}
+
+
+{ [client] weather_setenv
+
+	setenv fog.enabled	1
+	setenv fog.density	5.4
+	setenv fog.start	50
+	setenv fog.end		500
+	setenv fog.type		linear
+	setenv fog.color	(0.9,0.9,0.9)
+}

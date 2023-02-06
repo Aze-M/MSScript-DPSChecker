@@ -1,0 +1,91 @@
+
+
+
+{
+   const SOUND_PAIN 	monsters/spider/spiderhiss.wav
+   const SOUND_IDLE1 	monsters/spider/spideridle.wav
+   const SOUND_DEATH 	monsters/spider/spiderdie.wav
+   const SND_STRUCK1 	weapons/axemetal1.wav
+   const SND_STRUCK2 	weapons/axemetal2.wav
+   const SND_STRUCK3 	debris/concrete1.wav
+   const SND_STRUCK4 	SOUND_PAIN
+   const SND_STRUCK5 	SOUND_PAIN
+   const SOUND_ATTACK1	zombie/claw_miss1.wav
+   const SOUND_ATTACK2	zombie/claw_miss2.wav
+
+   setvar ANIM_IDLE 	idle
+   setvar ANIM_WALK 	walk
+   setvar ANIM_RUN 	run
+   setvard ANIM_ATTACK 	attack
+   const ANIM_DODGE 	dodge
+   setvard ANIM_DEATH 	die
+
+   setvard MOVE_RANGE 	100
+   setvard ATTACK_RANGE 	250
+   setvard ATTACK_HITRANGE 300
+   const ATTACK_DAMAGE_LOW	14.0
+   const ATTACK_DAMAGE_HIGH	20.0
+   const ATTACK_ACCURACY	60%
+   setvard NPC_GIVE_EXP 	100
+	const NPC_BASE_EXP 100
+
+   const SPIDER_IDLE_VOL   4
+   const SPIDER_IDLE_DELAY 3.6
+   const SPIDER_VOLUME  10
+
+	setvard IMMUNE_VAMPIRE 1
+
+   
+   
+}
+
+#include monsters/spider_base
+
+{ npc_spawn
+
+   hp 500
+   width 120
+   height 64
+   name a|Spider made of stone
+   hearingsensitivity 6
+   setmodel monsters/fer_spider_giant.mdl
+   setmodelbody	0 3
+
+   takedmg all .85
+	takedmg poison 0.0
+}
+
+{ npc_post_spawn
+	takedmg holy 2.0	
+}
+
+
+   
+{ [override] bite1
+
+   if( $rand(0,1) == 0 ) playrandomsound CHAN_VOICE SPIDER_VOLUME SOUND_ATTACK1 SOUND_ATTACK2
+   setvar PUSH_VEL $relvel(0,100,0)
+   if( $rand(1,10) == 1 ) applyeffect ent_laststruckbyme effects/effect_push 3 $relvel(0,200,200) 0
+   if( $rand(1,10) == 1 ) applyeffect ent_laststruckbyme effects/effect_stun 3 0
+   dodamage ent_lastseen ATTACK_HITRANGE $randf(ATTACK_DAMAGE_LOW,ATTACK_DAMAGE_HIGH) 85%
+}
+
+{  game_damaged_other
+
+   if PUSH_VEL isnot 'PUSH_VEL'
+
+   addvelocity ent_laststruckbyme PUSH_VEL
+
+}
+
+{ [override] check_attack
+
+   if !IS_FLEEING
+
+	if $get(HUNT_LASTTARGET,isalive)
+
+   if( $get(HUNT_LASTTARGET,range) <= ATTACK_RANGE ) local L_ATTACK 1
+
+   if L_ATTACK
+   callevent npcatk_attackenemy
+}

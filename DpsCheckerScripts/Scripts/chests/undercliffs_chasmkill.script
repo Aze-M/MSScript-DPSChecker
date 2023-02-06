@@ -1,0 +1,4 @@
+
+#scope server
+#include [server] chests/undercliffs_chasm
+

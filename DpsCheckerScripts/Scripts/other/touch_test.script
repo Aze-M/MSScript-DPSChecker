@@ -1,0 +1,15 @@
+{
+	setcallback touch enable
+	setprop ent_me solid 1
+}
+
+{ game_touch
+	
+	
+}
+
+{ game_used
+
+}
+
+#include [server] monsters/debug

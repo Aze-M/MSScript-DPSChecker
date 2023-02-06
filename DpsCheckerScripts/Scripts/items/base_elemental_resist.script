@@ -1,0 +1,111 @@
+#scope server
+{
+	
+	
+	
+	
+	
+
+	
+	
+	
+	
+	
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+}
+
+{ game_putinpack
+	callevent elm_remove_effect
+}
+{ game_drop
+	callevent elm_remove_effect
+}
+{ game_remove
+	callevent elm_remove_effect
+}
+{ game_fall
+	callevent elm_remove_effect
+}
+{ game_sheath
+	callevent elm_remove_effect
+}
+{ game_deploy
+	if !ELM_WEAPON
+	callevent elm_remove_effect
+}
+
+
+{ game_wear
+	callevent 0.1 elm_activate_effect
+}
+
+{ ext_activate_items
+
+	if PARAM1 equals $get(ent_owner,id)
+
+	if ( !ELM_WEAPON )
+	{
+		
+		if !$get(ent_me,is_worn)
+		local EXIT_SUB 1
+	}
+	if !EXIT_SUB
+
+	if ( ELM_WEAPON )
+	{
+		
+		if $get(ent_owner,scriptvar,PLR_LEFT_HAND) isnot ent_me
+		if $get(ent_owner,scriptvar,PLR_RIGHT_HAND) isnot ent_me
+		local EXIT_SUB 1
+	}
+	if !EXIT_SUB
+
+	callevent 0.1 elm_activate_effect
+}
+
+{ elm_activate_effect
+	callevent elm_get_resist
+	if ( !ELM_WEAPON )
+	{
+		callexternal ent_owner ext_register_element ELM_NAME ELM_TYPE ELM_AMT $get(ent_me,scriptname)
+	}
+	else
+	{
+		callexternal ent_owner ext_register_weapon $get(ent_me,id) ELM_NAME ELM_TYPE ELM_AMT
+	}
+}
+
+{ elm_remove_effect
+	if ( !ELM_WEAPON )
+	{
+		callexternal ent_owner ext_register_element ELM_NAME remove 0 $get(ent_me,scriptname)
+	}
+	else
+	{
+		callexternal ent_owner ext_register_weapon $get(ent_me,id) ELM_NAME remove
+	}
+}
+
+{ elm_get_resist
+	
+}
+

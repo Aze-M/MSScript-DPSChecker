@@ -1,0 +1,32 @@
+
+{
+   setvard MOVE_RANGE 60
+   setvard ATTACK_RANGE 70
+   setvard ATTACK_HITRANGE 120
+ 
+   const ATTACK_DAMAGE '$rand(5,8)'  
+   const ATTACK_HITCHANCE 60%
+   const NPC_BASE_EXP	20
+  
+   setvard DROP_ITEM1 skin_bear 	
+   setvard DROP_ITEM1_CHANCE 50%	
+
+	setvard IMMUNE_COLD 1
+}
+
+#include monsters/bear_base
+#include monsters/base_ice_race
+
+{  npc_spawn
+
+   	hp 80
+   	
+   	width 40
+   	height 80
+   	name a|Polar Bear Cub
+   	hearingsensitivity 2
+	takedmg cold 0.0
+
+   	setmodel monsters/bearcub.mdl
+   	setmodelbody	0 0
+}

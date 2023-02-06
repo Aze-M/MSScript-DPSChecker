@@ -1,0 +1,159 @@
+#scope server
+
+{ [shared]
+	setvar ANIM_RUN run
+
+	const ANIM_CAST castspell
+}
+
+{
+	const GOLD_BAGS 1
+	const GOLD_BAGS_PPLAYER 1
+	const GOLD_PER_BAG 50
+	const GOLD_RADIUS 64
+	const GOLD_MAX_BAGS 4
+
+	const SOUND_LAUGH monsters/skeleton/cal_laugh.wav
+	const SOUND_WARCRY monsters/skeleton/calrain3.wav
+
+	
+	const SKEL_HP		1000
+	const ATTACK_HITCHANCE 	85%
+	const ATTACK_DAMAGE_LOW 	15.5
+	const ATTACK_DAMAGE_HIGH 	25.5
+	setvard NPC_GIVE_EXP 		400
+
+	const DMG_ZAP $randf(40,60)
+	const DOT_ZAP 10.0
+	const DUR_ZAP 5.0
+	const DMG_BARRIER 10.0
+	const BARRIER_RAD 96
+	const ZAP_FREQ $randf(10,15)
+	const ZAP_RANGE 1024
+	const ATTACH_WAND 0
+	const FREQ_ZAP 30.0
+
+	
+	const SOUND_BARRIER_REPELL doors/aliendoor3.wav
+	const SOUND_BARRIER_SPAWN magic/spawn.wav
+}
+
+#include monsters/skeleton_base
+
+{ [shared] skeleton_spawn
+
+	name a|Lightning Forged Skeleton
+	race undead
+	roam 1
+	takedmg all .7
+	setmodel monsters/skeleton_enraged.mdl
+	hearingsensitivity 8
+	setmodelbody	0 6 
+	setmodelbody	1 8 
+
+	if ( $lcase(game.map.name) equals thanatos ) setvard SET_GREEK 1
+	if ( SET_GREEK ) setmodelbody 0 10
+
+	setmoveanim sitstand
+	setidleanim sitstand
+
+	takedmg lightning 0.0
+
+	local MY_SKY game.monster.origin
+	vectoradd MY_SKY (0,0,4096)
+	local MY_CENTER $get(ent_me,origin)
+	vectoradd MY_CENTER $vec(0,0,-48)
+	
+	
+	
+	playsound 0 10 weather/lightning.wav
+	effect beam point lgtning.spr 120 MY_CENTER MY_SKY (128,64,255) 200 3.0 1.0
+	callevent ZAP_FREQ zap_check
+	callevent 2.0 stand_complete
+}
+
+{ npcatk_targetvalidate
+
+	if ( !DID_WARCRY )
+	{
+		setvard DID_WARCRY 1
+		playsound 0 10 SOUND_LAUGH
+	}
+}
+
+{ stand_complete
+	setidleanim idle1
+	if !CYCLED_UP
+	setmoveanim ANIM_WALK
+}
+
+{ zap_check
+	if $get(ent_me,isalive)
+	if NPCATK_TARGET isnot unset
+	setvard ZAP_LIST $get_tsphere(enemy,ZAP_RANGE)
+	if ZAP_LIST isnot none
+	playsound 3 10 SOUND_WARCRY
+	playsound 1 10 SOUND_BARRIER_SPAWN
+	callevent npcatk_suspend_ai
+	callevent npcatk_suspend_movement ANIM_CAST
+	
+	clientevent new all monsters/skeleton_lightning_cl $get(ent_me,index) BARRIER_RAD (255,0,0) DUR_ZAP 1 1
+	setvard BARRIER_ID game.script.last_sent_id
+
+
+	setvard ZAP_ACTIVE 1
+	callevent DUR_ZAP stop_zapping
+	callevent 1.0 zap_scan_loop
+	callevent ZAP_FREQ zap_check
+}
+
+{ zap_scan_loop
+	if ZAP_ACTIVE
+	if $get(ent_me,isalive)
+	callevent 1.0 zap_scan_loop
+	local L_ZAP_ORG $get(ent_me,origin)
+	vectoradd L_ZAP_ORG z 32
+	clientevent update all BARRIER_ID clear_beams
+	xdodamage L_ZAP_ORG ZAP_RANGE DMG_ZAP 0 ent_me ent_me none lightning_effect dmgevent:zap
+}
+
+{ zap_dodamage
+	if PARAM1
+	local CUR_TARG PARAM2
+	if $get(CUR_TARG,relationship,ent_me) equals enemy
+
+	applyeffect CUR_TARG effects/effect_shock_dmg 5.0 $get(ent_me,id) DOT_ZAP
+
+	local TARG_ORG $get(CUR_TARG,origin)
+
+
+	clientevent update all BARRIER_ID add_beam $get(CUR_TARG,index)
+
+	local MY_ORG $get(ent_me,origin)
+	local TARG_ANG $angles(MY_ORG,TARG_ORG)
+
+	if ( $get(CUR_TARG,range) > BARRIER_RAD )
+	{
+		addvelocity CUR_TARG $relvel($vec(0,TARG_ANG,0),$vec(0,500,0))
+	}
+	else
+	{
+		setvelocity CUR_TARG $relvel($vec(0,TARG_ANG,0),$vec(10,1000,110))
+		playsound 1 10 SOUND_BARRIER_REPELL
+	}
+	
+}
+
+{ stop_zapping
+	setvard ZAP_ACTIVE 0
+	clientevent update all BARRIER_ID end_fx
+	callevent npcatk_resume_ai
+	callevent npcatk_resume_movement
+}
+
+{ game_death
+	if ZAP_ACTIVE
+	clientevent update all BARRIER_ID end_fx
+	clientevent update all BEAMS_ID end_fx
+}
+

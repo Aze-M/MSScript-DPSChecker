@@ -1,0 +1,80 @@
+{
+
+	
+
+
+	
+	
+	
+	
+
+	
+
+	
+	precache poison_cloud.spr
+	precache laserbeam.spr
+	
+	precache weapons/magic/seals.mdl
+	precache 3dmflaora.spr
+	precache lgtning.spr
+	precache fire1_fixed.spr
+	precache null.mdl
+	precache xsmoke3.spr
+
+	precache weapons/p_weapons1.mdl
+	precache weapons/p_weapons2.mdl
+	precache weapons/p_weapons3.mdl
+	precache weapons/p_weapons4.mdl
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+
+
+	precache glassgibs.mdl
+	
+
+	
+	precache weapons/p_weapons1.mdl
+	precache weapons/p_weapons2.mdl
+	precache weapons/p_weapons3.mdl
+	precache weapons/projectiles.mdl
+	
+	precache bigsmoke.spr
+
+	
+	precache null.wav
+	precache misc/gold.wav
+	precache ambience/alienflyby1.wav
+
+	precachefile chests/base_treasurechest_array
+	precachefile monsters/skeleton
+
+	precachefile monsters/summon/bear1
+	precache fire1_fixed2.spr
+	precache fire1_fixed.spr
+	precachefile monsters/summon/lesser_wraith
+	precachefile monsters/wraith_cl
+
+	precachefile monsters/companion/pet_wolf
+	precachefile monsters/companion/pet_wolf_ice
+	precachefile monsters/companion/pet_wolf_shadow
+}
+
+{ fake_caches
+
+
+
+}

@@ -1,0 +1,126 @@
+
+
+#include secondary_globals
+
+
+{
+	setvarg TIME_RATIO 20			
+	const TIME_UPDATE_INTERVAL 30		
+}
+
+{
+
+	callevent load_globals
+
+	if CURRENT_TIME equals 'CURRENT_TIME'
+
+	
+	setvarg CURRENT_TIME_HOUR 0
+	setvarg CURRENT_TIME_MIN 0
+	setvarg global.mstime.secs	 0	
+	setvarg global.mstime.lastupdate 0	
+	setvarg global.mstime.updateall  0	
+	
+	setvarg global.mstime.secs 215940 
+}
+
+	
+{
+	repeatdelay 1
+
+	if ( !$get(GAME_MASTER,exists) )
+	{
+		if game.time > 10
+		createnpc game_master $vec(20000,-10000,-20000)
+	}
+
+	if ( !GLOBALS_LOADED )
+	{
+		callevent 1.0 load_globals
+		setvard GLOBALS_LOADED 1
+	}
+
+	callevent global_time_update				
+
+	local l.dayofs.secs global.mstime.secs			
+	mod l.dayofs.secs 86400					
+
+	setvarg CURRENT_TIME_HOUR l.dayofs.secs			
+	divide CURRENT_TIME_HOUR 3600
+	setvarg CURRENT_TIME_HOUR $int(CURRENT_TIME_HOUR)
+
+	setvarg CURRENT_TIME_MIN l.dayofs.secs			
+	mod CURRENT_TIME_MIN 3600
+	divide CURRENT_TIME_MIN 60
+	setvarg CURRENT_TIME_MIN $int(CURRENT_TIME_MIN)
+
+	callevent format_time CURRENT_TIME_HOUR CURRENT_TIME_MIN 
+
+	
+
+	if global.mstime.secs >= global.mstime.updateall
+
+	callexternal all worldevent_time CURRENT_TIME_HOUR CURRENT_TIME_MIN TIME_RATIO 
+	
+	local l.intervalsecs TIME_UPDATE_INTERVAL
+	multiply l.intervalsecs 60
+
+	local local.lastupdatetime global.mstime.secs
+	divide local.lastupdatetime l.intervalsecs
+	setvard local.lastupdatetime $int(local.lastupdatetime)
+	multiply local.lastupdatetime l.intervalsecs
+	
+	setvarg global.mstime.updateall local.lastupdatetime	
+	add global.mstime.updateall l.intervalsecs
+}
+
+{  global_time_update	
+
+	local l.time_elapsed game.time			
+	subtract l.time_elapsed global.mstime.lastupdate
+	
+	local l.secs l.time_elapsed			
+	multiply l.secs TIME_RATIO
+
+	add global.mstime.secs l.secs
+
+	setvarg global.mstime.lastupdate game.time
+}
+
+{	format_time	
+
+		setvarg CURRENT_TIME ''
+		if( PARAM1 < 10 ) setvarg CURRENT_TIME '0'
+		stradd CURRENT_TIME $int(PARAM1)	
+			
+		if( PARAM2 < 10 ) local local.mins '0'
+		else local local.mins ''
+		stradd local.mins $int(PARAM2)
+
+		stradd CURRENT_TIME :
+		stradd CURRENT_TIME local.mins
+}
+
+
+{   game_spawn
+
+	setvarg global.mstime.lastupdate 0
+}
+
+
+{ [shared] game_playerjoin
+
+   
+	callevent world_updateplayertime
+}
+
+{   worldevent_time  
+	
+	callevent world_updateplayertime
+}
+
+{   world_updateplayertime
+    
+	clientevent update all const.localplayer.scriptID recv_time CURRENT_TIME_HOUR CURRENT_TIME_MIN TIME_RATIO global.map.allownight
+	
+}

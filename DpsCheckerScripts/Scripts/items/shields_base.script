@@ -1,0 +1,291 @@
+
+
+{
+	setvar AM_SHIELD 1
+
+	const ANIM_IDLE1 0
+	const ANIM_IDLE_TOTAL 1
+	const ANIM_LIFT1 0
+	const ANIM_THRUST1 1
+	const ANIM_RETRACT1 2
+	const MELEE_VIEWANIM_ATK ANIM_THRUST1
+	const BASEWEAPON_NO_HAND_IDLE 1		
+
+	const MODEL_WORLD weapons/p_weapons2.mdl 
+	const MODEL_HANDS weapons/p_weapons2.mdl 
+  	const MODEL_WEAR weapons/p_weapons2.mdl 
+  	const ANIM_PREFIX allshields 
+  	const PLAYERANIM_AIM battleaxe
+
+	const MELEE_STAT parry
+	const MELEE_ACCURACY 40
+	const MELEE_DMG_DELAY 0.1
+	const MELEE_ATK_DURATION 1.0
+	const MELEE_ACCURACY 40
+	const MELEE_CALLBACK melee
+	const MELEE_NOISE 400
+	const MELEE_SOUND_DELAY 0
+
+	const SHIELD_TAKEDMG 0.5
+
+	const SHIELD_BREAK_SOUND debris/bustmetal1.wav
+  	const SOUND_THRUST weapons/cbar_miss1.wav
+	const SOUND_SWIPE SOUND_THRUST
+	const SOUND_BLOCK body/armour3.wav
+}
+
+#include items/base_melee
+
+{  [override] weapon_spawn
+
+   sethand left
+   wearable 1 bow
+
+   
+   
+
+   local reg.attack.type hold-strike
+   local reg.attack.keys +attack1
+   local reg.attack.range 0
+   local reg.attack.dmg 0
+   local reg.attack.dmg.range 100
+   local reg.attack.dmg.type block
+   local reg.attack.energydrain 0
+   local reg.attack.stat MELEE_STAT
+   local reg.attack.hitchance MELEE_ACCURACY
+   local reg.attack.priority 0
+   local reg.attack.delay.strike MELEE_DMG_DELAY
+   local reg.attack.delay.end MELEE_ATK_DURATION
+   local reg.attack.ofs.startpos MELEE_STARTPOS
+   local reg.attack.ofs.aimang MELEE_AIMANGLE
+   local reg.attack.callback MELEE_CALLBACK
+   local reg.attack.noise MELEE_NOISE
+   local reg.attack.dmg.ignore 1
+
+   registerattack
+
+   
+   
+
+
+
+	setvard PARRY_MULTI_OUT PARRY_MULTI
+
+
+	callevent shield_spawn
+}
+
+{ [server] melee_start
+	
+	if $get(ent_owner,scriptvar,'PLR_IN_WORLD')
+	callexternal ent_owner ext_shield_up 1
+}
+
+{  melee_hold
+
+	playowneranim hold aim_axe_onehand squatwalk1
+}
+
+{  melee_end
+
+	if ( game.clientside )
+	{
+		playviewanim ANIM_RETRACT1
+	}
+	else
+	{
+		if $get(ent_owner,scriptvar,'PLR_IN_WORLD')
+		callexternal ent_owner ext_shield_up 0
+		playowneranim break
+	}
+}
+
+{ bweapon_effect_remove
+	if $get(ent_owner,scriptvar,'PLR_IN_WORLD')
+	callexternal ent_owner ext_shield_up 0
+}
+
+{ game_wear
+
+	setvard		IS_DEPLOYED	0
+	setmodel	MODEL_WEAR
+	local		L_SUBMODEL MODEL_BODY_OFS
+	add		L_SUBMODEL 3
+	
+	setmodelbody 	0 L_SUBMODEL
+}
+
+{ game_show
+	setmodel	MODEL_WEAR
+	local		L_SUBMODEL MODEL_BODY_OFS
+	add		L_SUBMODEL 3
+	setmodelbody 	0 L_SUBMODEL
+}
+
+{ weapon_deploy
+
+	setvard		IS_DEPLOYED	1
+	local L_ANIM_IDLE ANIM_PREFIX
+	stradd L_ANIM_IDLE _idle
+  	playanim	L_ANIM_IDLE
+}
+
+{ [override] game_viewanimdone
+
+     if ANIM_IDLE_TOTAL > 0
+     if !game.item.attacking
+     if game.item.wielded
+     callevent $rand(ANIM_IDLE_DELAY_LOW,ANIM_IDLE_DELAY_HIGH) item_idle
+}
+
+{ game_takedamage 
+
+	if IS_DEPLOYED
+
+	if ( SHIELD_PRE_BLOCK_EFFECT )
+	{
+		setvard EXIT_BLOCK 0
+		local OUT_PAR1 PARAM1
+		local OUT_PAR2 PARAM2
+		local OUT_PAR4 PARAM4
+		callevent shield_pre_block_effect OUT_PAR1 OUT_PAR2 SHIELD_DMG_TAKEN OUT_PAR4
+	}
+	if !EXIT_BLOCK
+
+	
+	
+	
+	
+	
+	if ( PARAM4 startswith target ) local CANT_BLOCK 1
+	if ( PARAM4 contains effect ) local CANT_BLOCK 1
+	if !CANT_BLOCK
+
+	
+	
+
+	
+	
+	
+	
+
+	local MY_OWNER $get(ent_owner,id)
+	local THE_ATTACKER PARAM2
+	if $get(PARAM1,id) isnot $get(ent_owner,id)	
+
+	local l.pos $get(ent_owner,origin)
+	local l.mypos $get(ent_owner,origin)
+	local l.myang $get(ent_owner,angles)
+	local l.attpos $get(PARAM1,origin)
+
+	if $within_cone2D(l.attpos,l.mypos,l.myang,100)	
+
+	if ( SHIELD_REPORT_HITS )
+	{
+		local THE_INFLICTOR PARAM2
+		callevent shield_hit THE_ATTACKER THE_INFLICTOR $lcase(PARAM3) $lcase(PARAM4)
+	}
+
+	
+	
+	
+	
+
+	
+
+	if( game.item.attacking ) 
+	{
+		
+		if ( $rand(1,100) <= BLOCK_CHANCE_UP ) 
+		{
+			setvard SHIELD_DMG_TAKEN PARAM3
+			local ORIG_DMG PARAM3
+			multiply SHIELD_DMG_TAKEN DMG_BLOCK_UP
+
+			if ( SHIELD_IMMORTAL == 0 ) 
+			{
+				subtract ORIG_DMG SHIELD_DMG_TAKEN
+				subtract SHIELD_HEALTH ORIG_DMG
+				local SHIELD_STATUS SHIELD_HEALTH
+				divide SHIELD_STATUS SHIELD_MAXHEALTH
+				multiply SHIELD_STATUS 100
+				local SHIELD_STATUS $int(SHIELD_STATUS)
+			}
+			if ( SHIELD_IMMORTAL == 1 ) local SHIELD_STATUS 100
+
+			if ( ORIG_DMG > 0 )
+			{
+				stradd SHIELD_STATUS "%%"
+				playermessage Shield absorbed: ORIG_DMG hp ( shield hp: SHIELD_STATUS )
+			}
+			setdmg dmg SHIELD_DMG_TAKEN
+			callevent shield_deflect THE_ATTACKER
+		}
+	}
+	
+	if( !game.item.attacking ) 
+	{
+		
+		if game.item.wielded
+		if ( $rand(1,100) <= BLOCK_CHANCE_DOWN ) 
+		{
+			if ( SHIELD_IMMORTAL == 0 ) 
+			{
+				subtract SHIELD_HEALTH PARAM3
+				local SHIELD_STATUS SHIELD_HEALTH
+				divide SHIELD_STATUS SHIELD_MAXHEALTH
+				multiply SHIELD_STATUS 100
+				local SHIELD_STATUS $int(SHIELD_STATUS)
+			}
+			if ( SHIELD_IMMORTAL == 1 ) local SHIELD_STATUS 100
+			setvard SHIELD_DMG_TAKEN PARAM3
+			if ( PARAM3 > 0 ) playermessage Deflected! ( shield health SHIELD_STATUS %%)
+			setdmg hit 0
+			setdmg dmg 0
+			
+			callevent shield_deflect THE_ATTACKER
+		}
+	}
+}
+
+{ shield_deflect 
+
+ 	playsound const.snd.body const.snd.fullvol SOUND_BLOCK
+
+	if ( !SHIELD_IMMORTAL )
+	{
+		if ( SHIELD_HEALTH <= 0 ) 
+		{ 
+			
+ 			playsound 2 const.snd.fullvol SHIELD_BREAK_SOUND
+			playermessage YOUR SHIELD HAS BROKEN!
+			removeitem ent_me
+			deleteme
+		}
+	}
+	if !game.item.attacking
+
+	playviewanim ANIM_RETRACT1
+}
+
+{ game_pickup
+
+	if ( SHIELD_IMMORTAL ) playermessage This shield is immortal.
+
+	if !SHIELD_IMMORTAL
+	local SHIELD_STATUS SHIELD_HEALTH
+	divide SHIELD_STATUS SHIELD_MAXHEALTH
+	multiply SHIELD_STATUS 100
+	local SHIELD_STATUS $int(SHIELD_STATUS)
+
+	local L_OUT_MSG "This shield's health is "
+	stradd L_OUT_MSG SHIELD_STATUS
+	stradd L_OUT_MSG %%
+	stradd L_OUT_MSG (
+	stradd L_OUT_MSG $int(SHIELD_HEALTH)
+	stradd L_OUT_MSG /
+	stradd L_OUT_MSG $int(SHIELD_MAXHEALTH)
+	stradd L_OUT_MSG )
+	
+}
+

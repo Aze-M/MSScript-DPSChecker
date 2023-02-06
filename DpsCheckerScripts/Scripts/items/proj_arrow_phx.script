@@ -1,0 +1,139 @@
+
+{
+	const	MODEL_WORLD		weapons/projectiles.mdl
+	const	MODEL_HANDS      	weapons/projectiles.mdl
+	const	MODEL_BODY_OFS		48
+	const	ARROW_BODY_OFS		48
+
+	const	PROJ_IGNORENPC		1 
+								  
+	const	PROJ_ANIM_IDLE		idle_standard
+
+	
+	
+	
+	const MAX_DIST 1024
+	const MIN_RADIUS 32
+	const MAX_RADIUS 256
+
+	const PROJ_DAMAGE 1 
+
+	
+	
+	
+	
+	
+	
+	
+
+	
+	const SOUND_PHOENIX monsters/birds/hawkcaw.wav
+
+	
+	precache ambience/steamburst1.wav
+}
+
+#include items/proj_arrow_base
+
+{  game_spawn
+
+	name 		a|Phoenix Arrow
+	
+	
+	
+   	setmonsterclip	0
+
+	sethudsprite	hand arrows
+	sethudsprite	trade ITEM_NAME
+	sethand		any
+
+	
+	
+	
+
+	setvard		GAME_PVP game.pvp
+	gravity		1
+}
+
+{ [server] game_tossprojectile
+	
+	svplaysound 0 5 SOUND_PHOENIX
+}
+
+{ [server] game_projectile_hitwall
+
+	
+	
+
+	local USER_ORG $get(ent_expowner,origin) 
+	local MY_ORG $get(ent_me,origin) 
+	vectorset MY_ORG z $get_ground_height(MY_ORG)
+	local DISTANCE_TRAVELED $dist(USER_ORG,MY_ORG)
+	local DISTANCE_RATIO DISTANCE_TRAVELED
+
+	
+	local OWNER_SKILL $get(ent_expowner,skill.archery.power) 
+	local MIN_DMG OWNER_SKILL 
+	local MAX_DMG OWNER_SKILL
+	multiply MAX_DMG 2.0
+
+
+	
+	if ( DISTANCE_TRAVELED >= MAX_DIST ) 
+	{ 
+		local MY_DAMAGE MAX_DMG 
+		local MY_RADIUS MAX_RADIUS 
+	} 
+	else 
+	{ 
+		divide DISTANCE_RATIO MAX_DIST
+		setvard MY_DAMAGE $get_skill_ratio(DISTANCE_RATIO,MIN_DMG,MAX_DMG) 
+		setvard MY_RADIUS $get_skill_ratio(DISTANCE_RATIO,MIN_RADIUS,MAX_RADIUS) 
+	}
+
+	if ( $get(ent_expowner,isplayer) )
+	{
+		if $get(ent_expowner,skill.archery) < 30
+		setvard IS_UNDERSKILLED 1
+		multiply MY_DAMAGE 0.1
+		multiply MY_RADIUS 0.5
+	}
+
+	
+	
+	
+	clientevent new all items/proj_arrow_phx_cl MY_ORG MY_RADIUS
+
+	
+
+
+	xdodamage MY_ORG MY_RADIUS MY_DAMAGE 0 ent_expowner ent_expowner archery fire
+
+	setvard TARGET_LIST $get_tsphere(any,MY_RADIUS)
+
+	
+	if TARGET_LIST isnot 'none'
+
+	
+	setvard BURN_DMG $get(ent_expowner,skill.spellcasting.fire)
+	multiply BURN_DMG 0.5
+
+	if ( IS_UNDERSKILLED ) multiply BURN_DMG 0.1
+
+	calleventloop $get_token_amt(TARGET_LIST) burn_them
+}
+
+{ burn_them
+	local CUR_TARGET $get_token(TARGET_LIST,game.script.iteration)
+	if $get(ent_expowner,relationship,CUR_TARGET) equals enemy
+	if ( $get(ent_expowner,isplayer) )
+	{
+		if GAME_PVP == 0
+		if $get(CUR_TARGET,isplayer)
+		local EXIT_SUB 1
+	}
+	if !EXIT_SUB
+
+	
+	applyeffect CUR_TARGET effects/effect_burn 5 $get(ent_expowner,id) BURN_DMG 1 0 spellcasting.fire
+}

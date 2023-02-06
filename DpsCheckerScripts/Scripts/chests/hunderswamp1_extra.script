@@ -1,0 +1,39 @@
+#scope server
+{
+	const ITEM_EVENT add_epic_item
+	const HP_REQ 500
+	
+}
+
+#include chests/base_treasurechest_array
+
+{ game_spawn
+	callevent 0.1 chest_sprite_in
+}
+
+{ chest_sprite_in
+	setsolid trigger
+}
+
+{ chest_additems
+
+	
+	callevent ITEM_EVENT 100 HP_REQ
+}
+
+{ chest_add_quality_items
+	callevent add_epic_arrows
+	callevent add_epic_arrows
+	callevent add_epic_arrows
+	callevent add_epic_arrows
+	callevent ITEM_EVENT 100 HP_REQ
+	callevent ITEM_EVENT 100 HP_REQ
+	callevent ITEM_EVENT 100 HP_REQ
+
+	if ( $randf(1,5) <= game.playersnb )
+	{
+		if !G_GAVE_ARTI1
+		setvarg G_GAVE_ARTI1 1
+		addstoreitem STORENAME smallarms_crep 1 0
+	}
+}

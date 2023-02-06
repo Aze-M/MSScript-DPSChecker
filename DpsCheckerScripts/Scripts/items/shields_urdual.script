@@ -1,0 +1,71 @@
+{
+	const NOPUSH_CHANCE 75%
+
+	const PARRY_MULTI 3.0
+	const SHIELD_BASE_PARRY 40
+
+	const MODEL_VIEW       	viewmodels/v_shields.mdl
+	const MODEL_VIEW_IDX	3
+	
+
+  const MODEL_BODY_OFS		73 
+  const MELEE_ENERGY		1
+  const MELEE_ACCURACY   	150%
+  const BLOCK_CHANCE_UP		100	
+  const DMG_BLOCK_UP		0.05 
+  const BLOCK_CHANCE_DOWN	50	
+  const SHIELD_MAXHEALTH	infinite
+  const SHIELD_IMMORTAL		1
+  setvard SHIELD_HEALTH		infinite
+  const SOUND_BLOCK      	doors/doorstop5.wav
+  const EFFECT_RANGE		150
+  precache SOUND_BLOCK
+}
+
+#include items/shields_base
+
+{  shield_spawn
+
+   name 	an|Urdulian Shield
+   desc 	A massive shield forged from the seal of a fallen temple of Urdual
+   weight 	120
+   size 	45
+   value	5000
+   quality      2000
+   sethudsprite hand 165
+   sethudsprite trade 165
+}
+
+{ game_wear
+
+	playermessage You heft an Urdulian shield onto your back.
+	setvard SLOW_LOOP_ACTIVE 0
+}
+
+{ game_drop
+
+	setvard SLOW_LOOP_ACTIVE 0
+}
+
+
+
+{ game_deploy
+	if game.item.wielded
+	if $get(ent_owner,scriptvar,'PLR_IN_WORLD')
+	local L_SCRIPTFLAG $get(ent_me,itemname)
+	if !$get_scriptflag(ent_owner,L_SCRIPTFLAG,name_exists)
+	
+	
+	callexternal ent_owner plr_change_speed -1 0.75 L_SCRIPTFLAG
+}
+
+{ bweapon_effect_remove
+	callevent remove_slow
+}
+
+{ remove_slow
+	local L_SCRIPTFLAG $get(ent_me,itemname)
+	
+	callexternal ent_owner plr_update_speed_effects remove L_SCRIPTFLAG
+}
+

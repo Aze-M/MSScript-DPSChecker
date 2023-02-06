@@ -1,0 +1,4 @@
+{
+setvarg ALWAYS_DUSK 1
+}
+#include monsters/base_temporary

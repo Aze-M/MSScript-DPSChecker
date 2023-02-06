@@ -1,0 +1,172 @@
+
+{ [server]
+	const EFFECT_ID			freeze_solid
+	const EFFECT_NAME		"freeze_solid"
+	const EFFECT_ACTIONTYPE		nostack
+	const EFFECT_SCRIPT		$currentscript
+	const SOUND_FREEZE magic/freeze.wav
+
+	setvard game.effect.id		EFFECT_ID
+	setvard game.effect.displayname	EFFECT_NAME
+	setvard game.effect.type	EFFECT_ACTIONTYPE
+
+	const DOT_EFFECT 1
+	const DOT_TYPE cold
+	const DOT_DMG EFFECT_DAMAGE
+	const DOT_FREQ $randf(0.9,1.1)
+	const DOT_ATTACKER MY_ATTACKER
+	const DOT_SKILL ACTIVE_SKILL
+}
+
+#include effects/effect_base	allowduplicate
+
+{ [server] game_activate
+
+	if !$get(ent_me,scriptvar,'IS_LURE') 
+
+	
+	callevent resist_check cold $get(PARAM2,id)
+	
+	
+	
+	if RESISTED_EFFECT < 2
+
+	local MAX_HP PARAM5
+	if ( $get(PARAM2,isplayer) )
+	{
+		if ( MAX_HP startswith 'PARAM' ) local MAX_HP 1500
+		add OWNER_SKILL $get(PARAM2,skill.spellcasting.cold)
+		multiply OWNER_SKILL 50
+		add MAX_HP OWNER_SKILL
+	}
+
+	
+	if ( $get(ent_me,width) > 256 ) local L_TOO_BIG 1
+	if ( $get(ent_me,height) > 256 ) local L_TOO_BIG 1
+	if ( L_TOO_BIG )
+	{
+		if $get(PARAM2,isplayer)
+		playermessage $get(PARAM2,id) $get(ent_me,name) is too large to be encased in ice.
+		setvard RESISTED_EFFECT 2
+		callevent effect_die
+	}
+	if ( $get(ent_me,hp) > MAX_HP )
+	{
+		if $get(PARAM2,isplayer)
+		playermessage $get(PARAM2,id) $get(ent_me,name) is too strong to be encased in ice. ( > $int(MAX_HP) )
+		setvard RESISTED_EFFECT 2
+		callevent effect_die
+	}
+	if RESISTED_EFFECT < 2
+	
+
+	if ( PARAM3 > 0 )
+	{
+		setvard ACTIVE_SKILL PARAM4
+		if ( ACTIVE_SKILL startswith 'PARAM' ) setvard ACTIVE_SKILL spellcasting.ice
+	}
+
+	setvard EFFECT_DAMAGE 0
+	if ( PARAM3 isnot 'PARAM3' ) setvard EFFECT_DAMAGE PARAM3
+
+	if ( EFFECT_DAMAGE == 0 )
+	{
+		if RESISTED_EFFECT == 1
+		setvard RESISTED_EFFECT 2
+	}
+	if RESISTED_EFFECT < 2 
+
+	setvard local.effect.duration 	PARAM1
+
+	if ( RESISTED_EFFECT < 1 )
+	{
+		playsound 0 10 SOUND_FREEZE
+
+		if ( $get(ent_me,isplayer) )
+		{
+			
+			
+			setvard game.effect.movespeed 0.0001%
+			setvard game.effect.canjump 0
+			setvard game.effect.canattack 0
+			setvard game.effect.anim.framerate 0.01
+		}
+		playermessage ent_me You have been encased in ice! BE_RESIST_STRING
+	}
+
+	setvard MY_ATTACKER PARAM2
+
+	setvard EFFECT_DAMAGE 0
+	if ( PARAM3 isnot 'PARAM3' ) setvard EFFECT_DAMAGE PARAM3
+
+	if ( EFFECT_DAMAGE == 0 ) setvard DOT_ABORT 1
+
+	callevent local.effect.duration effect_die
+
+	setvard BE_ACT_DIE_TIME game.time
+	add BE_ACT_DIE_TIME local.effect.duration
+
+	setvard IR_FROZEN 1
+
+	if ( RESISTED_EFFECT < 1 )
+	{
+		clientevent new all effects/sfx_icecage $get(ent_me,index) local.effect.duration
+		setvard CAGE_SCRIPT_IDX game.script.last_sent_id
+	
+		callexternal $get(ent_me,id) freeze_solid_start local.effect.duration $get(PARAM2,id)
+	}
+}
+
+{ game_death
+	
+	
+	callevent effect_die
+}
+
+{ game_duplicated
+	
+	setvard DUPLICATED 1
+	callevent game_death
+}
+
+{ effect_die
+
+	if RESISTED_EFFECT < 1
+	if !DUPLICATED
+
+	
+	clientevent update all CAGE_SCRIPT_IDX end_cage_fx
+
+	setvard IR_FROZEN 0
+	setvard EFFECT_DAMAGE 0
+
+	setvard game.effect.movespeed 100%
+	setvard game.effect.canjump 1
+	setvard game.effect.canattack 1
+	setvard game.effect.anim.framerate 1.0
+
+	if ( $get(ent_me,isalive) )
+	{
+		playanim break 
+		
+
+		if ( game.time < BE_ACT_DIE_TIME )
+		{
+		
+			callexternal ent_me freeze_solid_end 1
+		}
+	}
+}
+
+
+{
+repeatdelay 0.1
+	if !$get(ent_me,isalive)
+	callevent effect_die
+}
+
+{
+repeatdelay DOT_FREQ
+	if BE_EFFECT_ACTIVE
+	callevent dot_effect
+}

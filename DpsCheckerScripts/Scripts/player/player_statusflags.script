@@ -1,0 +1,36 @@
+
+{
+	setvard game.effect.canmove 1
+	setvard game.effect.canrun 1
+	setvard game.effect.canjump 1
+	setvard game.effect.canduck 1
+	setvard game.effect.canattack 1
+}
+
+{ set_status_flags 
+	setvard game.effect.canmove PARAM1
+	setvard game.effect.canrun PARAM2
+	setvard game.effect.canjump PARAM3
+	setvard game.effect.canduck PARAM4
+	setvard game.effect.canattack PARAM5
+}
+
+{ set_status_canmove 
+	setvard game.effect.canmove PARAM1
+}
+
+{ set_status_canrun 
+	setvard game.effect.canrun PARAM1
+}
+
+{ set_status_canjump 
+	setvard game.effect.canjump PARAM1
+}
+
+{ set_status_canduck 
+	setvard game.effect.canduck PARAM1
+}
+
+{ set_status_canattack 
+	setvard game.effect.canattack PARAM1
+}

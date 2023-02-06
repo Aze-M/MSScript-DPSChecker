@@ -1,0 +1,4 @@
+
+#include weather/sfx_weather_rain
+#include weather/sfx_weather_rain_storm
+#include weather/sfx_weather_snow

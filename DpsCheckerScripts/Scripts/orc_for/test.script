@@ -1,0 +1,85 @@
+{
+	setcallback touch enable
+	
+}
+
+{ game_spawn
+	setmodel misc/treasure.mdl
+	width 32
+	height 32
+	hp 1000
+	race hated
+	
+	
+	setprop ent_me movetype 7
+	setprop ent_me solid 2
+	
+	gravity 0
+	if game.serverside
+	callevent 0.25 snap_to_ground
+}
+
+{ snap_to_ground
+	local MY_POS $get(ent_me,origin)
+	vectorset MY_POS z $get_ground_height(MY_POS)
+	setorigin ent_me MY_POS
+}
+
+{ ext_forward
+	setprop ent_me movetype 7
+	setprop ent_me velocity $relvel($vec(0,0,0),$vec(0,1000,0))
+}
+
+{ ext_backwards
+	setprop ent_me velocity $relvel($vec(0,0,0),$vec(0,-1000,0))
+	setprop ent_me movetype 7
+}
+
+{ ext_reset
+	setprop ent_me velocity $relvel($vec(0,0,0),$vec(0,0,0))
+	setorigin ent_me $vec(0,0,0)
+	setprop ent_me solid 2
+	setprop ent_me movetype 7
+}
+
+{ ext_down
+	setprop ent_me solid 2
+	setprop ent_me movetype 7
+	setprop ent_me velocity $relvel($vec(0,0,0),$vec(0,0,-100))
+	setprop ent_me solid 2
+	setprop ent_me movetype 7
+}
+
+{ ext_up
+	setprop ent_me solid 2
+	setprop ent_me movetype 7
+	setprop ent_me velocity $relvel($vec(0,0,0),$vec(0,0,100))
+	setprop ent_me solid 2
+	setprop ent_me movetype 7
+}
+
+{ game_touch
+	
+	setvard PUSH_TARG PARAM1
+	callevent 0.1 do_repel $get(PARAM1,id)
+}
+
+{ do_repel
+	if game.time > NEXT_PUSH
+	setvard NEXT_PUSH game.time
+	add NEXT_PUSH 0.25
+
+	local CUR_TARG PUSH_TARG
+	dodamage CUR_TARG direct 0.1 100% ent_me lightning_effect
+	local TARGET_ORG $get(CUR_TARG,origin)
+	local TARG_ANG $angles(game.monster.origin,TARGET_ORG)
+	local NEW_YAW TARG_ANG
+	addvelocity CUR_TARG $relvel($vec(0,NEW_YAW,0),$vec(0,800,110))
+}
+
+{ game_blocked
+
+	callevent do_repel $get(PARAM1,id)
+}
+
+#include [server] monsters/debug

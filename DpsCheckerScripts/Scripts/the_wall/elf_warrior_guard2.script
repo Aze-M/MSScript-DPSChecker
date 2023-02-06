@@ -1,0 +1,100 @@
+#scope server
+{
+	setvard NPC_GIVE_EXP 0
+
+
+	const CHANCE_STUN 20%
+	const ATTACK_TYPE blunt
+	const ATTACK_STANCE 1h
+	const DMG_MELEE 800
+	const CAN_BLOCK 1
+
+	setvard NPC_NO_PLAYER_DMG 1
+
+	setvard NPC_RETURN_HOME 1
+
+	const NO_CHAT 1 
+
+	const NPC_BATTLE_ALLY 1
+
+	const SOUND_HELLO npc/elvenfemale/vs_nnwnobf1_hi.wav
+	const SOUND_VELEND npc/elvenfemale/vs_nnwnobf1_warn.wav
+}
+
+#include monsters/elf_warrior_base
+#include monsters/base_chat
+
+{ elf_spawn
+	name an|Elven Warrior
+	
+	
+	
+	
+	
+	hp 2000
+	takedmg all 0.5
+	race human
+	roam 0
+
+	setprop ent_me skin 1 
+
+	setmodelbody 1 11 
+	setmodelbody 2 3  
+}
+
+{ npc_post_spawn
+	setvard ANIM_ATTACK swordswing1_R
+}
+
+{ game_menu_getoptions
+	if ( NPCATK_TARGET isnot unset )
+	{
+		local reg.mitem.title 	"(In combat...)"
+		local reg.mitem.type 	disabled
+		menuitem.register
+		local EXIT_SUB 1
+	}
+	if !EXIT_SUB
+
+	setmovedest PARAM1 9999
+
+	if !BUSY_CHATTING
+
+	playsound 2 10 SOUND_HELLO
+
+	say [0.1] [0.3]
+	callevent 0.6 bchat_close_mouth
+
+	local reg.mitem.title 	"Hail"
+	local reg.mitem.type 	callback
+	local reg.mitem.callback say_hi
+	menuitem.register
+}
+
+{ say_hi
+	if !BUSY_CHATTING
+	playsound 2 10 SOUND_VELEND
+
+	local LEADER_ID $get_by_name(elf_leader)
+	if ( $get(LEADER_ID,isalive) )
+	{
+		setvard CHAT_STEP1 "Velend Varon speaks for us."
+
+		if ( $get(PARAM1,race) equals human )
+		{
+			setvard CHAT_STEP2 "Address any questions you have to him, child of Torkaloth."
+		}
+		else
+		{
+			setvard CHAT_STEP2 "Address any questions you have to him."
+		}
+		setvard CHAT_STEPS 2
+		callevent chat_loop
+	}
+	else
+	{
+		saytext Seeker Varon maybe dead, but I must still stand guard, as I await our reinforcements.
+	}
+
+}
+

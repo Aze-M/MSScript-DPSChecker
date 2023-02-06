@@ -1,0 +1,38 @@
+
+{
+	setvar ANIM_RUN run
+   const SKEL_HP		250
+   const ATTACK_HITCHANCE 	85%
+   const ATTACK_DAMAGE_LOW 	5.5
+   const ATTACK_DAMAGE_HIGH 	7.0
+   setvard NPC_GIVE_EXP 		26
+
+   setvard DROP_GOLD 		1
+   setvard DROP_GOLD_MIN		25
+   setvard DROP_GOLD_MAX		55
+
+   const SKEL_RESPAWN_CHANCE	0%
+   const SKEL_RESPAWN_LIVES	0
+
+	precache monsters/skeleton_boss1.mdl 
+}
+
+#include monsters/skeleton_base
+
+{
+   eventname skeleton_spawn
+
+   name Ghor Ash
+   roam 1
+   takedmg all .9
+    setmodel monsters/skeleton_boss1.mdl
+	setmodelbody	0 1 
+	setmodelbody	1 0 
+
+   hearingsensitivity 3
+   if ( game.map.name equals heras ) giveitem item_runicsymbol 
+   
+   
+
+   
+}

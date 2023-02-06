@@ -1,0 +1,118 @@
+
+{
+   eventname spawn
+
+   hp 1
+   gold 0
+   name Fenrin, the Crest Keeper
+   
+   width 32
+   height 72
+   race human
+   roam 0      
+   setmodel    npc/balancepriest1.mdl
+   invincible  1
+   setvar      CANCHAT 1
+   saytextrange 1024
+
+   catchspeech say_hi hello hail greet
+   catchspeech cheater_guessing edana blades urdual fmu torkalath darktide bou pirates crest guild thoth
+	catchspeech give_orochi krizarid
+
+   precache npc/balancepriest1.mdl
+   precache voices/human/male_idle2.wav		
+
+   setvard PROXY_SPOKE 0
+
+	callevent 0.1 check_central
+}
+
+{ check_central
+
+	if game.central equals 0
+	if !G_DEVELOPER_MODE
+	infomsg all FENRIN_FN_ONLY "You must be connected to [FN] to use the Guild Master"
+	deleteent ent_me
+}
+
+#include monsters/base_npc
+
+{ repeatdelay 1
+	
+	if !PROXY_SPOKE
+	if ( $cansee(player,512) == 1 ) callevent say_hi
+	setvard PROXY_SPOKE 1
+}
+
+{ eventname say_hi
+
+ volume 10
+ saytext Greetings, I am Fenrin, the Master of Guilds.
+ playanim once talkleft
+ calleventtimed 5 say_hi2
+}
+
+{ eventname say_hi2
+
+	if ( $get(ent_lastspoke,name) contains dridje )
+	{
+		if 10 equals 10
+		callevent hi_dridge
+		exitevent
+	}
+
+  volume 10
+  saytext Or I was, now I just kinda sit here looking over this gaudy map fragment.
+	callevent 5.0 say_hi3
+}
+
+{ say_hi3
+	playanim once retina
+  saytext By the gods, this is gaudy. Who built this monstrosity anyways?
+	callevent 5.0 say_hi4
+}
+
+{ say_hi4
+  saytext Oh, if you're here for a crest, that system is changed. You should hit up the forums and send Thothie a PM.
+	callevent 5.0 say_hi5
+}
+
+{ say_hi5
+	playanim once nod
+  saytext The forums being at www.msremake.com, of course.
+}
+
+
+{ hi_dridge
+	playanim once nod
+	saytext Oh hi there Dridje...
+	callevent 3.0 hi_dridge2
+}
+
+{ hi_dridge2
+	playanim once retina
+	setvard NERF_PLR $get(ent_lastspoke,id)
+	saytext Enjoy your rollback.
+	
+	setvard SKILL_TOKENS "archery;bluntarms;axehandling;swordsmanship;polearms;smallarms;spellcasting"
+	setvard PROP_TOKENS "proficiency;power;balance"
+
+	calleventloop $get_token_amt(SKILL_TOKENS) do_nerf
+}
+
+{ do_nerf
+	local CUR_IDX game.script.iteration
+	setvard CUR_SKILL $get_token(SKILL_TOKENS,CUR_IDX)
+	calleventloop $get_token_amt(PROP_TOKENS) do_nerf_props
+}
+
+{ do_nerf_props
+	local CUR_SKILL_NAME CUR_SKILL
+	stradd CUR_SKILL_NAME .
+	stradd CUR_SKILL_NAME $get_token(PROP_TOKENS,game.script.iteration)
+	local L_GRAB_SKILL skill.
+	stradd L_GRAB_SKILL CUR_SKILL_NAME
+	local L_SKILL_LEVEL $get(NERF_PLR,L_GRAB_SKILL)
+	multiply L_SKILL_LEVEL 0.5
+	callexternal NERF_PLR ext_setstat CUR_SKILL_NAME L_SKILL_LEVEL
+}

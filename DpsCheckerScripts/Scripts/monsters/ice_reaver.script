@@ -1,0 +1,373 @@
+
+{
+	const SOUND_WALK1 common/npc_step1.wav
+	const SOUND_WALK2 common/npc_step2.wav
+	const SOUND_WALK3 common/npc_step3.wav
+	const SOUND_WALK4 common/npc_step4.wav
+	const SOUND_RUN1 gonarch/gon_step1.wav
+	const SOUND_RUN2 gonarch/gon_step2.wav
+	const SOUND_RUN3 gonarch/gon_step3.wav 
+	const SOUND_DEATH gonarch/gon_die1.wav
+	const SOUND_WARCRY gonarch/gon_alert1.wav 
+	const SOUND_STRUCK1 gonarch/gon_sack1.wav 
+	const SOUND_STRUCK2 gonarch/gon_sack2.wav 
+	const SOUND_PAIN_STRONG gonarch/gon_pain2.wav
+	const SOUND_PAIN_WEAK gonarch/gon_pain4.wav
+	const SOUND_PAIN_NEAR_DEATH gonarch/gon_pain5.wav
+	const SOUND_SLASHHIT zombie/claw_strike1.wav 
+	const SOUND_SMASHHIT zombie/claw_strike2.wav 
+	const SOUND_SLASHMISS zombie/claw_miss1.wav 
+	const SOUND_SMASHMISS zombie/claw_miss2.wav 
+	const SOUND_BEAMCHARGE debris/beamstart2.wav
+	const SOUND_BEAMFIRE debris/beamstart9.wav
+	const SOUND_SEARCH1 gonarch/gon_childdie3.wav
+	const SOUND_SEARCH2 gonarch/gon_childdie2.wav
+	const SOUND_SEARCH3 gonarch/gon_childdie1.wav
+	setvard SOUND_ATTACKHIT unset
+	setvard SOUND_ATTACKMISS unset
+
+	
+	precache SOUND_SLASHMISS
+	precache SOUND_SLASHHIT
+	precache SOUND_SMASHMISS
+	precache SOUND_SMASHHIT
+	precache SOUND_PAIN_STRONG 
+	precache SOUND_PAIN_WEAK
+	precache SOUND_PAIN_NEAR_DEATH
+
+	
+	setvard ATTACK_RANGE 60
+	setvard ATTACK_HITRANGE 160
+	setvard ATTACK_MOVERANGE 38 
+
+	const STRONG_THRESHOLD 1500
+	const WEAK_THRESHOLD 1000
+	const NEAR_DEATH_THRESHOLD 500
+	const PROJECTILE_RANGE 256
+	const MAX_PROJECTILE_AMMO 1	
+
+	const SLASH_DAMAGE '$rand(50,100)'
+	const SMASH_DAMAGE '$rand(100,250)'
+	const SLASH_HITCHANCE 90%
+	const SMASH_HITCHANCE 100%
+	const SMASH_HITRANGE 200
+	const SMASH_STUN_CHANCE 50%
+
+	setvard BEAM_FREQ 45.0
+	const BEAM_DAMAGE 200
+	const SHOCK_DAMAGE 30
+	const SHOCK_DURATION 10
+
+	setvar ANIM_WALK walk
+	setvar ANIM_RUN run
+	setvar ANIM_IDLE idle1
+	const ANIM_SEARCH idle2
+	setvard ANIM_FLINCH turnl
+	const ANIM_SMASH mattack3
+	const ANIM_SLASH mattack2
+	const ANIM_PROJECTILE distanceattack
+	const ANIM_ALERT distanceattack
+	setvard ANIM_DEATH1 dieforward
+	setvard ANIM_DEATH2 diesimple
+	setvard ANIM_DEATH3 diesideways
+	const ANIM_VICTORY1 victoryeat
+	const ANIM_VICTORY2 victorysniff
+	setvard ANIM_VICTORY victoryeat
+	setvard ANIM_DEATH dieforward
+	setvard ANIM_ATTACK mattack3
+
+	setvard CAN_FLINCH 1
+	setvard FLINCH_HEALTH 500
+	setvard FLINCH_CHANCE 30
+
+	const DOSMASH_CHANCE 30
+
+	setvard IMMUNE_COLD 1
+	setvard IMMUNE_FIRE 0.5 
+	
+	const LIGHTNING_SPRITE lgtning.spr
+	const MONSTER_MODEL monsters/abominable.mdl
+	precache LIGHTNING_SPRITE
+	precache MONSTER_MODEL 
+	precache SOUND_DEATH 
+}
+
+#include monsters/base_monster_new
+
+{ npc_spawn
+
+	name an|Ice Reaver
+	hp 2000
+	roam 1
+	takedmg cold 0.0
+	takedmg ice 0.0
+	takedmg fire 0.5
+
+	if ( $lcase(game.map.name) equals the_wall )
+	{
+		width 48
+		height 64
+	}
+	else
+	{
+		width 72
+		height 64
+	}
+
+	setvard NPC_GIVE_EXP 400
+	race demon 
+	hearingsensitivity 3
+	precache MONSTER_MODEL 
+	setmodel MONSTER_MODEL
+	setmoveanim ANIM_WALK
+
+	if ( $lcase(game.map.name) startswith 'the_wall' ) setvard BEAM_FREQ 15.0
+
+	setvard PROJECTILE_AMMO MAX_PROJECTILE_AMMO
+
+	setvard HP_STORAGE game.monster.hp
+
+	setvard NEXT_PROJECTILE game.time
+	add NEXT_PROJECTILE BEAM_FREQ
+
+
+	callevent 1.0 post_spawn
+}
+
+{ post_spawn
+
+	takedmg holy 0.0 
+}
+
+{ npc_targetsighted 
+
+	if !DID_WARCRY
+
+	
+
+	playsound 0 10 SOUND_WARCRY
+	setvard DID_WARCRY 1	
+	setvard FIRST_ATTACK 1
+	setvard NEXT_PROJECTILE game.time
+	add NEXT_PROJECTILE 1.0
+	setvard AS_ATTACKING game.time
+	add AS_ATTACKING 5.0
+}
+
+{ my_target_died
+
+	callevent ice_reaver_beam_reload
+
+	hp HP_STORAGE 
+
+	if !$cansee(enemy)
+
+	local RAND_VICT $rand(1,2)
+	if ( RAND_VICT == 1 ) setvard ANIM_VICTORY ANIM_VICTORY1
+	if ( RAND_VICT == 2 ) setvard ANIM_VICTORY ANIM_VICTORY2
+	playanim once ANIM_VICTORY
+	playrandomsound 0 10 SOUND_SEARCH1 SOUND_SEARCH2 SOUND_SEARCH3
+}
+
+{ npcatk_hunt
+
+	if !SUSPEND_AI
+	if !I_R_FROZEN
+	if NPCATK_TARGET isnot unset
+	
+
+	
+
+	if game.time > NEXT_PROJECTILE
+	setvard NEXT_PROJECTILE game.time
+	add NEXT_PROJECTILE BEAM_FREQ
+
+	if $cansee(NPCATK_TARGET)
+
+	if ( $get(NPCATK_TARGET,range) > ATTACK_RANGE )
+	{
+		setvard BEAM_TARGET NPCATK_TARGET
+		callevent npcatk_faceattacker
+		playsound 0 10 SOUND_BEAMCHARGE
+		setvard AS_ATTACKING game.time
+		add AS_ATTACKING 5.0
+		callevent npcatk_suspend_movement ANIM_PROJECTILE 2.0 
+		playanim critical ANIM_PROJECTILE
+	}
+	else
+	{
+		callevent reaver_beam_reposition
+		setvard NEXT_PROJECTILE game.time
+		add NEXT_PROJECTILE 3.0
+	}
+}
+
+{ attack_ranged 
+
+	setvard STUN_ATTACK 0
+
+	callevent 0.5 npcatk_resume_ai
+
+	playsound 0 10 SOUND_BEAMFIRE
+
+	setmovedest BEAM_TARGET 9999
+
+	
+
+	
+
+	local BEAM_START game.monster.origin
+	local BEAM_END $get(BEAM_TARGET,origin)
+	
+	effect beam point LIGHTNING_SPRITE 80 $relpos(0,0,-22) BEAM_END (255,255,255) 150 50 0.2
+	effect beam point LIGHTNING_SPRITE 80 $relpos(-22,0,22) BEAM_END (255,255,255) 150 50 0.2
+	effect beam point LIGHTNING_SPRITE 80 $relpos(22,0,22) BEAM_END (255,255,255) 150 50 0.2
+	
+	
+
+	setvard SOUND_ATTACK unset
+	setvard NPC_DAMAGE_TYPE lightning 
+	
+	xdodamage BEAM_TARGET direct BEAM_DAMAGE 100% ent_me ent_me none lightning dmgevent:beam
+}
+
+{ beam_dodamage
+	if PARAM1
+	if $get(PARAM2,relationship,ent_me) equals enemy
+	applyeffect PARAM2 effects/effect_shock_dmg SHOCK_DURATION $get(ent_me,id) SHOCK_DAMAGE
+}
+
+{ reaver_beam_reposition
+
+	callevent npcatk_flee NPCATK_TARGET 640 2.0	
+}
+
+{ npc_selectattack
+
+	
+	local RAND_ATK $rand(1,100)
+	if ( RAND_ATK <= DOSMASH_CHANCE ) setvard ANIM_ATTACK ANIM_SMASH
+	if ( RAND_ATK > DOSMASH_CHANCE ) setvard ANIM_ATTACK ANIM_SLASH
+	if ( FIRST_ATTACK ) setvard ANIM_ATTACK ANIM_SMASH
+	setvard FIRST_ATTACK 0
+}
+
+{ attack_mele1 
+
+	
+	xdodamage NPCATK_TARGET ATTACK_HITRANGE SLASH_DAMAGE SLASH_HITCHANCE ent_me ent_me none slash dmgevent:slash
+}
+
+{ slash_dodamage
+	setvard STUN_ATTACK 0
+	local RANDOM_PUSH $rand(100,175)
+	setvard PUSH_VEL $relvel(-100,RANDOM_PUSH,120)
+	setvard SOUND_ATTACKHIT SOUND_SLASHHIT
+	setvard SOUND_ATTACKMISS SOUND_SLASHMISS
+	local OUT_PAR1 PARAM1
+	local OUT_PAR2 PARAM2
+	local OUT_PAR3 PARAM3
+	local OUT_PAR4 PARAM4
+	local OUT_PAR5 PARAM5
+	callevent mele_attack OUT_PAR1 OUT_PAR2 OUT_PAR3 OUT_PAR4 OUT_PAR5
+}
+
+{ attack_mele2 
+
+	
+	xdodamage NPCATK_TARGET SMASH_HITRANGE SMASH_DAMAGE SMASH_HITCHANCE ent_me ent_me none slash dmgevent:smash
+}
+
+{ slash_dodamage
+	setvard STUN_ATTACK 1
+	setvard SOUND_ATTACKHIT SOUND_SMASHHIT
+	setvard SOUND_ATTACKMISS SOUND_SMASHMISS
+	local RANDOM_PUSH $rand(200,400)
+	setvard PUSH_VEL $relvel(-100,RANDOM_PUSH,120)
+	local OUT_PAR1 PARAM1
+	local OUT_PAR2 PARAM2
+	local OUT_PAR3 PARAM3
+	local OUT_PAR4 PARAM4
+	local OUT_PAR5 PARAM5
+	callevent mele_attack OUT_PAR1 OUT_PAR2 OUT_PAR3 OUT_PAR4 OUT_PAR5
+}
+
+{ npcatk_search_init_advanced
+
+	if !SEARCH_ANIM_DELAY
+	setvard NPC_DELAYING_UNSTUCK 10.0
+	playanim once ANIM_SEARCH
+	playrandomsound 0 10 SOUND_SEARCH1 SOUND_SEARCH2 SOUND_SEARCH3
+	setvard SEARCH_ANIM_DELAY 1
+	callevent 5.0 reset_search_anim
+}
+
+{ reset_search_anim
+	setrvard SEARCH_ANIM_DELAY 0
+}
+
+{ mele_attack 
+
+	if ( !PARAM1 )
+	{
+		if ( SOUND_ATTACKMISS isnot unset ) playsound 0 10 SOUND_ATTACKMISS
+	}
+
+	if ( PARAM1 )
+	{
+		if ( SOUND_ATTACKHIT isnot unset )	playsound 0 10 SOUND_ATTACKHIT
+		addvelocity ent_laststruckbyme PUSH_VEL
+	}
+
+	if ( STUN_ATTACK )
+	{
+		setvard STUN_ATTACK 0
+		if ( $rand(1,100) > SMASH_STUN_CHANCE ) applyeffect NPCATK_TARGET effects/heavy_stun 10 $get(ent_me,id)
+	}
+}
+
+{ game_struck
+
+	setvard HP_STORAGE game.monster.hp 
+
+	if ( game.monster.hp >= 1500 ) local PAIN_SOUND SOUND_PAIN_STRONG
+	if ( game.monster.hp < 1500 ) local PAIN_SOUND SOUND_PAIN_WEAK
+	if ( game.monster.hp < 500 ) local PAIN_SOUND SOUND_PAIN_NEAR_DEATH
+	playrandomsound 0 10 SOUND_STRUCK1 SOUND_STRUCK2 SOUND_STRUCK1 SOUND_STRUCK2 PAIN_SOUND
+}
+
+{ monster_walk_step 
+
+	playrandomsound 0 5 SOUND_WALK1 SOUND_WALK2 SOUND_WALK3 SOUND_WALK4
+}
+
+{ monster_run_step 
+
+   	effect screenshake $relpos(0,0,0) 64 10 0.5 128
+	playrandomsound 0 8 SOUND_RUN1 SOUND_RUN2 SOUND_RUN3
+}
+
+{ npc_death 
+
+	
+	local RAND_DEATH $rand(1,3)
+	if ( RAND_DEATH == 1 ) setvard ANIM_DEATH ANIM_DEATH1
+	if ( RAND_DEATH == 2 ) setvard ANIM_DEATH ANIM_DEATH2
+	if ( RAND_DEATH == 3 ) setvard ANIM_DEATH ANIM_DEATH3
+
+	setvard SUSPEND_AI 1
+	setmovedest none
+	setmoveanim ANIM_DEATH
+}
+
+{ game_reached_destination
+
+	
+	if NPCATK_TARGET equals unset
+	if NPC_LOST_TARGET equals unset
+	if !$cansee(enemy)
+	local RAND_VICT $rand(1,2)
+	if ( RAND_VICT == 1 ) setvard ANIM_VICTORY ANIM_VICTORY1
+	if ( RAND_VICT == 2 ) setvard ANIM_VICTORY ANIM_VICTORY2
+	playanim once ANIM_VICTORY
+}

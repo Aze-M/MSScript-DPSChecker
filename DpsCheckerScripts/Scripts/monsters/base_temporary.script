@@ -1,0 +1,40 @@
+#scope server
+{
+	const DEATH_DELAY 0.5
+	
+	
+	
+	
+}
+
+{ game_spawn
+
+	
+
+	setmodel monsters/rat.mdl
+	setprop ent_me rendermode 5
+	setprop ent_me renderamt 0
+	hp 1
+	width 40
+	height 64
+	name a|Suicide
+	roam 0
+	fly 1
+	hearingsensitivity 0
+	skilllevel 0
+	race hated
+	blood none
+
+	callevent DEATH_DELAY suicide_me
+
+	setvard PLAYING_DEAD 1 
+
+	setidleanim idle
+	setmoveanim idle
+}
+
+{ suicide_me
+	
+	
+	dodamage ent_me direct 99999 100 GAME_MASTER target
+}

@@ -1,0 +1,11 @@
+#include monsters/dwarf_zombie_random
+
+{ [override] pick_weapon_type
+
+	
+	
+	
+	
+	
+	setvard WEAPON_TYPE 1
+}

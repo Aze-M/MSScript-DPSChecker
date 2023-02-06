@@ -1,0 +1,43 @@
+{
+	const STORENAME four
+}
+
+#include items/base_treasurechest
+
+{
+   eventname treasure_spawn
+
+   name a|Treasure Chest STORENAME
+   
+}
+
+{ chest_additems
+
+	
+	addstoreitem  STORENAME		swords_shortsword	1          0
+	addstoreitem  STORENAME		axes_axe		1          0
+	addstoreitem  STORENAME		axes_battleaxe		1          0
+	
+	addstoreitem  STORENAME		smallarms_dagger	1          0
+	callevent add_gold 5 50 5
+	local EXIT_SUB 0
+	callevent get_chance 5 10 100 100 
+	if ( GIVE_PRIZE ) 
+	{
+		addstoreitem  STORENAME     swords_katana		1	    0
+	}
+	callevent get_chance 1 10 100 100 
+	if ( GIVE_PRIZE ) 
+	{
+		addstoreitem  STORENAME     swords_katana2		1	    0
+		local EXIT_SUB 1
+	}
+	if !EXIT_SUB
+	callevent get_chance 1 5 75 100 
+	if ( GIVE_PRIZE ) 
+	{
+		addstoreitem  STORENAME     swords_katana3		1	    0
+		local EXIT_SUB 1
+	}
+}
+

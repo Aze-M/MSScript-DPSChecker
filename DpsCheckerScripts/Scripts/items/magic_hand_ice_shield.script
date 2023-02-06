@@ -1,0 +1,124 @@
+
+{
+	const NO_REGISTER 1
+
+  const SOUND_SHOOT      	magic/cast.wav
+
+  const MELEE_RANGE		600
+  const MELEE_HITCHANCE 	100%
+  const MELEE_ATK_DURATION 	2
+  const MELEE_DMG_DELAY 1
+
+  setvar SPELL_SKILL_REQUIRED	5
+  const SPELL_FIZZLE_TIME	25
+  const SPELL_CAST_SUCCESS	95%
+  const SPELL_PREPARE_TIME	1
+  const SPELL_DAMAGE_TYPE	cold
+  const SPELL_ENERGYDRAIN	50
+  const SPELL_MPDRAIN 0 
+	const MANA_COST	50 
+  const SPELL_STAT		none	
+
+  const EFFECT_MAXDURATION 	30 
+  const EFFECT_MINDURATION 	30 
+  const EFFECT_DURATION_STAT	$get(ent_owner,stat.concentration.ratio)
+  const EFFECT_DURATION_FORMULA $get_skill_ratio(EFFECT_DURATION_STAT,EFFECT_MINDURATION,EFFECT_MAXDURATION)
+  const ICESHIELD_MAX_TAKEDMG 	1	
+  const ICESHIELD_MIN_TAKEDMG 	0.1	
+  const ICESHIELD_SKILL		$get(ent_owner,skill.spellcasting.protection.ratio)
+  const ICESHIELD_FORMULA 	0.5
+  
+  
+
+  const SPELL_SCRIPT		effects/effect_iceshield
+  precachefile 			SPELL_SCRIPT
+}
+
+#include items/magic_hand_base
+
+{  spell_spawn
+
+   name 		Ice Shield
+   desc 		Ice Shield - Provides 50% damage reduction for you or allies, for a time
+}
+
+{ game_attack1
+
+	
+
+	local TIME_DIFF game.time
+	subtract TIME_DIFF LAST_ATTACK
+	if TIME_DIFF > MELEE_ATK_DURATION
+
+	setvard LAST_ATTACK game.time
+
+	playviewanim	ANIM_CAST
+	playowneranim	critical PLAYERANIM_PREPARE squatwalk1
+
+	if ( $get(ent_owner,mp) < MANA_COST ) dplayermessage ent_owner Insufficient mana.
+	if $get(ent_owner,mp) >= MANA_COST
+
+	playsound	game.sound.item game.sound.maxvol SOUND_CHARGE
+
+	local SPELL_TARGET $get(ent_owner,target)
+
+	
+	if ( !$get(SPELL_TARGET,isalive) ) local SPELL_TARGET $get(ent_owner,id)
+	if ( !$get(SPELL_TARGET,isplayer) )
+	{
+		if $get(ent_owner,relationship,SPELL_TARGET) isnot ally
+		local SPELL_TARGET $get(ent_owner,id)
+	}
+
+	
+	
+	
+	
+	local ALREADY_SHIELDED $get(SPELL_TARGET,haseffect,effect_iceshield)
+
+	if ( ALREADY_SHIELDED )
+	{
+		bplayermessage ent_owner "Target is already shielded"
+		
+		
+		local EXIT_SUB 1
+	}
+	if !EXIT_SUB
+
+	local FINAL_DURATION EFFECT_DURATION_FORMULA
+	add FINAL_DURATION 570
+
+	if ( SPELL_TARGET isnot $get(ent_owner,id) )
+	{
+		if ( $get(SPELL_TARGET,isplayer) )
+		{
+			gplayermessage SPELL_TARGET $get(ent_owner,name) has protected you with a shield of ice.
+			local ADD_BONUS 1
+		}
+		if ( $get(SPELL_TARGET,scriptvar,'NPC_CRITICAL') ) local ADD_BONUS 1
+		if ADD_BONUS
+		callexternal ent_owner add_damage_points 500
+	}
+
+	givemp $neg(MANA_COST)
+	callexternal ent_owner mana_drain 
+
+	applyeffect SPELL_TARGET SPELL_SCRIPT FINAL_DURATION ICESHIELD_FORMULA
+	if ( SPELL_TARGET isnot $get(ent_owner,id) )
+	{
+		gplayermessage ent_owner You shield $get(SPELL_TARGET,name)
+
+		if ( $get(SPELL_TARGET,isplayer) ) local L_DMG_BONUS 1
+		if ( $get(SPELL_TARGET,scriptvar,'NPC_CRITICAL') ) local L_DMG_BONUS 1
+		if L_DMG_BONUS
+		local L_BONUS_MSG "for shielding "
+		stradd  L_BONUS_MSG $get(SPELL_TARGET,name)
+		callexternal ent_owner ext_dmgpoint_bonus 1000 L_BONUS_MSG
+	}
+}
+
+
+
+{ fake_precache
+	svplaysound 0 0 SOUND_CHARGE
+}

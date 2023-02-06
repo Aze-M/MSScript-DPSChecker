@@ -1,0 +1,30 @@
+
+{
+   eventname treasure_spawn
+
+   
+   setvar	STORENAME treasure_storeA35
+}
+
+#include items/base_treasurechest
+
+{
+   eventname chest_additems
+
+	callevent add_gold 10 50 10
+	callevent get_players 20
+	local N_ITEMS TC_NPLAYERS
+	capvar N_ITEMS 0 3
+   
+   addstoreitem  STORENAME     blunt_maul	         N_ITEMS         0
+   addstoreitem  STORENAME     bows_shortbow	         N_ITEMS         0
+
+	callevent get_chance 15 15 100 15
+	if ( GIVE_PRIZE )
+	{
+		multiply N_ITEMS 60
+		addstoreitem  STORENAME     proj_arrow_broadhead	 N_ITEMS        0		0	30
+	}
+
+	if ( TC_NPLAYERS > 5 ) callevent add_noob_item 50
+}

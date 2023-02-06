@@ -1,0 +1,11 @@
+{
+	name_unique spawner6
+}
+
+#include keledrosruins/spawner_base
+
+{ spawn_undead
+
+	
+	createnpc monsters/anim_warrior2 $get(ent_me,origin) $get(ent_me,id)
+}

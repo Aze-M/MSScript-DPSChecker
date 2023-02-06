@@ -1,0 +1,9 @@
+#include other/trigger_base
+
+{ apply_damage
+	
+
+
+
+	applyeffect PARAM1 effects/effect_burn EFFECT_TIME GAME_MASTER EFFECT_DAMAGE
+}

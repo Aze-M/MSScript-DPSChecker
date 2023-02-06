@@ -1,0 +1,16 @@
+{
+	setcallback touch enable
+}
+
+{ game_touch
+	
+	if $get(PARAM1,race) isnot human
+	if $get(PARAM1,race) isnot hguard
+	usetrigger PARAM3
+	setcallback touch disable
+	removescript
+}
+
+{ game_used
+
+}

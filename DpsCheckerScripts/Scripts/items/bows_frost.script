@@ -1,0 +1,140 @@
+
+{	
+	const BASE_LEVEL_REQ	25
+	const MODEL_VIEW_IDX	8
+	const MODEL_VIEW       	viewmodels/v_bows.mdl
+	const MODEL_HANDS      	weapons/p_weapons3.mdl
+	const MODEL_WORLD      	weapons/p_weapons3.mdl
+	const MODEL_WEAR	weapons/p_weapons3.mdl
+	const SOUND_SHOOT      	weapons/bow/bow.wav
+	const ITEM_NAME		longbow
+	const ANIM_PREFIX	standard
+	const MODEL_BODY_OFS	44
+
+	const RANGED_AIMANGLE	(0,0,0)
+
+	const SOUND_RESISTUP magic/frost_reverse.wav
+
+	const CUSTOM_ATTACK	1
+
+	const SOUND_RESIST_PREP magic/gaus_warmup.wav
+	const SOUND_RESIST_LOOP ambience/pulsemachine.wav
+	const SOUND_RESIST_LOCK weapons/egon_off1.wav
+}
+
+#include items/bows_base
+
+{ [shared] bow_spawn
+
+	name 			a|Frost Bow
+	desc 			An icy bow that fires icy projectiles.
+	weight 			100
+	value			1500
+	sethudsprite trade	135
+
+	callevent custom_register
+}
+
+{ custom_register
+
+	local reg.attack.type		charge-throw-projectile
+	local reg.attack.keys		+attack1
+	local reg.attack.hold_min&max	1.1;1.3
+	local reg.attack.dmg.type	magic
+	local reg.attack.range		1500
+	local reg.attack.energydrain	1
+	local reg.attack.stat		archery
+	local reg.attack.COF		1;1
+	local reg.attack.projectile	proj_arrow_fbow
+	local reg.attack.priority	0
+	local reg.attack.delay.strike	1.2
+	local reg.attack.delay.end	1.2
+	local reg.attack.ofs.startpos	(0,0,10)
+	local reg.attack.ofs.aimang	RANGED_AIMANGLE
+	local reg.attack.ammodrain	0
+	local reg.attack.callback	ranged
+	local reg.attack.noise		1000
+
+	registerattack
+}
+
+{ [server] bweapon_effect_activate
+	if game.serverside
+
+	if !BOW_PREPPING
+	if !RESIST_ACTIVE
+	setvard NOT_BOGUS_SCRIPT 1
+	callevent setup_bow 
+}
+
+{ [server] setup_bow
+	if game.serverside
+	if !BOW_PREPPING
+	callevent 0.1 prep_bow 
+	if ( !REMOVE_LOOP_ACTIVE )
+	{
+		setvard ABORT_PREP 0
+		setvard REMOVE_LOOP_ACTIVE 1 
+		callevent check_to_remove_loop
+	}
+}
+
+{ [server] prep_bow
+	if game.serverside
+	if !RESIST_ACTIVE
+	setvard BOW_PREPPING 1
+	playsound 0 10 SOUND_RESIST_PREP
+	callevent 10.0 activate_resistance
+	clientevent new all items/bows_frost_cl $get(ent_owner,index)
+	setvard BOW_PREP_SCRIPT_ID game.script.last_sent_id
+	callevent 3.0 play_resist_loop
+}
+
+{ [server] play_resist_loop
+	if game.serverside
+	if BOW_PREPPING
+	svplaysound 1 10 SOUND_RESIST_LOOP
+}
+ 
+{ [server] activate_resistance 
+	if game.serverside
+	if BOW_PREPPING
+	setvard BOW_PREPPING 0
+	if !RESIST_ACTIVE
+	setvard RESIST_ACTIVE 1
+	callexternal ent_owner ext_register_weapon $get(ent_me,id) "cbow" cold 75 
+	playsound 2 10 SOUND_RESIST_LOCK
+	svplaysound 1 0 SOUND_RESIST_LOOP
+} 
+ 
+{ [server] check_to_remove_loop 
+	if game.serverside
+	if REMOVE_LOOP_ACTIVE 
+	callevent 1.0 check_to_remove_loop
+	if ( !$get(ent_owner,isalive) )
+	{
+		callevent bweapon_effect_remove 
+	}
+}
+
+{ [server] bweapon_effect_remove
+	if game.serverside
+
+ 	setvard REMOVE_LOOP_ACTIVE 0
+	if ( BOW_PREPPING ) callevent abort_prep
+	if RESIST_ACTIVE
+	callexternal ent_owner ext_register_weapon $get(ent_me,id) "cbow" remove
+	setvard RESIST_ACTIVE 0
+}
+
+{ [server] abort_prep
+	if game.serverside
+
+	svplaysound 1 0 SOUND_RESIST_LOOP
+	setvard REMOVE_LOOP_ACTIVE 0 
+	setvard RESIST_ACTIVE 0
+	setvard BOW_PREPPING 0 
+	clientevent update all BOW_PREP_SCRIPT_ID remove_sprites 
+}
+
+

@@ -1,0 +1,168 @@
+{ game_spawn
+
+	setvard IS_LURE 1 
+	setvard IMMUNE_PUSH 1 
+	
+
+	hp 1
+	roam 0
+	race human
+	blood none
+	skilllevel 0
+	width 32
+	height 32
+	setmodel null.mdl
+
+	setsolid trigger
+	setbbox npcsize
+
+	callevent 1.0 get_pos
+}
+
+{ get_pos
+	setvard LURE_HOME_POS game.monster.origin
+	callevent 20.0 maintain_pos
+}
+
+{ npc_spawn
+	blood none
+	setprop ent_me const.movetype.none
+}
+
+#include monsters/base_npc
+
+{ game_death
+
+	usetrigger lure_died
+}
+
+{ game_struck
+
+	setorigin ent_me LURE_HOME_POS
+	
+	if $get(ent_laststruck,isplayer) == 1
+	givehp PARAM1
+	
+}
+
+{ game_takedamage 
+
+
+
+	
+	if ( $get(PARAM1,isplayer) )
+	{
+		setdmg dmg 0.0
+		returndata 0
+	}
+	if ( $get(PARAM2,isplayer) )
+	{
+		setdmg dmg 0.0
+		returndata 0
+	}
+}
+
+{ game_damaged
+
+
+
+ 	if $get(PARAM1,isplayer)
+	setdmg dmg 0
+	setdmg hit 0
+	returndata 0
+}
+
+{ [override] effect_damage
+
+	
+
+	if !$get(PARAM2,isplayer)
+
+	if !EFFECT_DAMAGE_DELAY
+	setvard EFFECT_DAMAGE_DELAY 1
+	callevent 0.9 reset_effect_damage
+	dodamage ent_me direct PARAM1 100% PARAM2 PARAM4
+}
+
+{ maintain_pos
+
+	setorigin ent_me LURE_HOME_POS
+	callevent 20.0 maintain_pos
+}
+
+{ make_sun 
+
+	name The sun
+	invincible 1
+	race hated
+}
+
+{ game_postspawn 
+
+
+	setvard NEW_NAME PARAM1
+	if ( NEW_NAME isnot 'default' ) name NEW_NAME
+
+	setvard NPC_DMG_MULTI 1
+	if ( PARAM2 > 1 )
+	{
+		add NPC_DMG_MULTI PARAM2
+		dmgmulti PARAM2
+	}
+
+	setvard NPC_HP_MULTI 1
+	if ( PARAM3 > 1 )
+	{
+		setvard NPC_HP_MULTI PARAM3
+	}
+
+	setvard NPC_DO_EVENTS PARAM4
+	if PARAM4 isnot 'none'
+	calleventloop $get_token_amt(NPC_DO_EVENTS) npcatk_do_events
+}
+
+{ game_death
+
+	
+	if NPC_CRITICAL
+	local INFO_TITLE "A CRITICAL OBJECT HAS BEEN DESTROYED!"
+	local INFO_MSG $get(ent_me,name)
+	stradd INFO_MSG " has been destroyed! "
+	infomsg all INFO_TITLE INFO_MSG
+	callexternal GAME_MASTER gm_crit_npc_died $get(ent_me,id) $get(ent_laststruck,id)
+}
+
+{ game_struck
+
+	if ( NPC_CRITICAL )
+	{
+		
+		if ( !NPC_CRIT_WARN_DELAY )
+		{
+			setvard NPC_CRIT_WARN_DELAY 1
+			callevent NPC_FREQ_WARN npcatk_reset_warn_delay
+			local INFO_TITLE "Critical Object Under Attack!"
+			local INFO_MSG $get(ent_me,name)
+			stradd INFO_MSG " is under attack!"
+			infomsg all INFO_TITLE INFO_MSG
+		}
+	}
+}
+
+{ critical_npc
+
+	
+	invincible 0
+	setvard NPC_CRITICAL 1
+	token.add G_CRITICAL_NPCS $get(ent_me,id)
+	setvarg G_SIEGE_MAP 1
+	local FIRST_TOKEN $get_token(G_CRITICAL_NPCS,0)
+	if ( !$get(FIRST_TOKEN,isalive) ) token.del G_CRITICAL_NPCS 0 
+}
+
+{ npcatk_reset_warn_delay
+	
+	setvard NPC_CRIT_WARN_DELAY 0
+}
+
+#include [server] monsters/debug

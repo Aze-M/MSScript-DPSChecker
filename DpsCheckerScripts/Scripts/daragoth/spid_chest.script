@@ -1,0 +1,22 @@
+{
+   eventname treasure_spawn
+
+	setvar STORENAME spid_chest
+	
+}
+
+#include items/base_treasurechest
+
+{
+   eventname chest_additems
+
+	callevent add_gold 5 25 5
+
+   
+   addstoreitem  STORENAME     drink_mead 	5          0
+   addstoreitem  STORENAME     health_apple 	5          0
+}
+
+{ game_playerused
+	callexternal all spider_chest_used
+}

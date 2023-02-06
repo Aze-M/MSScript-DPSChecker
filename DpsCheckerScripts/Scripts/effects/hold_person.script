@@ -1,0 +1,160 @@
+
+{ [server]
+	const EFFECT_ID			effect_hold
+	const EFFECT_NAME		"hold"
+	const EFFECT_ACTIONTYPE		nostack
+	const EFFECT_SCRIPT		$currentscript
+	const SOUND_FREEZE magic/freeze.wav
+
+	setvard game.effect.id		EFFECT_ID
+	setvard game.effect.displayname	EFFECT_NAME
+	setvard game.effect.type	EFFECT_ACTIONTYPE
+
+	const DOT_EFFECT 1
+	const DOT_TYPE ACTIVE_DOT_TYPE
+	const DOT_DMG EFFECT_DAMAGE
+	const DOT_FREQ $randf(0.9,1.1)
+	const DOT_ATTACKER MY_ATTACKER
+	const DOT_SKILL ACTIVE_SKILL
+}
+
+#include effects/effect_base	allowduplicate
+
+{ [server] game_activate 
+
+	if !$get(ent_me,scriptvar,'IS_LURE') 
+
+	setvard ACTIVE_DOT_TYPE lightning_effect
+	setvard ACTIVE_SKILL spellcasting.lightning
+	setvard CL_FX_SCRIPT effects/hold_person_cl
+
+
+
+	if ( STONE_FX )
+	{
+	
+		setvard ACTIVE_DOT_TYPE blunt_effect
+		setvard ACTIVE_SKILL spellcasting.earth
+		setvard CL_FX_SCRIPT effects/hold_person_stone_cl
+	}
+
+	if ( $get(ent_me,width) > 48 )
+	{
+		if $get(PARAM2,isplayer) 
+		if ( !STONE_FX ) dplayermessage PARAM2 Stone Coil: $get(ent_me,name) too large for force cage
+		else dplayermessage PARAM2 Stone Coil: $get(ent_me,name) too large to encase in stone.
+		callevent effect_die resisted
+		local EXIT_SUB 1
+	}
+	if !EXIT_SUB
+
+
+	if ( !STONE_FX ) playsound 0 10 SOUND_FREEZE
+
+	setvard local.effect.duration 	PARAM1
+
+		setvard game.effect.movespeed 0.0001%
+		setvard game.effect.canjump 0
+		if ( STONE_FX )
+		{
+			setvard game.effect.canattack 0
+			setvard game.effect.anim.framerate 0.01
+		}
+
+	setvard MY_ATTACKER PARAM2
+
+	setvard EFFECT_DAMAGE 0
+	if ( PARAM3 isnot 'PARAM3' ) setvard EFFECT_DAMAGE PARAM3
+
+	if ( EFFECT_DAMAGE == 0 ) setvard DOT_ABORT 1
+
+	if ( !STONE_FX ) playermessage ent_me You are held in a magic field!
+	else playermessage ent_me You are encased in stone!
+
+	callevent local.effect.duration effect_die
+
+	if game.serverside
+	callexternal $get(ent_me,id) ext_set_frozen local.effect.duration 1
+
+	setvard HOLD_POS $get(ent_me,origin)
+
+	setvard EFFECT_BEGAN game.time
+	callevent do_cage
+
+	setvard IS_ACTIVE 1
+	
+	createnpc monsters/summon/holder $get(ent_me,origin) local.effect.duration $get(ent_me,id)
+	setvard HOLDER_ID $get(ent_lastcreated,id)
+	setvelocity ent_me $vec(0,0,0)
+	callexternal $get(ent_me,id) ext_hold_person local.effect.duration
+}
+
+{ do_cage
+
+	
+	local MY_VEL $get(ent_me,velocity)
+	local MY_VEL_X $vec.x(MY_VEL)
+	local MY_VEL_Y $vec.y(MY_VEL)
+	local MY_VEL_Z $vec.z(MY_VEL)
+	local TOTAL_VEL MY_VEL_X
+	add TOTAL_VEL MY_VEL_Y
+	add TOTAL_VEL MY_VEL_Z
+	if ( TOTAL_VEL == 0 )
+	{
+		local NEW_DURATION EFFECT_BEGAN
+		add NEW_DURATION local.effect.duration
+		subtract NEW_DURATION game.time
+		clientevent new all CL_FX_SCRIPT $get(ent_me,index) NEW_DURATION $get(ent_me,width) $get(ent_me,height)
+	}
+	else
+	{
+		callevent 0.5 do_cage
+	}
+}
+
+{ [shared] game_death
+	callevent effect_die
+}
+
+{ [shared] effect_die
+
+	if PARAM1 isnot resisted
+
+	if ( !STONE_FX ) playermessage ent_me The magic field dissipates.
+	else playermessage ent_me The stone crumbles away.
+
+	setvard IS_ACTIVE 0
+	if ( game.clientside )
+	{
+		removescript
+	}
+
+	callexternal $get(ent_me,id) hold_person_end
+	callexternal $get(ent_me,id) ext_set_unfrozen
+	deleteent HOLDER_ID
+	setvard EFFECT_DAMAGE 0
+
+	setvard game.effect.movespeed 100%
+	setvard game.effect.canjump 1
+	setvard game.effect.canattack 1
+	setvard game.effect.anim.framerate 1.0
+
+	if ( !STONE_FX ) playsound 0 10 magic/energy1_loud.wav
+}
+
+{
+repeatdelay DOT_FREQ
+	
+
+	if BE_EFFECT_ACTIVE
+	callevent dot_effect
+	if ( !$get(ent_me,isalive) ) callevent effect_die
+}
+
+{ game_damaged
+	
+	if STONE_FX
+	if PARAM3 !contains effect
+	setdmg dmg 0.25
+	returndata 0.25
+}

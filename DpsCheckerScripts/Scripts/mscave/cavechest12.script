@@ -1,0 +1,21 @@
+{
+	const STORENAME twelve
+}
+
+#include items/base_treasurechest
+
+{
+	eventname treasure_spawn
+
+	name a|Treasure Chest STORENAME
+	
+}
+
+{
+	eventname chest_additems
+
+
+	callevent add_gold 10 100 10 
+	
+	addstoreitem  STORENAME     mana_mpotion 	 1          0
+}

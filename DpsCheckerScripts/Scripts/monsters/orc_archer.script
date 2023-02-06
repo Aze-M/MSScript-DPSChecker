@@ -1,0 +1,41 @@
+{
+   setvard DROP_GOLD 1			
+   setvard DROP_GOLD_AMT $rand(2,8)	
+   setvard NPC_GIVE_EXP 25
+
+   setvard ANIM_ATTACK shootorcbow	
+
+   const AIM_RATIO 30			
+   const ARROW_DAMAGE_LOW 3
+   const ARROW_DAMAGE_HIGH 5
+   setvard MOVE_RANGE 400
+   setvard ATTACK_RANGE 800
+   const ATTACK_SPEED 700
+   const ATTACK_CONE_OF_FIRE 3
+
+   setvard DROP_ITEM1 bows_orcbow 
+   setvard DROP_ITEM1_CHANCE 20%	  
+   setvard DROP_ITEM2 proj_arrow_wooden 30 
+   setvard DROP_ITEM2_CHANCE 80%	  
+
+   setvard DROPS_CONTAINER 1
+   setvard CONTAINER_DROP_CHANCE 10% 
+   setvard CONTAINER_SCRIPT chests/quiver_of_bluntwood
+}
+
+#include monsters/orc_base_ranged
+#include monsters/orc_base
+
+{
+   eventname orc_spawn
+
+   hp 40
+   
+   name an|Orc Archer
+   hearingsensitivity 1.5
+   setstat parry 20
+
+   setmodelbody	0 1		
+   setmodelbody	1 1		
+   setmodelbody	2 2		
+}

@@ -1,0 +1,97 @@
+
+{
+	const SPRITE_ARROW_TRADE	firearrow
+	const ARROW_BODY_OFS		0
+
+	const PROJ_DAMAGE		$rand(100,150)
+	const PROJ_DAMAGETYPE		fire
+	const ARROW_STICK_DURATION	25 	
+	const PROJ_STICK_DURATION	25
+	const ARROW_SOLIDIFY_ON_WALL	0 	
+	const ARROW_BREAK_CHANCE	0%	
+  	const ARROW_EXPIRE_DELAY 	100 
+
+	const SFX_SCRIPT		items/proj_arrow_fire_cl
+	precachefile 			SFX_SCRIPT
+
+	const LOOPSND_NAME		items/torch1.wav
+	const LOOPSND_LENGTH		6
+	const LOOPSND_VOLUME		5
+}
+
+#include items/proj_arrow_base
+#include items/base_loopsnd
+
+{  arrow_spawn
+
+	name 		Fire Arrow
+	desc 		This kind of arrow is merely used for lighting up dark areas
+	weight 		0.2
+	size 		1
+	value		10
+	gravity		0.8
+	groupable	15
+}
+
+{ game_putinpack
+
+  	callevent loopsnd_end	
+}
+{ game_fall
+
+  	callevent loopsnd_start	
+}
+
+{ arrow_hitwall
+
+  	callevent loopsnd_start	
+}
+
+{  game_tossprojectile
+
+	
+
+	clientevent new all SFX_SCRIPT $get(ent_me,index)
+   setvard SCRIPT_1_ID game.script.last_sent_id
+}
+
+{ hitwall
+	local TRACE_START $get(ent_me,origin)
+	local TRACE_END TRACE_START
+	vectoradd TRACE_END $relpos(0,100,0)
+	effect decal TRACE_END 46
+}
+
+{  projectile_landed
+
+	
+	
+	
+	setsolid none
+	callevent loopsnd_end
+	clientevent update all SCRIPT_1_ID loop_sound
+	callevent 10.0 projectile_expire
+}
+
+{ game_dodamage
+
+	if PARAM1
+
+	local MY_OWNER $get(ent_expowner,id)
+	applyeffect PARAM2 effects/effect_burn 5 MY_OWNER 1 1 1 archery
+}
+
+{ game_projectile_hitnpc
+	if $get(PARAM1,isalive)
+	clientevent update all SCRIPT_1_ID transfer_owner $get(PARAM1,index)
+}
+
+{ projectile_broke
+
+	callevent loopsnd_end 
+}
+
+{ projectile_expire
+	deleteent ent_me
+}
+

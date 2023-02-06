@@ -1,0 +1,219 @@
+
+#scope server
+
+
+{ [shared]
+	const STORM_HEIGHT 260
+	const SMOKE_SPRITE bigsmoke.spr
+	const LIGHTNING_SPRITE lgtning.spr
+	const LIGHTNING_SPRITE_SPARKS	3dmflaora.spr
+	const STORM_WIDTH 75
+	precache LIGHTNING_SPRITE_SPARKS	
+	precache SMOKE_SPRITE
+	precache LIGHTNING_SPRITE		
+
+	const AOE_FREQ 1.0
+	const AOE_RADIUS 150
+}
+
+#include monsters/summon/base_aoe
+
+{  game_spawn
+	name a|Lightning Storm
+	setmodel null.mdl
+	width 1
+	height 1
+	setidleanim none
+	invincible 1
+	setsolid none
+	blood none
+	width 10
+	height 10
+	race hated
+	hp 1
+	nopush 1
+
+	setvard PLAYING_DEAD 1 
+
+	setvard LOOP_SOUND 0
+	setvard I_DO_LIGHTNING_DAMAGE 1
+}
+
+{ [server] game_dynamically_created
+
+	setvard NEG_WIDTH $neg(STORM_WIDTH)
+
+	setvard MY_OWNER PARAM1
+	setvard MY_BASE_DAMAGE PARAM3
+	setvard STORM_DURATION PARAM4
+	setvard ACTIVE_SKILL PARAM5
+	if ( ACTIVE_SKILL equals 'PARAM5' ) setvard ACTIVE_SKILL spellcasting.lightning
+	race $get(MY_OWNER,race)
+
+	
+
+	setvard CAST_BY_PLAYER $get(PARAM1,isplayer)
+
+	
+	
+
+	setangle face.y PARAM2
+
+	
+	local FIND_GROUND_START game.monster.origin
+	local FIND_GROUND_END FIND_GROUND_START
+	vectorset FIND_GROUND_END z -10000
+	local FIND_GROUND_TRACE $get_traceline(FIND_GROUND_START,FIND_GROUND_END,worldonly)
+
+	local F_GROUND_Z $vec.z(FIND_GROUND_TRACE)
+
+
+	if ( CAST_BY_PLAYER )
+	{
+		setvard STORM_COUNT 0
+		if ( FX_SPAMMERS < MAX_FX_SPAMMERS )
+		{
+			clientevent new all $currentscript $get(ent_me,origin) PARAM2  F_GROUND_Z
+			setvard STORM_CLID game.script.last_sent_id
+		}
+		if ( FX_SPAMMERS >= MAX_FX_SPAMMERS ) consolemsg all Some effects hidden to prevent crash.
+	}
+
+	if ( !CAST_BY_PLAYER )
+	{
+		clientevent new all $currentscript $get(ent_me,origin) PARAM2 F_GROUND_Z
+		setvard STORM_CLID game.script.last_sent_id
+		callevent STORM_DURATION lstorm_end
+	}
+
+	callevent do_storm
+}
+
+{ do_storm 
+
+	callevent 0.25 do_storm	
+
+	if ( CAST_BY_PLAYER )
+	{
+		add STORM_COUNT 1
+		if STORM_COUNT > 20
+		
+		callevent lstorm_end
+	}
+
+	
+
+	
+
+	
+	
+	
+	
+
+	
+	
+
+	add LOOP_SOUND 1
+	if ( LOOP_SOUND >= 3 )
+	{
+		playsound 0 7 weather/lightning.wav
+		setvard LOOP_SOUND 0
+	}
+
+	
+	
+
+	
+	
+}
+
+
+
+{ apply_aoe_effect
+	if !$get(PARAM1,haseffect,DOT_lightning)
+
+	local EFFECT_DUR 5.0
+	if ( $get(MY_OWNER,isplayer) ) multiply EFFECT_DUR 2
+	applyeffect PARAM1 effects/effect_shock_dmg EFFECT_DUR MY_OWNER MY_BASE_DAMAGE ACTIVE_SKILL
+}
+
+{ sustain_storm 
+
+	clientevent update all STORM_CLID cl_pos_update $get(ent_me,origin)
+	setvard STORM_COUNT 0
+}
+
+{ lstorm_end  
+
+	callexternal MY_OWNER using_lightning 0
+
+	clientevent remove all STORM_CLID
+	deleteent ent_me
+}
+
+
+{ [client]
+   const HEIGHT 250
+   const WIDTH 64
+
+}
+
+{ [client] client_activate
+
+   setvard smoke_POSITION PARAM1
+   setvard smoke_ANGLE $vec(0,PARAM2,0)
+	setvard GROUND_Z PARAM3
+   callevent smokes_start
+}
+
+{ [client]
+   repeatdelay 0.25
+   callevent smokes_shoot
+}
+
+{ [client] smokes_shoot
+   local NEGWIDTH WIDTH
+   multiply NEGWIDTH -1
+
+   local x $rand(NEGWIDTH,WIDTH)
+   local y $rand(NEGWIDTH,WIDTH)
+   local L_POS $relpos(smoke_ANGLE,$vec(x,y,HEIGHT))
+   vectoradd L_POS smoke_POSITION
+
+	local GROUND_LPOS $get_ground_height(L_GPOS)
+	local L_GPOS L_POS
+	vectorset L_GPOS z GROUND_LPOS
+	callevent cl_beam L_POS L_GPOS
+
+   cleffect tempent sprite bigsmoke.spr L_POS setup_smokes
+}
+
+{ [client] cl_pos_update
+
+   setvard smoke_POSITION PARAM1
+}
+
+{ [client] cl_beam
+	local CL_BEAM_START PARAM1
+	
+	local CL_BEAM_END CL_BEAM_START
+	vectorset CL_BEAM_END z GROUND_Z
+	playermessage MY_OWNER CL_BEAM_START - CL_BEAM_END
+	
+	cleffect beam_points CL_BEAM_START CL_BEAM_END lgtning.spr 1.0 60 .4 .5 1 2 (255,255,0)
+}
+
+{  [client] setup_smokes
+
+
+   cleffect tempent set_current_prop death_delay 	2.5
+   cleffect tempent set_current_prop framerate		10
+   cleffect tempent set_current_prop frames		17
+   cleffect tempent set_current_prop bouncefactor 	0
+   cleffect tempent set_current_prop scale 		$randf(0.5,1.0)
+   cleffect tempent set_current_prop rendermode		alpha
+   cleffect tempent set_current_prop renderamt		255
+   cleffect tempent set_current_prop rendercolor	(0,0,0)
+   cleffect tempent set_current_prop gravity 		.005
+   cleffect tempent set_current_prop collide 		none
+}

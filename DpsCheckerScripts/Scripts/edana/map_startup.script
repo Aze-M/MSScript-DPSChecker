@@ -1,0 +1,33 @@
+{ [shared]
+
+	const MAP_NAME 		'edana'
+	const MAP_WEATHER 	clear;clear;clear;clear;rain;clear
+	const MAP_ALLOWNIGHT 	1
+
+
+	setvarg G_CONTROL_MAP 1
+
+	setvarg G_MAP_NAME "The Village of Edana"
+	setvarg G_MAP_DESC "This village grew around the temple of Urdual of the southern frontier"
+	setvarg G_MAP_DIFF "(Beginner/Safe Area)"
+
+	setvarg MAP_CON 1
+}
+
+#include worlditems/map_startup
+
+{ [client] game_newlevel	
+
+	if PARAM1 equals MAP_NAME
+
+	
+
+	local reg.texture.name		'reflective'
+	local reg.texture.reflect	1
+	local reg.texture.reflect.blend	1
+	local reg.texture.reflect.color	1;1;1;0.2
+	local reg.texture.reflect.range	256
+	local reg.texture.reflect.world	0
+	local reg.texture.water		0
+	registertexture
+}

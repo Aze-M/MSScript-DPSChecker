@@ -1,0 +1,6 @@
+#scope server
+{
+	const DEATH_DELAY 3.0
+}
+
+#include [server] monsters/base_temporary

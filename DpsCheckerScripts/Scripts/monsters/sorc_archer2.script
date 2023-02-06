@@ -1,0 +1,38 @@
+{
+	const ARROW_TYPE proj_arrow_lightning
+	const FIN_EXP 200
+	setvard DROP_GOLD_AMT $rand(20,60)
+
+	const DROP_ITEM_BASE1 bows_swiftbow
+
+	const CONTAINER_BASE chests/quiver_of_lightning
+
+	const AM_SORC 1
+
+   const ARROW_DAMAGE_LOW 75
+   const ARROW_DAMAGE_HIGH 150
+
+	const AM_SORC 1 
+}
+
+#include monsters/orc_sniper
+
+{ orc_spawn
+
+   hp 500
+   
+   name a|Shadahar Archer
+   hearingsensitivity 10
+   setstat parry 60
+   takedmg all .7
+	race orc
+
+	setmodel monsters/sorc.mdl
+
+	setvard DOING_KICK 0
+	setvard KICK_TYPE 1
+
+	setmodelbody 0 3 
+	setmodelbody 1 2 
+	setmodelbody 2 2 
+}

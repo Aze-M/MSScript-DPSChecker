@@ -1,0 +1,140 @@
+{
+	
+	const MODEL_HANDS misc/p_misc.mdl
+	const MODEL_WORLD misc/p_misc.mdl
+	const MODEL_BODY_OFS 16
+	const MODEL_VIEW none
+
+	
+	const NEW_ARMOR_MODEL armor/p_armorvest_new.mdl
+}
+
+#include items/base_item
+#include items/base_effect_armor
+
+{  game_spawn
+
+	setworldmodel MODEL_WORLD
+	sethudsprite hand armor
+	sethudsprite trade leather
+
+	sethand any
+
+	setvard ARMOR_TYPE BARMOR_TYPE
+	setvard ARMOR_PROTECTION 0
+	setvard ARMOR_PROTECTION_AREA BARMOR_PROTECTION_AREA
+	setvard ARMOR_REPLACE_BODYPARTS BARMOR_PROTECTION_AREA
+
+	registerarmor
+
+
+	setmodelbody 0 NEW_ARMOR_OFS
+	callevent hide_body_parts
+
+	if game.serverside
+	setvard L_PERC_TO_FLOAT BARMOR_PROTECTION
+	multiply L_PERC_TO_FLOAT 0.01
+	setvard DMG_REDUCT 1
+	subtract DMG_REDUCT L_PERC_TO_FLOAT
+}
+
+{ hide_body_parts
+	
+	
+	callexternal ent_owner ext_setbodytype BARMOR_TYPE
+}
+
+{ show_body_parts
+	
+	callexternal ent_owner ext_setbodytype normal
+}
+
+{ game_deploy
+
+	setviewmodel  MODEL_VIEW
+	setmodel MODEL_HANDS
+
+	local L_SUBMODEL 16
+	add L_SUBMODEL game.item.hand_index
+	setmodelbody 0 L_SUBMODEL
+}
+
+{ game_wear
+
+	setmodel NEW_ARMOR_MODEL
+	setmodelbody 0 NEW_ARMOR_OFS
+
+	playermessagecl ARMOR_TEXT ( BARMOR_PROTECTION )
+
+	if game.serverside
+	
+	callevent hide_body_parts
+
+	if $get(ent_owner,stat.strength) < ARMOR_STR_REQ
+	callevent 0.1 failed_str_req_loop
+}
+
+{ barmor_effect_remove
+	if $get(ent_owner,scriptvar,'PLR_BODY_TYPE') isnot normal
+	
+	callevent show_body_parts
+}
+
+{ barmor_effect_activate
+	callexternal ent_owner ext_setbodytype BARMOR_TYPE
+}
+
+{ failed_str_req_loop
+	if $get(ent_me,is_worn)
+	if $get(ent_owner,stat.strength) < ARMOR_STR_REQ
+	callevent 10.0 failed_str_req_loop
+	local ALRT_STR "You are too weak to move freely in this armor. (Min Strength "
+	stradd ALRT_STR ARMOR_STR_REQ
+	stradd ALRT_STR ")"
+	infomsg ent_owner "Insufficient Strength for Armor" ALRT_STR
+	applyeffectstack ent_owner effects/effect_slow 10.0 50% $get(ent_me,id) 
+}
+
+{ ext_activate_items
+	if PARAM1 equals $get(ent_owner,id)
+	if $get(ent_owner,stat.strength) < ARMOR_STR_REQ
+	callevent 0.1 failed_str_req_loop
+}
+
+{ game_takedamage 
+
+	if $get(ent_me,is_worn) 
+	
+	
+	if ( $get(ent_owner,scriptvar,'PLR_SPIDER_PROT') )
+	{
+		if $get(PARAM1,race) equals spider
+		local DMG_RED_AMT $get(ent_owner,scriptvar,'PLR_SPIDER_AMT')
+		local OUT_DMG PARAM3
+		multiply OUT_DMG PLR_SPIDER_AMT
+		setdmg hit 1
+		setdmg dmg OUT_DMG
+		returndata PLR_SPIDER_AMT
+	}
+
+	if ( PARAM4 contains poison )
+	{
+		
+		
+		local OUT_DMG PARAM3
+		multiply PARAM3 0.5
+		setdmg hit 1
+		setdmg dmg PARAM3
+		returndata 0.5
+	}
+	else
+	{
+		
+		if !$get(PARAM1,scriptvar,'NPC_IGNORES_ARMOR')
+		multiply PARAM3 DMG_REDUCT
+		setdmg hit 1
+		setdmg dmg PARAM3
+		returndata DMG_REDUCT
+	}
+}
+

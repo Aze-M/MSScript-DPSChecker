@@ -1,0 +1,47 @@
+#scope server
+{ game_dynamically_created 
+	setvard HOLD_TARGET PARAM2
+	if PARAM1 > 0
+	callevent PARAM1 remove_me
+}
+
+{ game_spawn
+	
+	setmodel misc/treasure.mdl
+	setprop ent_me scale 0.01
+	setprop rendermode 5
+	setprop renderamt 0
+	width 5
+	height 5
+	nopush 1
+	race hated
+	
+	setidleanim none
+	setmoveanim none
+	setvard PLAYING_DEAD 1
+}
+
+{ remove_me
+	deleteent ent_me
+	removescript
+}
+
+{ game_damaged 	
+	if $get(PARAM1,relationship,ent_me) equals enemy
+
+	local L_ACTIVE_SKILL none
+	if ( $get(PARAM1,isplayer) )
+	{
+		local L_ACTIVE_SKILL PARAM5
+	}
+	xdodamage HOLD_TARGET direct PARAM2 PARAM4 PARAM1 PARAM1 L_ACTIVE_SKILL PARAM3
+	setdmg dmg 0.0
+	setdmg hit 0.0
+	returndata 0
+}
+
+{ game_applyeffect
+	local L_RETURN redirect
+	token.add L_RETURN HOLD_TARGET
+	returndata L_RETURN
+}

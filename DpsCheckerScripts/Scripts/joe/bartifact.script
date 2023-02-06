@@ -1,0 +1,35 @@
+
+{ game_spawn
+
+	hp 1000
+	name A Bloodshrine Artifact
+	width 12
+	height 6
+	race beloved
+	setmodel misc/bartifact.mdl
+	invincible 1
+	setalive 0 
+	setangle face $vec(90,0,0)
+	menu.autoopen 1
+
+	setvard THE_PLAYER 0
+}
+
+#include monsters/base_npc
+
+{ itemtook
+
+	setvard THE_PLAYER PARAM1
+	
+	usetrigger door_event
+	deleteent ent_me
+}
+
+{ game_menu_getoptions
+
+	local reg.mitem.id takeitem
+	local reg.mitem.title "Remove the stone"
+	local reg.mitem.callback itemtook
+	
+	menuitem.register
+}

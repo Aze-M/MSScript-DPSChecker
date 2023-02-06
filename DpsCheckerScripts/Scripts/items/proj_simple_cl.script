@@ -1,0 +1,271 @@
+
+{ client_activate 
+
+	setcallback render enable
+
+	setvard FX_OWNER PARAM1
+	setvard FX_EXP_OWNER PARAM2
+	local L_INFO_STRING PARAM3
+	setvard FX_MODEL_NAME PARAM4
+	setvard FX_MODEL_OFS PARAM5
+	setvard FX_USE_MOTIONBLUR PARAM6
+	setvard FX_SPECIAL PARAM7 
+
+	setvard FX_MAX_DURATION 5.0 
+	setvard FX_SCALE 1.0
+	setvard FX_FREMOVE_DELAY 0.25 
+
+	setvard FX_ACTIVE 1
+	setvard FX_IN_FLIGHT 1
+
+	setvard FX_UPDATE_ORG 0
+	setvard FX_UPDATE_ANG 0
+	setvard FX_UPDATE_VEL 0
+
+	setvard FX_ORIGIN $get_token(L_INFO_STRING,0)
+	setvard FX_ANGLES $get_token(L_INFO_STRING,1)
+	setvard FX_VELOCITY $get_token(L_INFO_STRING,2)
+	setvard FX_ANIM_IDX $get_token(L_INFO_STRING,3)
+	setvard FX_GRAVITY $get_token(L_INFO_STRING,4)
+	setvard FX_DO_STICK 1 
+	setvard FX_STICK_TARGET 0
+
+	if ( FX_ANIM_IDX == -1 ) setvard FX_ANIM_IDX 0
+
+
+
+
+	cleffect tempent model FX_MODEL_NAME FX_ORIGIN make_clfx_proj update_clfx_proj collide_clfx_proj
+
+	callevent FX_MAX_DURATION end_fx
+}
+
+{ end_fx 
+
+
+	if ( FX_DO_STICK )
+	{
+		if ( PARAM1 equals touch_remove ) local L_ABORT_REMOVE 1
+		if ( PARAM1 equals strike_target ) local L_ABORT_REMOVE 1
+		if ( PARAM1 equals landed ) local L_ABORT_REMOVE 1
+		if L_ABORT_REMOVE
+		exitevent
+	}
+	setvard FX_ACTIVE 0
+	callevent FX_FREMOVE_DELAY remove_fx
+}
+
+{ remove_fx
+	removescript
+}
+
+{ ext_scale 
+
+	setvard FX_SCALE PARAM1
+	setvard FX_UPDATE_SPECIAL 1
+}
+
+{ ext_lighten 
+
+	setvard FX_GRAVITY PARAM1
+	setvard FX_UPDATE_SPECIAL 1
+}
+
+{ ext_touch 
+
+	
+}
+
+{ ext_hitnpc 
+	setvard FX_STICK_TARGET PARAM1
+
+	setvard FX_DO_STICK 1 
+	if FX_DO_STICK
+	setvard FX_IN_FLIGHT 0
+}
+
+{ ext_update 
+
+	setvard FX_SV_UPDATE 1
+	setvard FX_ORIGIN PARAM1
+	setvard FX_ANGLES PARAM2
+	setvard FX_VELOCITY PARAM3
+}
+
+{ make_clfx_proj
+
+	cleffect tempent set_current_prop origin FX_ORIGIN
+	cleffect tempent set_current_prop bouncefactor 0
+	cleffect tempent set_current_prop death_delay 10.0
+	cleffect tempent set_current_prop scale 1.0
+	cleffect tempent set_current_prop gravity FX_GRAVITY
+	cleffect tempent set_current_prop angles FX_ANGLES
+	cleffect tempent set_current_prop velocity FX_VELOCITY
+	cleffect tempent set_current_prop collide all FX_EXP_OWNER
+	cleffect tempent set_current_prop body 	FX_MODEL_OFS
+	cleffect tempent set_current_prop framerate 1.0
+	cleffect tempent set_current_prop frames 16
+	cleffect tempent set_current_prop sequence FX_ANIM_IDX
+}
+
+{ update_clfx_proj
+	if ( FX_ACTIVE )
+	{
+		if ( FX_IN_FLIGHT )
+		{
+			
+			
+			
+			
+			
+			
+
+			if ( FX_SV_UPDATE )
+			{
+			
+				setvard FX_SV_UPDATE 0
+				local L_MY_POS game.tempent.origin
+				if ( $dist(FX_UPDATE_ORG,L_MY_POS) > 100 ) cleffect tempent set_current_prop origin FX_ORIGIN
+				cleffect tempent set_current_prop angles FX_ANGLES
+				cleffect tempent set_current_prop velocity FX_VELOCITY
+			}
+
+			if ( FX_UPDATE_SPECIAL )
+			{
+			
+				setvard FX_UPDATE_SPECIAL 0
+				cleffect tempent set_current_prop scale FX_SCALE
+				cleffect tempent set_current_prop scale FX_GRAVITY
+			}
+			
+
+			if ( FX_USE_MOTIONBLUR ) callevent fx_motion_blur
+		}
+		else
+		{
+			if ( FX_DO_STICK )
+			{
+				if ( FX_STICK_TARGET != 0 )
+				{
+					if ( $getcl(FX_STICK_TARGET,exists) )
+					{
+						local L_STICK_POINT $getcl(FX_STICK_TARGET,origin)
+						if ( FX_USE_BONE > -1 ) local L_STICK_POINT $getcl(FX_STICK_TARGET,bonepos,FX_USE_BONE)
+						local L_MY_POS game.tempent.origin
+						if ( !FX_STICK_OFS_SET )
+						{
+							setvard FX_STICK_OFS_SET 1
+							setvard FX_STICK_DIR $dir(L_STICK_POINT,L_MY_POS)
+							setvard FX_STICK_DIST $dist(L_MY_POS,L_STICK_POINT)
+							vectormultiply FX_STICK_DIR FX_STICK_DIST
+							cleffect tempent set_current_prop framerate 0
+							cleffect tempent set_current_prop movetype 0
+							cleffect tempent set_current_prop gravity 0
+							cleffect tempent set_current_prop collide none
+							setvard FX_STICK_ANGS game.tempent.angles
+						}
+						
+						
+						local L_TARG_YAW $getcl(FX_STICK_TARGET,angles)
+						local L_TARG_YAW $vec.y(L_TARG_YAW)
+						add L_TARG_YAW 180
+						if ( L_TARG_YAW > 359.99 ) subtract L_TARG_ANG 359.99
+						local L_NEW_ANG FX_STICK_ANGS
+						vectorset L_NEW_ANG y L_TARG_YAW
+						cleffect tempent set_current_prop angles L_NEW_ANG
+
+						
+						vectoradd L_STICK_POINT FX_STICK_DIR
+						cleffect tempent set_current_prop origin L_STICK_POINT
+					}
+					else
+					{
+						callevent end_fx
+					}
+				}
+			}
+			else
+			{
+				callevent end_fx
+			}
+		}
+	}
+	else
+	{
+		
+		cleffect tempent set_current_prop origin $vec(5000,5000,5000)
+	}
+}
+
+{ fx_motion_blur
+	setvard FX_MBLUR_ANGLES game.tempent.angles
+	cleffect tempent model FX_MODEL_NAME game.tempent.origin setup_motion_blur
+}
+
+{ setup_motion_blur
+	cleffect tempent set_current_prop death_delay 	0.15
+	cleffect tempent set_current_prop scale 1.0
+	cleffect tempent set_current_prop gravity 0
+	cleffect tempent set_current_prop angles FX_MBLUR_ANGLES
+	cleffect tempent set_current_prop collide none
+	cleffect tempent set_current_prop body 	FX_MODEL_OFS
+	cleffect tempent set_current_prop rendermode 	alpha
+	cleffect tempent set_current_prop renderamt 	50
+}
+
+
+{ collide_clfx_proj
+
+	if ( PARAM1 equals world ) local PARAM1 0
+	setvard FX_IN_FLIGHT 0
+
+	cleffect tempent set_current_prop movetype 0
+	cleffect tempent set_current_prop gravity 0
+	cleffect tempent set_current_prop collide none
+
+	if PARAM1 > 0
+
+
+	setvard FX_STICK_TARGET PARAM1
+	local L_N_BONES $getcl(FX_STICK_TARGET,bonecount)
+	if ( L_N_BONES == 0 )
+	{
+		setvard FX_USE_BONE -1
+	}
+	else
+	{
+		setvard BEST_BONE_DIST 9999
+		setvard FX_PROJ_POS game.tempent.origin
+		calleventloop L_N_BONES find_nearest_bone
+	}
+
+
+	local L_MY_POS game.tempent.origin
+	local L_STICK_POINT $getcl(FX_STICK_TARGET,origin)
+	if ( FX_USE_BONE > -1 ) local L_STICK_POINT $getcl(FX_STICK_TARGET,bonepos,FX_USE_BONE)
+
+	setvard FX_STICK_OFS_SET 1
+	setvard FX_STICK_DIR $dir(L_STICK_POINT,L_MY_POS)
+	setvard FX_STICK_DIST $dist(L_MY_POS,L_STICK_POINT)
+	vectormultiply FX_STICK_DIR FX_STICK_DIST
+	vectoradd L_STICK_POINT FX_STICK_DIST
+	cleffect tempent set_current_prop origin L_STICK_POINT
+	setvard FX_STICK_ANGS game.tempent.angles
+	
+	
+}
+
+{ find_nearest_bone
+	local L_CUR_BONE game.script.iteration
+	if L_CUR_BONE > 0
+	local L_CUR_BONE_POS $getcl(FX_STICK_TARGET,bonepos,L_CUR_BONE)
+	local L_CUR_BONE_DIST $dist(FX_PROJ_POS,L_CUR_BONE_POS)
+
+	if ( L_CUR_BONE_DIST < BEST_BONE_DIST )
+	{
+		setvard FX_USE_BONE L_CUR_BONE
+		setvard BEST_BONE_DIST L_CUR_BONE_DIST
+	}
+
+	
+}

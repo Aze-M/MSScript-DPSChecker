@@ -1,0 +1,39 @@
+#scope server
+{
+	
+	setvar ANIM_WALK walk
+	setvar ANIM_RUN walk2
+	setvar ANIM_IDLE idle1
+
+	
+	setvard NPC_GIVE_EXP 1000
+	setvard ATTACK_RANGE 80 
+	setvard ATTACK_HITRANGE 96
+	setvard ATTACK_MOVERANGE 48
+	setvard ANIM_ATTACK steelpipe
+	setvard FLINCH_DAMAGE_THRESHOLD 50 
+	setvard FLINCH_HEALTH_RATIO 0.75 
+
+	
+	const ATTACK_TYPE melee
+	const ATTACK_HITCHANCE 80
+	const DMG_STEELPIPE 400
+	const MUMMY_STARTING_LIVES 1
+	const MUMMY_IS_CLERIC 1
+	const MUMMY_MELEE_DMG_TYPE blunt
+	setvard MUMMY_STUN_CHANCE 20%
+}
+
+#include monsters/mummy_base
+
+
+{ mummy_spawn
+
+	name a|Mummy High Priest
+	hp 5000
+
+	setmodelbody 0 1 
+	setmodelbody 1 4 
+	setmodelbody 2 4 
+	setmodelbody 3 0 
+}

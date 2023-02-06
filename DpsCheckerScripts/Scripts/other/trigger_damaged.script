@@ -1,0 +1,27 @@
+{ game_damaged
+
+}
+
+{ game_takedamage
+
+}
+
+{ game_struck
+
+}
+
+{ game_death
+
+}
+
+{ ext_test
+
+}
+
+{ ext_report
+
+}
+
+{ ext_follow
+	setfollow PARAM1 align_bottom
+}

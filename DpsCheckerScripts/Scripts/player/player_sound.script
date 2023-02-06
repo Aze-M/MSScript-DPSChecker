@@ -1,0 +1,4 @@
+
+{
+	const SOUND_DEATH $get(ent_me,scriptvar,'PLR_SOUND_DEATH')
+}

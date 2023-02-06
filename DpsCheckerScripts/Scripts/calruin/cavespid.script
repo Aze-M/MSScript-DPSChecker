@@ -1,0 +1,24 @@
+{
+	const FIN_EXP 20
+	const SPIDER_MODEL monsters/fer_spider.mdl
+}
+
+#include monsters/spider
+
+{ npc_spawn
+	hp 85
+	if ( $lcase(game.map.name) contains calruin ) local ALT_NAME 1
+	if ( $lcase(game.map.name) contains deralia ) local ALT_NAME 1
+	if ( ALT_NAME )
+	{
+		if ( $lcase(game.map.name) contains calruin ) name a|Maisculus Araneu
+		if ( $lcase(game.map.name) contains deralia ) name the|Maisculus Araneu
+	}
+	else
+	{
+		name a|Cave Spider
+	}
+	
+	
+	setmodelbody 0 0
+}

@@ -1,0 +1,37 @@
+
+{
+	const NOPUSH_CHANCE 100%
+
+	const PARRY_MULTI 2.5
+	const SHIELD_BASE_PARRY 40
+
+	const MODEL_VIEW       	viewmodels/v_shields.mdl
+	const MODEL_VIEW_IDX	0
+	
+
+  const MODEL_BODY_OFS		65 
+  const MELEE_ENERGY		8
+  const MELEE_ACCURACY   	75%
+  const BLOCK_CHANCE_UP		100	
+  const DMG_BLOCK_UP		0.30	
+  const BLOCK_CHANCE_DOWN	25	
+  const SHIELD_MAXHEALTH	4000
+  const SHIELD_IMMORTAL		0
+  setvard SHIELD_HEALTH		4000
+  const SOUND_BLOCK      	debris/bustmetal1.wav
+  precache SOUND_BLOCK
+}
+
+#include items/shields_base
+
+{  shield_spawn
+
+   name 	a|Large Iron Shield
+   desc 	A large Iron shield
+   weight 	60
+   size 	70
+   value	2200
+   quality      600
+   sethudsprite hand ironshield
+   sethudsprite trade ironshield
+}

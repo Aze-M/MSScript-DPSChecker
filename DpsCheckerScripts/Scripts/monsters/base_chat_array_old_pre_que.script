@@ -1,0 +1,414 @@
+
+
+
+
+
+
+
+
+
+
+
+
+#scope server
+{ [shared]
+	const CHAT_CONV_ANIMS "converse2;converse1;talkleft;talkright;lean;pondering;pondering2;pondering3;"
+}
+
+{
+	setvar HAS_BASE_CHAT_ARRAY_INCLUDE 1
+
+	const CHAT_USE_CONV_ANIMS 1 
+	const CHAT_MOVE_MOUTH 1 
+	const CHAT_NO_CLOSE_MOUTH 0 
+	const CHAT_AUTO_FACE 1 
+	const CHAT_FACE_ON_USE 1 
+	const CHAT_MENU_ENABLE 1 
+	const CHAT_BUSY_OVERRIDE 0 
+
+
+	setvard CHAT_MENU_ON 1 
+	const CHAT_AUTO_HAIL 0 
+	const CHAT_AUTO_JOB 0 
+	const CHAT_AUTO_RUMOR 0 
+
+	const CHAT_MAX_LINE_LEN 192 
+
+	const CHAT_DELAY 4.0 
+
+	setvard CHAT_CURRENT_SPEAKER none 
+}
+
+{ game_spawn
+	menu.autoopen CHAT_MENU_ENABLE
+
+	if ( CHAT_AUTO_HAIL ) catchspeech say_hi hail hi j0 yo waddup wassup gweets greet
+	if ( CHAT_AUTO_JOB ) catchspeech say_job job work
+	if ( CHAT_AUTO_RUMOR ) catchspeech say_rumor rumour rumor
+}
+
+{ game_menu_getoptions
+
+	
+	setvard CHAT_CURRENT_SPEAKER PARAM1
+	setvard CHAT_LAST_USED_MENU PARAM1
+
+	if ( CHAT_FACE_ON_USE ) setmovedest PARAM1 9999
+
+	if CHAT_MENU_ON
+
+	
+
+	if ( CHAT_AUTO_HAIL )
+	{
+		local reg.mitem.title 	"Hail"
+		local reg.mitem.type 	callback
+		local reg.mitem.callback say_hi
+		menuitem.register
+	}
+
+	if ( CHAT_AUTO_JOB )
+	{
+		local reg.mitem.title 	"Ask about Jobs"
+		local reg.mitem.type 	callback
+		local reg.mitem.callback say_job
+		menuitem.register
+	}
+
+	if ( CHAT_AUTO_RUMOR )
+	{
+		local reg.mitem.title 	"Ask about Rumors"
+		local reg.mitem.type 	callback
+		local reg.mitem.callback say_rumor
+		menuitem.register
+	}
+}
+
+{ chat_add_text 
+
+	
+	
+	local CONVO_NAME PARAM1
+
+	local CONVO_DELAYS CONVO_NAME
+	stradd CONVO_DELAYS "_DELAYS"
+
+	local CONVO_ANIMS CONVO_NAME
+	stradd CONVO_ANIMS "_ANIMS"
+
+	local CONVO_EVENTS CONVO_NAME
+	stradd CONVO_EVENTS "_EVENTS"
+
+	local CONV_ARRAY_EXISTS $get_array(PARAM1,0)
+
+	if ( CONV_ARRAY_EXISTS contains '[ERROR_NO_ARRAY]' )
+	{
+	
+		array.create CONVO_NAME
+		array.create CONVO_DELAYS
+		array.create CONVO_ANIMS
+		array.create CONVO_EVENTS
+	}
+
+	local L_CHAT_TEXT PARAM2
+
+	local L_CHAT_DELAY PARAM3
+	if ( L_CHAT_DELAY startswith 'PARAM' ) local L_CHAT_DELAY CHAT_DELAY
+
+	local L_CHAT_ANIM PARAM4
+	if ( L_CHAT_ANIM startswith 'PARAM' ) local L_CHAT_ANIM 'none'
+
+	local L_CHAT_EVENT PARAM5
+	if ( L_CHAT_EVENT startswith 'PARAM' ) local L_CHAT_EVENT 'none'
+
+	array.add CONVO_NAME L_CHAT_TEXT
+	array.add CONVO_DELAYS L_CHAT_DELAY
+	array.add CONVO_ANIMS L_CHAT_ANIM
+	array.add CONVO_EVENTS L_CHAT_EVENT
+
+	
+	local ARRAY_IDX $get_array_amt(CONVO_NAME)
+	subtract ARRAY_IDX 1
+	local DBG_TXT $get_array(CONVO_NAME,ARRAY_IDX)
+
+}
+
+{ chat_start_sequence 
+
+
+
+	if ( CHAT_AUTO_FACE ) callevent chat_face_speaker
+
+	setvard CHAT_ABORT 0 
+	local CONVO_NAME PARAM1
+	local CONV_ARRAY_EXISTS $get_array(PARAM1,0)
+	if ( CONV_ARRAY_EXISTS contains '[ERROR_NO_ARRAY]' )
+	{
+		saytext [ERROR] conversation CONVO_NAME does not exist!
+		local EXIT_SUB 1
+	}
+	if !EXIT_SUB
+
+	if ( CHAT_BUSY )
+	{
+		if ( PARAM2 equals abort )
+		{
+		
+			callevent npc_chat_was_busy started_new
+		}
+		if PARAM2 isnot abort
+		if ( !CHAT_BUSY_OVERRIDE )
+		{
+		
+			callevent npc_chat_was_busy ignored
+			local EXIT_SUB 1
+		}
+		else
+		{
+			callevent npc_chat_was_busy started_new
+		
+		}
+	}
+	if !EXIT_SUB
+
+	
+
+	setvard CHAT_SEQUENCE CONVO_NAME
+	setvard CHAT_LINES_ANAME CONVO_NAME
+	setvard CHAT_DELAYS_ANAME CONVO_NAME
+	stradd CHAT_DELAYS_ANAME "_DELAYS"
+	setvard CHAT_ANIMS_ANAME CONVO_NAME
+	stradd CHAT_ANIMS_ANAME "_ANIMS"
+	setvard CHAT_EVENTS_ANAME CONVO_NAME
+	stradd CHAT_EVENTS_ANAME "_EVENTS"
+
+	
+
+	setvard CHAT_STEP 0
+
+	setvard CHAT_BUSY 1
+
+	callevent chat_array_loop
+}
+
+
+{ chat_array_loop
+
+	if ( CHAT_ABORT )
+	{
+		setvard CHAT_ABORT 0
+		setvard CHAT_BUSY 0
+		local EXIT_SUB 1
+	}
+	if !EXIT_SUB
+
+	local CUR_LINE $get_array(CHAT_LINES_ANAME,CHAT_STEP)
+	local CUR_LEN $len(CUR_LINE)
+	add CUR_LEN $len(game.monster.name)
+	add CUR_LEN 6 
+
+	if ( CUR_LEN < CHAT_MAX_LINE_LEN )
+	{
+		saytext CUR_LINE
+	}
+	else
+	{
+		saytext [ERROR: LINE TOO LONG!] [ CHAT_LINES_ANAME $int(CHAT_STEP) - $int(CUR_LEN) / $int(CHAT_MAX_LINE_LEN) ]
+	}
+
+	local CUR_DELAY $get_array(CHAT_DELAYS_ANAME,CHAT_STEP)
+
+	local CUR_ANIM $get_array(CHAT_ANIMS_ANAME,CHAT_STEP)
+	if ( CUR_ANIM isnot none )
+	{
+		playanim critical CUR_ANIM
+	}
+	else
+	{
+		if CHAT_USE_CONV_ANIMS
+		callevent chat_convo_anim
+	}
+
+	local CUR_EVENT $get_array(CHAT_EVENTS_ANAME,CHAT_STEP)
+	if ( CUR_EVENT isnot none )
+	{
+	
+		callevent CUR_DELAY CUR_EVENT
+	}
+
+
+	if ( CHAT_MOVE_MOUTH ) callevent chat_move_mouth CUR_DELAY
+
+	local L_N_STEPS $get_array_amt(CHAT_SEQUENCE)
+	subtract L_N_STEPS 1
+
+
+
+	if ( CHAT_STEP == L_N_STEPS ) setvard CHAT_BUSY 0
+	if CHAT_STEP < L_N_STEPS
+	add CHAT_STEP 1
+	callevent CUR_DELAY chat_array_loop
+}
+
+{ chat_convo_anim
+	local N_ANIMS $get_token_amt(CHAT_CONV_ANIMS)
+	subtract N_ANIMS 1
+	local RND_ANIM $rand(0,N_ANIMS)
+	playanim critical $get_token(CHAT_CONV_ANIMS,RND_ANIM)
+}
+
+{ chat_move_mouth 
+	if ( PARAM1 startswith 'PARAM' )
+	{
+		
+	}
+	else
+	{
+		setvard CHAT_END_MOVE_MOUTH game.time
+		add CHAT_END_MOVE_MOUTH PARAM1
+		subtract CHAT_END_MOVE_MOUTH 1.0 
+	
+	}
+
+	if ( game.time < CHAT_END_MOVE_MOUTH )
+	{
+		local RND_SAY "["
+		local M_TIME $randf(0.1,0.3)
+		stradd RND_SAY M_TIME
+		stradd RND_SAY "]"
+		say RND_SAY
+
+		add M_TIME 0.1
+		callevent M_TIME chat_close_mouth
+		add M_TIME 0.1
+		callevent M_TIME chat_move_mouth
+	}
+}
+
+{ chat_close_mouth
+	if !CHAT_NO_CLOSE_MOUTH 
+	setprop ent_me controller1 0
+}
+
+{ chat_open_mouth 
+	setprop ent_me controller1 -1
+}
+
+{ chat_face_speaker
+	if !CHAT_TEMP_NO_AUTO_FACE
+	if ( PARAM1 isnot 'PARAM1' )
+	{
+		setvard CHAT_CURRENT_SPEAKER PARAM1
+	}
+	else
+	{
+		callevent chat_find_speaker_id
+	}
+	setmovedest CHAT_CURRENT_SPEAKER 9999
+}
+
+{ chat_find_speaker_id
+	local L_LAST_SPOKE $get(ent_lastspoke,id)
+	if ( $get(L_LAST_SPOKE,isalive) )
+	{
+		if $get(L_LAST_SPOKE,range) < 512
+		setvard CHAT_CURRENT_SPEAKER L_LAST_SPOKE
+	}
+	if ( $get(CHAT_LAST_USED_MENU,isalive) )
+	{
+		if $get(CHAT_LAST_USED_MENU,range) < 512
+		setvard CHAT_CURRENT_SPEAKER CHAT_LAST_USED_MENU
+	}
+	if ( !$get(CHAT_CURRENT_SPEAKER,isalive) )
+	{
+	
+		setvard CHAT_CURRENT_SPEAKER $get_insphere(player,512)
+	}
+	if ( !$get(CHAT_CURRENT_SPEAKER,isalive) )
+	{
+		
+		getplayersnb PLAYER_LIST
+		setvard CHAT_CURRENT_SPEAKER $get_token(PLAYER_LIST,0)
+	}
+}
+
+{ chat_now 
+	if ( CHAT_BUSY )
+	{
+		if ( !CHAT_BUSY_OVERRIDE )
+		{
+			if PARAM4 isnot 'abort'
+		
+			local EXIT_SUB 1
+		}
+		else
+		{
+			local L_ABORT_SEQUENCE 1
+		}
+
+		if ( PARAM4 equals 'abort' ) local L_ABORT_SEQUENCE 1
+		if L_ABORT_SEQUENCE
+	
+		callevent chat_stop
+	}
+	if !EXIT_SUB
+
+	saytext PARAM1
+
+	local L_MOUTH_MOVE_TIME PARAM2
+	if ( PARAM2 startswith 'PARAM' ) local L_MOUTH_MOVE_TIME CHAT_DELAY
+	if ( CHAT_MOVE_MOUTH ) callevent chat_move_mouth L_MOUTH_MOVE_TIME
+
+	if ( PARAM3 startswith 'PARAM' )
+	{
+		local L_ANIM_NAME none
+	}
+	else
+	{
+		local L_ANIM_NAME PARAM3
+	}
+	
+	if ( L_ANIM_NAME isnot none )
+	{
+		playanim critical L_ANIM_NAME
+	}
+	else
+	{
+		if CHAT_USE_CONV_ANIMS
+		callevent chat_convo_anim
+	}
+}
+
+{ chat_stop
+	if CHAT_BUSY
+	if ( $get(ent_me,isalive) ) callevent npc_chat_was_busy aborted
+	setvard CHAT_ABORT 1
+}
+
+{ game_death
+	if CHAT_BUSY
+	callevent chat_stop
+}
+
+{ ext_dump_chat 
+	setvard DUMP_CONVO PARAM1
+	calleventloop $get_array_amt(DUMP_CONVO) dump_chat
+}
+
+{ dump_chat
+	local CUR_IDX game.script.iteration
+	local CUR_LINES_ANAME DUMP_CONVO
+	local CUR_DELAYS DUMP_CONVO
+	stradd CUR_DELAYS _DELAYS
+	local CUR_ANIMS DUMP_CONVO
+	stradd CUR_ANIMS '_ANIMS'
+	local CUR_EVENTS DUMP_CONVO
+	stradd CUR_EVENTS '_EVENTS'
+
+	local CUR_TEXT $get_array(CUR_LINES_ANAME,CUR_IDX)
+	local CUR_DELAY $get_array(CUR_DELAYS,CUR_IDX)
+	local CUR_ANIM $get_array(CUR_ANIMS,CUR_IDX)
+	local CUR_EVENT $get_array(CUR_EVENTS,CUR_IDX)
+
+
+}

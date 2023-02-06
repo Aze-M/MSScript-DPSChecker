@@ -1,0 +1,5 @@
+{
+	const DEATH_DELAY 3.0
+}
+
+#include monsters/base_temporary

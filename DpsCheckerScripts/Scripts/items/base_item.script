@@ -1,0 +1,128 @@
+
+
+#include items/base_hide_stuff
+
+{
+	const ANIM_LIFT1 0
+	const ANIM_IDLE1 0
+	const ANIM_IDLE2 0
+	const ANIM_IDLE3 0
+	const ANIM_IDLE4 0
+	const ANIM_IDLE5 0
+	const ANIM_IDLE_DELAY_LOW 2
+	const ANIM_IDLE_DELAY_HIGH 5
+	setvard baseitem.canidle 1	
+	const PLAYERANIM_AIM blunt
+}
+
+#include items/base_item_extras
+
+{ game_spawn
+
+	if !IS_MAGIC_HAND
+
+	setanimext	PLAYERANIM_AIM
+
+	setworldmodel MODEL_WORLD
+	callevent item_spawn
+}
+
+{ game_pickup
+
+	if !IS_MAGIC_HAND
+
+	playviewanim  ANIM_LIFT1 
+
+	setmodel MODEL_HANDS
+	setmodelbody 0 game.item.hand_index
+
+	callevent item_pickup
+
+}
+
+{ game_deploy
+
+	if !IS_WEAPON
+	if !IS_MAGIC_HAND
+
+	
+	
+
+	setviewmodel  MODEL_VIEW
+
+	callevent item_deploy
+
+	if game.serverside
+	
+	if ITEM_MODEL_VIEW_IDX > 0
+	callevent 0.1 bi_setup_model
+}
+
+{ game_switchhands
+
+	if !IS_MAGIC_HAND
+
+	playviewanim  ANIM_IDLE1
+
+	callevent item_switchhands
+}
+
+{ game_drop
+
+	callevent item_drop
+
+	
+
+	
+	
+	
+	
+	
+	
+}
+
+{ game_attack_cancel
+
+	callevent game_viewanimdone
+}
+
+{ game_viewanimdone
+
+	if ANIM_IDLE_TOTAL > 0
+     
+	callevent $rand(ANIM_IDLE_DELAY_LOW,ANIM_IDLE_DELAY_HIGH) item_idle
+}
+
+{ item_idle
+
+
+
+	if !NO_IDLE
+
+	if ANIM_IDLE_TOTAL > 0
+
+	if !game.item.attacking
+	if game.item.wielded
+	if baseitem.canidle
+
+	local l.anim $rand(1,ANIM_IDLE_TOTAL)
+	if( l.anim == 1 ) playviewanim ANIM_IDLE1
+	else if( l.anim == 2 ) playviewanim ANIM_IDLE2
+	else if( l.anim == 3 ) playviewanim ANIM_IDLE3
+	else if( l.anim == 4 ) playviewanim ANIM_IDLE4
+	else if( l.anim == 5 ) playviewanim ANIM_IDLE5
+}
+
+
+{ drink_deploy 
+	if game.serverside
+	if ITEM_MODEL_VIEW_IDX > 0
+	callevent 0.01 bi_setup_model
+}
+
+{ [server] bi_setup_model
+
+	setviewmodelprop ent_me submodel $get(ent_owner,scriptvar,'PLR_HAND_SET') ITEM_MODEL_VIEW_IDX
+}
+
+

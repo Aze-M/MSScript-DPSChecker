@@ -1,0 +1,9 @@
+{
+	
+	
+	
+	
+	setvard ARMOR_TYPE 1
+}
+
+#include monsters/anim_archer_hard_random

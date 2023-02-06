@@ -1,0 +1,27 @@
+
+{
+	setvard EXIST 0
+}
+
+{ make_undead
+
+	if EXIST < 3
+	local l.sky origin
+	vectoradd l.sky (0,0,4096)
+	local origin $get(ent_me,origin)
+
+	
+
+	add EXIST 1
+
+	
+
+	callevent spawn_undead
+}
+
+{ undead_died
+
+	subtract EXIST 1
+
+	
+}

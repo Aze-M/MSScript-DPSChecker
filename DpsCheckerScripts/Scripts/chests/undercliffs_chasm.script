@@ -1,0 +1,52 @@
+#scope server
+{
+	const CHEST_SELF_ADJ 1
+	const BC_SPRITE_IN 1
+}
+
+#include chests/base_treasurechest_array
+
+{ treasure_spawn
+	setmonsterclip 0
+}
+
+{ chest_additems
+	local L_GOLD_TO_ADD $get(CHEST_USER,scriptvar,'PLR_TOTAL_DMG')
+	multiply L_GOLD_TO_ADD 0.5
+	if ( 10 equals 10 ) multiply L_GOLD_TO_ADD game.playersnb
+
+	callevent add_gold $int(L_GOLD_TO_ADD)
+}
+
+{ chest_add_quality_items
+	calleventloop $int(CHEST_AVG_LEVELS) add_items_self_adj
+}
+
+{ add_items_self_adj
+
+
+
+	if ( CHEST_AVG_LEVELS < 2 ) callevent add_noob_item 100%
+	if ( CHEST_AVG_LEVELS >= 2 )
+	{
+		if CHEST_AVG_LEVELS < 3
+		callevent add_great_item 100%
+	}
+	if ( CHEST_AVG_LEVELS >= 3 )
+	{
+		if CHEST_AVG_LEVELS < 4
+
+		callevent add_epic_item 25%
+	}
+	if ( CHEST_AVG_LEVELS >= 4 )
+	{
+		if CHEST_AVG_LEVELS < 5
+		callevent add_epic_item 50%
+		callevent add_epic_arrows 15
+	}
+	if ( CHEST_AVG_LEVELS > 5 )
+	{
+		callevent add_epic_item 75%
+		callevent add_epic_arrows 30
+	}
+}

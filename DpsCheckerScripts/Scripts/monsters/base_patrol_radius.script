@@ -1,0 +1,217 @@
+
+
+
+
+#scope server
+{
+	setvard BPATROL_RAD 512 
+	const BPATROL_AGRO_RATIO 2.0
+	
+	const BPATROL_COOL_DOWN $randf(10.0,15.0) 
+	const BPATROL_ATK_COOLDOWN 10.0 
+	
+	const BPATROL_MOVEPROX game.monster.moveprox
+
+	const BPATROL_DEF_HEARING 10
+
+	setvard NPC_EXTRA_VALIDATIONS 1
+
+	const BPATROL_REGEN_FREQ 10.0 
+	const BPATROL_REGEN_AMT 0.01 
+}
+
+{ npc_spawn
+	setvard BPATROL_CENTER $get(ent_me,origin)
+}
+
+{ bpatrol_debug_beams
+	if BPATROL_ACTIVE
+	local BEAM_START BPATROL_CENTER
+	local BEAM_END BPATROL_CENTER
+
+	vectoradd BEAM_START $relpos($vec(0,BPATROL_ROT,0),$vec(0,BPATROL_RAD,32))
+	add BPATROL_ROT 22.5
+
+	vectoradd BEAM_END $relpos($vec(0,BPATROL_ROT,0),$vec(0,BPATROL_RAD,32))
+
+
+	effect beam point lgtning.spr 20 BEAM_START BEAM_END (255,0,255) 200 0 20.0
+
+	local BEAM_START BPATROL_CENTER
+	local BEAM_END BPATROL_CENTER
+
+	local L_BPATROL_RAD BPATROL_RAD
+	multiply L_BPATROL_RAD BPATROL_AGRO_RATIO
+
+	vectoradd BEAM_START $relpos($vec(0,BPATROL_ROT,0),$vec(0,L_BPATROL_RAD,32))
+	add BPATROL_ROT 22.5
+
+	vectoradd BEAM_END $relpos($vec(0,BPATROL_ROT,0),$vec(0,L_BPATROL_RAD,32))
+
+
+	effect beam point lgtning.spr 20 BEAM_START BEAM_END (255,0,0) 200 0 20.0
+
+	subtract BPATROL_ROT 22.5
+
+}
+
+{ npcatk_hunt
+
+	if BPATROL_ACTIVE
+
+	if ( game.time > BPATROL_NEXT_REGEN )
+	{
+		if !BPATROL_TARGET_VALIDATED
+		setvard BPATROL_NEXT_REGEN game.time
+		add BPATROL_NEXT_REGEN BPATROL_REGEN_FREQ
+		if $get(ent_me,hp) < $get(ent_me,maxhp)
+		local HP_TO_GIVE $get(ent_me,maxhp)
+		multiply HP_TO_GIVE BPATROL_REGEN_AMT
+		givehp ent_me HP_TO_GIVE
+	}
+
+	if ( G_DEVELOPER_MODE )
+	{
+		if game.time > BPATRON_NEXT_BEAM
+		setvard BPATRON_NEXT_BEAM game.time
+		add BPATRON_NEXT_BEAM 20.0
+		local BEAM_START BPATROL_CENTER
+		local BEAM_END BEAM_START
+		vectoradd BEAM_END z 64
+		effect beam point lgtning.spr 20 BEAM_START BEAM_END (255,0,255) 200 0 20.0
+		setvard BPATROL_ROT 0
+		calleventloop 16 bpatrol_debug_beams
+	}
+
+	local MY_POS $get(ent_me,origin)
+	local L_PATROL_DIST $dist(MY_POS,BPATROL_CENTER)
+
+	local L_BPATROL_RAD BPATROL_RAD
+	if ( NPCATK_TARGET isnot unset )
+	{
+		if BPATROL_TARGET_VALIDATED
+		multiply L_BPATROL_RAD BPATROL_AGRO_RATIO
+	}
+
+	if ( L_PATROL_DIST > L_BPATROL_RAD )
+	{
+		setvard BPATROL_OUTSIDE_RANGE 1
+	}
+
+	if ( L_PATROL_DIST <= L_BPATROL_RAD )
+	{
+		setvard BPATROL_OUTSIDE_RANGE 0
+	}
+
+
+	if ( BPATROL_OUTSIDE_RANGE )
+	{
+		if ( NPCATK_TARGET equals unset )
+		{
+			callevent npcatk_setmovedest BPATROL_CENTER BPATROL_MOVEPROX
+		}
+
+		if NPCATK_TARGET isnot unset
+		if ( $get(NPCATK_TARGET,range) < ATTACK_RANGE ) local EXIT_SUB 1
+		if !EXIT_SUB
+
+		if ( game.time > BPATROL_STRUCK_DELAY )
+		{
+			local TARG_POS $get(NPCATK_TARGET,origin)
+			if $dist(TARG_POS,BPATROL_CENTER) > BPATROL_RAD
+		
+			setvard BPATROL_LAST_TARGET NPCATK_TARGET
+			callevent npc_bpatrol_target_invalid BPATROL_LAST_TARGET
+			if ( $get(NPCATK_TARGET,isalive) ) callevent npcatk_clear_targets "beyond_patrol_range"
+			callevent npcatk_setmovedest BPATROL_CENTER BPATROL_MOVEPROX
+		}
+	}
+
+}
+
+{ game_struck
+	if BPATROL_ACTIVE
+
+	setvard BPATROL_STRUCK_DELAY game.time
+	add BPATROL_STRUCK_DELAY BPATROL_COOL_DOWN
+	hearingsensitivity BPATROL_DEF_HEARING
+	setvard BPATROL_TARGET_VALIDATED 1
+}
+
+{ npcatk_clear_targets
+	if BPATROL_ACTIVE
+
+	hearingsensitivity 0
+	setvard BPATROL_TARGET_VALIDATED 0
+}
+
+{ npc_selectattack
+	if BPATROL_ACTIVE
+
+	setvard BPATROL_LAST_ATK game.time
+}
+
+{ npc_targetvalidate
+	if BPATROL_ACTIVE
+	
+
+	if ( $get(NPCATK_TARGET,range) < ATTACK_RANGE )
+	{
+		
+		setvard BPATROL_TARGET_VALIDATED 1
+		local EXIT_SUB 1
+	}
+	if !EXIT_SUB
+
+	if ( game.time > BPATROL_STRUCK_DELAY )
+	{
+		local TARG_POS $get(NPCATK_TARGET,origin)
+		local L_TARG_DIST_FROM_PATROLPOINT $dist(TARG_POS,BPATROL_CENTER)
+		local MY_POS $get(ent_me,origin)
+		local L_MY_DIST_FROM_PATROLPOINT $dist(MY_POS,BPATROL_CENTER)
+
+		local L_BPATROL_RAD BPATROL_RAD
+		local L_BPATROL_LAST_ATK BPATROL_LAST_ATK
+		add L_BPATROL_LAST_ATK BPATROL_ATK_COOLDOWN
+		if ( game.time < L_BPATROL_LAST_ATK )
+		{
+			
+			
+			multiply L_BPATROL_RAD BPATROL_AGRO_RATIO
+		}
+
+
+		if (  L_TARG_DIST_FROM_PATROLPOINT > L_BPATROL_RAD )
+		{
+			
+			if ( L_MY_DIST_FROM_PATROLPOINT < L_TARG_DIST_FROM_PATROLPOINT )
+			{
+			
+				setvard BPATROL_LAST_TARGET NPCATK_TARGET
+				callevent npc_bpatrol_target_invalid BPATROL_LAST_TARGET
+				callevent npcatk_clear_targets "beyond_patrol_range"
+			}
+			else
+			{
+			
+				hearingsensitivity BPATROL_DEF_HEARING
+				setvard BPATROL_TARGET_VALIDATED 1
+			}
+		}
+		else
+		{
+			hearingsensitivity BPATROL_DEF_HEARING
+			setvard BPATROL_TARGET_VALIDATED 1
+		}
+	}
+	else
+	{
+		
+		hearingsensitivity BPATROL_DEF_HEARING
+		setvard BPATROL_TARGET_VALIDATED 1
+	}
+
+	if BPATROL_TARGET_VALIDATED
+	callevent npc_bpatrol_target_valid
+}
+

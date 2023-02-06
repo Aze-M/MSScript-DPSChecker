@@ -1,0 +1,21 @@
+{
+	const ITEM_EVENT add_good_item
+	const GOLD_AMT 25
+}
+
+{ treasure_spawn
+
+   setvar STORENAME $randf(-10000.00,10000.00) 
+	stradd STORENAME $randf(-10000.00,10000.00)
+}
+
+#include items/base_treasurechest
+
+{ chest_additems
+
+	addstoreitem STORENAME health_lpotion 1 0
+	addstoreitem STORENAME mana_mpotion 1 0
+
+	gold GOLD_AMT
+	callevent ITEM_EVENT 100
+}

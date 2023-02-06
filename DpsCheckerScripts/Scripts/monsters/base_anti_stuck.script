@@ -1,0 +1,631 @@
+#scope server
+{
+	const AS_MAX_ATTACK_TIME 3.0	
+									
+	const AS_STUCK_FREQ 0.25		
+	const AS_WIGGLE_DURATION 2.0	
+	const AS_TELE_THRESH 10			
+	const AS_CRITICAL_THRESH 40		
+
+	const AS_DIST_THRESH 1			
+
+	
+	
+	
+	
+	
+
+	
+	
+}
+
+{ npc_spawn
+
+	setvard STUCK_COUNT 0
+	setvard AS_HITBACK_FRUST 0
+	setvard AS_UNSTUCK_ANG 0
+	setvard AS_IN_RANGE_CLICKS 0
+	setvard AS_MISS_COUNT 0
+	if ( I_R_PET ) setvard NO_SPAWN_STUCK_CHECK 1
+	
+	if !NO_SPAWN_STUCK_CHECK
+	setvard AS_SPAWN_POINT game.monster.origin
+	callevent 1.0 as_check_spawn_stuck
+}
+
+{ as_check_spawn_stuck
+
+	setvard AS_MOVEPROX game.monster.moveprox
+
+
+	
+
+	
+	if !NO_SPAWN_STUCK_CHECK
+
+
+
+	
+	
+	
+	
+
+	
+	
+}
+
+{ as_tell_allies_move
+	
+
+	local CUR_TARG $get_token(AS_ALLY_LIST,game.script.iteration)
+
+	if ( $get(ent_me,relationship,CUR_TARG) equals ally )
+	{
+		local L_AS_MOVEPROX AS_MOVEPROX
+		divide L_AS_MOVEPROX 3
+		if $get(CUR_TARG,range) < L_AS_MOVEPROX
+		setvard AS_TELE_OUT 1
+		
+		callexternal CUR_TARG as_ally_stuck_so_move AS_SPAWN_POINT
+	}
+
+	if ( !NPC_NO_AUTO_ACTIVATE )
+	{
+		if $get(CUR_TARG,isplayer)
+		
+		callevent cycle_up "spawned_near_player"
+	}
+}
+
+{ as_tele_out 
+   if ( PARAM2 startswith PARAM )
+   {
+      
+      setvard AS_TELE_POINT $get(ent_me,origin)
+   }
+   else
+   {
+      setvard AS_TELE_POINT PARAM2
+   }
+   
+   local L_SCAN_RANGE AS_MOVEPROX
+   multiply L_SCAN_RANGE 2 
+   
+   emitsound ent_me $get(ent_me,origin) AS_MOVEPROX PARAM1 danger L_SCAN_RANGE 
+   setorigin ent_me (20000,10000,-10000) 
+   callevent PARAM1 as_tele_return
+}
+
+{ as_tele_return
+
+	setorigin ent_me AS_TELE_POINT
+	callevent 0.5 as_check_spawn_stuck 
+}
+
+{ as_ally_stuck_so_move
+	
+	if ( !SUSPEND_AI ) callevent npcatk_suspend_ai 3.0 allystuck
+	setvard NPC_FORCED_MOVEDEST 1
+	local TARGET_ORG $vec(AS_FLEE_POINT)
+	local TARG_ANG $angles(game.monster.origin,TARGET_ORG)
+	local NEW_YAW TARG_ANG
+	callevent npcatk_setmovedest $relvel($vec(0,NEW_YAW,0),$vec(0,1000,0)) 1
+	setvard AS_FLEE_POINT PARAM1
+	callevent 0.1 as_flee_nudge
+}
+
+
+{ as_flee_nudge
+	
+	local TARGET_ORG $vec(AS_FLEE_POINT)
+	local TARG_ANG $angles(game.monster.origin,TARGET_ORG)
+	local NEW_YAW TARG_ANG
+	setvelocity ent_me $relvel($vec(0,NEW_YAW,0),$vec(0,200,0))
+}
+
+{ npcatk_hunt
+	if ( !AS_STARTED )
+	{
+		
+		local L_SPAWN_TIME NPC_SPAWN_TIME
+		add L_SPAWN_TIME 5.0
+		if game.time > L_SPAWN_TIME
+		setvard AS_STARTED 1
+	}
+	else
+	{
+		callevent npcatk_anti_stuck
+	}
+}
+
+{ npcatk_anti_stuck
+	local GAME_TIME game.time
+	
+	if GAME_TIME > AS_NEXT_CHECK
+
+	if ( NO_STUCK_CHECKS )
+	{
+		setvard AS_LAST_POS_SET 0
+		setvard AS_NEXT_CHECK GAME_TIME
+		add AS_NEXT_CHECK 3.0
+	}
+
+	if !NO_STUCK_CHECKS
+
+	
+	setvard AS_NEXT_CHECK GAME_TIME
+	add AS_NEXT_CHECK AS_STUCK_FREQ
+
+	if ( !NEW_AI )
+	{
+		local TARG_CHECK HUNT_LASTTARGET
+	}
+	else
+	{	
+		local TARG_CHECK NPCATK_TARGET
+	}
+	if $get(TARG_CHECK,isalive)
+	local TARG_RANGE $get(NPCATK_TARGET,range)
+
+	
+	local LAST_ATK AS_ATTACKING
+	add LAST_ATK AS_MAX_ATTACK_TIME
+
+	if ( TARG_RANGE < ATTACK_HITRANGE )
+	{
+		local IN_RANGE 1
+		add AS_IN_RANGE_CLICKS 1
+	}
+	else
+	{
+		setvard AS_IN_RANGE_CLICKS 0
+	}
+
+	
+	if ( AS_MISS_COUNT > 3 )
+	{
+		if !NPC_RANGED 
+		if IN_RANGE
+		if GAME_TIME < LAST_ATK
+
+	
+
+		callevent chicken_run 1.0
+		setvard AS_MISS_COUNT 0
+	}
+
+	
+	if GAME_TIME > LAST_ATK	
+
+	
+	if !I_R_FROZEN
+	if !I_R_SLOWED 
+
+	
+	if !IS_FLEEING
+	if !SUSPEND_AI
+
+	
+	if !NPC_WINKED_OUT
+
+	
+	if $get(ent_me,isalive)
+
+	
+	if ( !NPC_RANGED ) 
+	{
+		if ( $get(NPCATK_TARGET,isalive) )
+		{
+			if ( TARG_RANGE < ATTACK_RANGE ) local EXIT_SUB 1
+			if ( TARG_RANGE < ATTACK_MOVERANGE ) local EXIT_SUB 1
+		}
+		if !EXIT_SUB
+	}
+	else
+	{
+		
+		if NPC_CANSEE_TARGET
+		local EXIT_SUB 1
+	}
+	if !EXIT_SUB
+	
+	local MY_ORG $get(ent_me,origin)
+
+	
+	if $dist(MY_ORG,game.monster.movedest.origin) >= game.monster.movedest.prox
+
+	if ( $dist(AS_LAST_POS,MY_ORG) < AS_DIST_THRESH )
+	{
+		
+		if AS_LAST_POS_SET
+	
+		add STUCK_COUNT 1
+		if STUCK_COUNT >= 1
+
+		if ( !AS_FIRST_STUCK )
+		{
+			
+			
+		
+			setvard AS_FIRST_STUCK 1
+		
+			local L_ORG $get(ent_me,origin)
+			local L_TESTPOS L_ORG
+			setorigin ent_me L_TESTPOS
+			local reg.npcmove.endpos L_TESTPOS
+			vectoradd reg.npcmove.endpos $relpos($vec(0,0,0),$vec(0,16,0))
+			local reg.npcmove.testonly 1
+			npcmove ent_me
+			if ( game.ret.npcmove.dist == 0 )
+			{
+				
+				setvard BAST_SPAWNCHECK 1
+				callevent as_tele_stuck_check
+			}
+			local EXIT_SUB 1
+		}
+		if !EXIT_SUB
+
+		if ( AS_CUSTOM_UNSTUCK )
+		{
+			callevent npc_stuck
+		}
+		else
+		{
+			callevent chicken_run $randf(0.5,1.0)
+		}
+	}
+	else
+	{
+		
+		setvard STUCK_COUNT 0
+	}
+
+	setvard AS_LAST_POS MY_ORG 
+	setvard AS_LAST_POS_SET 1
+
+	
+	if ( STUCK_COUNT == AS_TELE_THRESH )
+	{
+	
+		if ( !I_R_PET ) callevent ext_wink_out MY_ORG $randf(4,5)
+		add STUCK_COUNT 1
+	}
+
+	
+	if STUCK_COUNT >= AS_CRITICAL_THRESH
+
+	if ( !I_R_PET ) callevent ext_wink_out NPC_SPAWN_LOC $randf(4,5)
+	setvard STUCK_COUNT 0
+}
+
+
+{ npc_selectattack
+	setvard AS_ATTACKING game.time
+	
+}
+
+{ game_dynamically_created
+	setvard NO_SPAWN_STUCK_CHECK 1
+}
+
+{ game_damaged_other
+	setvard AS_LAST_HIT game.time
+	setvard AS_MISS_COUNT 0
+}
+
+{ game_dodamage
+	if !NO_STUCK_CHECKS
+	if !SUSPEND_AI
+	if ( !PARAM1 )
+	{
+		add AS_MISS_COUNT 1
+	}
+	else
+	{
+		setvard AS_MISS_COUNT 0
+		setvard AS_HITBACK_FRUST 0
+		setvard AS_HITBACK_FRUST_RUNS 0
+	}
+	setvard AS_LAST_STRIKE game.time
+}
+
+{ game_damaged
+	if !NO_STUCK_CHECKS
+	if !SUSPEND_AI
+	if ( game.time > AS_ATTACKING )
+	{
+		if game.time > NEXT_HITFRUST_RECORD
+		setvard NEXT_HITFRUST_RECORD game.time
+		add NEXT_HITFRUST_RECORD 1.0 
+		add AS_HITBACK_FRUST 1
+	}
+
+	if ( AS_HITBACK_FRUST >= 7 )
+	{
+		local LS_PLUS5 AS_LAST_STRIKE
+		add LS_PLUS5 5.0
+		if game.time > AS_LAST_STRIKE
+		setvard AS_HITBACK_FRUST 0
+		add AS_HITBACK_FRUST_RUNS 1
+		local MAX_RUN_TIME 3.0
+		multiply MAX_RUN_TIME AS_HITBACK_FRUST_RUNS
+		callevent chicken_run $randf(1.0,MAX_RUN_TIME)
+	
+	}
+}
+
+{ game_stuck
+
+	if G_DEVELOPER_MODE
+	playsound 0 10 amb/quest1.wav
+}
+
+{ npcatk_setmovedest
+	if NPC_NO_AI
+	setmovedest PARAM1 PARAM2
+}
+
+{ as_check_can_move
+	setvard AS_CAN_MOVE 0
+	
+	local reg.npcmove.endpos $get(ent_me,origin)
+	vectoradd reg.npcmove.endpos $relpos($vec(0,0,0),$vec(0,0,2))
+	local reg.npcmove.testonly	1
+	npcmove ent_me NPCATK_TARGET 
+	if ( game.ret.npcmove.dist > 0 )
+	{
+		setvard AS_CAN_MOVE 1
+	}
+	if !AS_CAN_MOVE
+	
+	local reg.npcmove.endpos $get(ent_me,origin)
+	vectoradd reg.npcmove.endpos $relpos($vec(0,0,0),$vec(0,2,0))
+	local reg.npcmove.testonly	1
+	npcmove ent_me NPCATK_TARGET 
+	if ( game.ret.npcmove.dist > 0 )
+	{
+		setvard AS_CAN_MOVE 1
+	}
+	if !AS_CAN_MOVE
+	
+	local reg.npcmove.endpos $get(ent_me,origin)
+	vectoradd reg.npcmove.endpos $relpos($vec(0,0,0),$vec(0,0,2))
+	local reg.npcmove.testonly	1
+	npcmove ent_me NPCATK_TARGET 
+	if ( game.ret.npcmove.dist > 0 )
+	{
+		setvard AS_CAN_MOVE 1
+	}
+	if !AS_CAN_MOVE
+	
+	local reg.npcmove.endpos $get(ent_me,origin)
+	vectoradd reg.npcmove.endpos $relpos($vec(0,0,0),$vec(0,0,-2))
+	local reg.npcmove.testonly	1
+	npcmove ent_me NPCATK_TARGET 
+	if ( game.ret.npcmove.dist > 0 )
+	{
+		setvard AS_CAN_MOVE 1
+	}
+	if !AS_CAN_MOVE
+	
+	local reg.npcmove.endpos $get(ent_me,origin)
+	vectoradd reg.npcmove.endpos $relpos($vec(0,0,0),$vec(0,-2,0))
+	local reg.npcmove.testonly	1
+	npcmove ent_me NPCATK_TARGET 
+	if ( game.ret.npcmove.dist > 0 )
+	{
+		setvard AS_CAN_MOVE 1
+	}
+	if !AS_CAN_MOVE
+}
+
+{ game_dynamically_created
+	if AS_SUMMON_TELE_CHECK
+	callevent as_tele_stuck_check
+}
+
+{ as_tele_stuck_check
+	if ( !BAST_STUCK_DID_INIT )
+	{
+		setvard BAST_STUCK_DID_INIT 1
+		setvard BAST_FIRST_TEST 1
+		setvard BAST_ROT 0
+		setvard BAST_FWD 0
+		setvard BAST_VFLOAT 0
+		setvard BAST_SPAWN_POS $get(ent_me,origin)
+
+		if ( $get(ent_me,fly) )
+		{
+			
+			setvard BAST_MOB_HEIGHT_ADJ $get(ent_me,height)
+			multiply BAST_MOB_HEIGHT_ADJ 1.1
+		}
+	}
+	local L_TESTPOS BAST_SPAWN_POS
+	local L_VADJ BAST_MOB_HEIGHT_ADJ
+	add L_VADJ BAST_VFLOAT
+	vectoradd L_TESTPOS $relpos($vec(0,BAST_ROT,0),$vec(0,BAST_FWD,BAST_VFLOAT))
+	if ( G_DEVELOPER_MODE )
+	{
+		local L_TESTPOS_ADJ L_TESTPOS
+		vectoradd L_TESTPOS_ADJ z 32
+		effect beam point lgtning.spr 20 L_TESTPOS L_TESTPOS_ADJ (255,0,255) 200 0 0.1
+	}
+	setorigin ent_me L_TESTPOS
+	local reg.npcmove.endpos L_TESTPOS
+	vectoradd reg.npcmove.endpos $relpos($vec(0,0,0),$vec(0,16,0))
+	local reg.npcmove.testonly 1
+	npcmove ent_me
+	if ( game.ret.npcmove.dist == 0 )
+	{
+
+	
+		add BAST_ROT 15
+		add BAST_FWD 4
+		add BAST_VFLOAT 2
+		if ( BAST_VFLOAT > 64 ) setvard BAST_VFLOAT -64
+		if ( BAST_ROT > 359 ) setvard BAST_ROT 0
+		setorigin ent_me BAST_SPAWN_POS
+		if ( BAST_FWD < 640 )
+		{
+			setvard BAST_FIRST_TEST 0
+			callevent 0.1 as_tele_stuck_check
+		}
+		else
+		{
+			
+			if ( BAST_SPAWNCHECK )
+			{
+				
+				setvard BAST_SPAWNCHECK 0
+				exitevent
+			}
+			setvard BAST_STUCK_DID_INIT 0
+			setvard BAST_PLAYER_LIST 'BAST_PLAYER_LIST' 
+			callevent as_tele_to_player_loop
+		}
+	}
+	else
+	{
+		
+		setvard BAST_STUCK_DID_INIT 0
+		setvard STUCK_COUNT 0 
+		if !BAST_FIRST_TEST 
+		setorigin ent_me L_TESTPOS
+	}
+}
+
+{ as_tele_to_player_loop
+	
+	setvard BAST_TELEPORTING 1
+	if ( game.players == 0 )
+	{
+		
+	
+		callevent 20.0 as_tele_to_player_loop
+		setvard BAST_DID_INIT 0
+		local EXIT_SUB 1
+	}
+	if !EXIT_SUB
+	if ( !BAST_DID_INIT )
+	{
+	
+		setvard BAST_DID_INIT 1
+		setvard BAST_SPAWN_POS $get(ent_me,origin)
+		if ( PARAM1 startswith PARAM )
+		{
+			getplayers BAST_PLAYER_LIST
+			setvard BAST_PLAYER_LIST $sort_entlist(BAST_PLAYER_LIST,range)
+			setvard BAST_TEST_PLAYER $get_token(BAST_PLAYER_LIST,0)
+		}
+		else
+		{
+			setvard BAST_TEST_PLAYER PARAM1
+		}
+
+		if ( $get(ent_me,fly) )
+		{
+			
+			setvard BAST_MOB_HEIGHT_ADJ $get(ent_me,height)
+			multiply BAST_MOB_HEIGHT_ADJ 1.1
+		}
+
+	
+	}
+
+	
+	add BAST_ROT 5
+	if ( BAST_ROT > 359 ) setvard BAST_ROT 0
+	if ( NPC_TELEHUNT ) setvard BAST_ROT $randf(0,359.99)
+	local L_DIST $get(ent_me,width)
+	multiply L_DIST 2
+	if ( L_DIST < 48 ) local L_DIST 48 
+	if ( NPC_TELEHUNT )
+	{
+		if NPC_RANGED
+		
+		if ( NPC_BATTLE_ALLY )
+		{
+			if ( $get(BAST_TEST_PLAYER,isplayer) ) local EXIT_SUB 1 
+		}
+		if !EXIT_SUB
+		local L_DIST $randf(384,768) 
+	}
+	local L_TELE_POINT $get(BAST_TEST_PLAYER,origin)
+	vectoradd L_TELE_POINT $relpos($vec(0,BAST_ROT,0),$vec(0,L_DIST,BAST_MOB_HEIGHT_ADJ))
+	if ( G_DEVELOPER_MODE )
+	{
+		local L_TELE_POINT_ADJ L_TELE_POINT
+		vectoradd L_TEST_POS_ADJ z 64
+		effect beam point lgtning.spr 20 L_TELE_POINT L_TELE_POINT_ADJ (255,0,255) 200 0 0.1
+	}
+	setorigin ent_me L_TELE_POINT
+	local reg.npcmove.endpos L_TELE_POINT
+	local L_MY_ANG $get(ent_me,angles.yaw)
+	vectoradd reg.npcmove.endpos $relpos($vec(0,L_MY_ANG,0),$vec(-16,0,0))
+	local reg.npcmove.testonly	1
+	npcmove ent_me
+	if ( game.ret.npcmove.dist == 0 )
+	{
+		
+	
+		setorigin ent_me BAST_SPAWN_POS
+
+		if ( !$get(BAST_TEST_PLAYER,isalive) )
+		{
+			setvard BAST_DID_INIT 0
+			if ( NPC_TELEHUNT )
+			{
+				setvard BAST_TELEPORTING 0
+				local EXIT_SUB 1 
+			}
+		}
+		if !EXIT_SUB
+
+		callevent 0.1 as_tele_to_player_loop
+	}
+	else
+	{
+		
+	
+		setvard STUCK_COUNT 0 
+		setvard BAST_DID_INIT 0
+		setvard BAST_TELEPORTING 0
+		setorigin ent_me L_TELE_POINT
+		if ( NPC_TELEHUNTER_FX )
+		{
+			if ( NPC_TELEHUNTER_FX == 1 )
+			{
+				local L_SCALE1 $get(ent_me,height)
+				if ( L_SCALE1 > 256 ) local L_SCALE1 256
+				local L_SCALE_RATIO L_SCALE1
+				divide L_SCALE_RATIO 256
+				local L_SCALE1 $ratio(L_SCALE_RATIO,0.5,3.0)
+				local L_SCALE2 $ratio(L_SCALE_RATIO,1.0,6.0)
+				local L_LIGHT_RAD1 $ratio(L_SCALE_RATIO,64,256)
+				local L_LIGHT_RAD2 $ratio(L_SCALE_RATIO,128,512)
+
+			
+
+				clientevent new all effects/sfx_sprite_in_fancy BAST_SPAWN_POS xflare1.spr 20 L_SCALE1 (255,255,255) L_LIGHT_RAD1 magic/teleport.wav
+				clientevent new all effects/sfx_sprite_in_fancy $get(ent_me,origin) xflare1.spr 20 L_SCALE2 (255,255,255) L_LIGHT_RAD2 magic/spawn.wav
+			}
+			else if ( NPC_TELEHUNTER_FX == 2 )
+			{
+				
+			}
+			else if ( NPC_TELEHUNTER_FX > 2 )
+			{
+				
+				callevent npc_teleport_fx BAST_SPAWN_POS $get(ent_me,origin)
+			}
+		}
+		else
+		{
+			playsound 0 10 magic/spawn.wav
+		}
+		callevent npcatk_settarget BAST_TEST_PLAYER
+		callevent npc_teleported
+	}
+}

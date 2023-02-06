@@ -1,0 +1,46 @@
+{
+	const SCAN_RANGE 256
+}
+
+#include monsters/summon/base_aoe
+
+{ game_dynamically_created 
+
+	
+	setvard MY_OWNER PARAM1
+	setvard OWNER_ISPLAYER $get(PARAM1,isplayer)
+	setvard GAME_PVP game.pvp
+	setvard MY_BASE_DAMAGE PARAM2
+	setvard ACTIVE_SKILL PARAM3
+	if ( ACTIVE_SKILL equals 'PARAM3' ) setvard ACTIVE_SKILL spellcasting.ice
+
+	clientevent new all_in_sight monsters/summon/ice_burst_cl $get(MY_OWNER,index)
+	setvard BURST_SCRIPT_IDX game.script.last_sent_id
+
+	callevent 0.25 big_boom
+
+	callevent 3.0 effect_die
+}
+
+{ effect_die
+
+	clienteffect remove all BURST_SCRIPT_IDX
+	deleteent ent_me
+}
+
+{ big_boom
+
+	playsound 0 10 ambience/steamburst1.wav
+	callevent aoe_applyeffect_rad
+}
+
+{ apply_aoe_effect
+
+	local FREEZE_ON_CHANCE $rand(1,2)
+	if ( FREEZE_ON_CHANCE == 1 ) applyeffect PARAM1 effects/effect_frostbite_dmg 10 MY_OWNER $rand(10,MY_BASE_DAMAGE) ACTIVE_SKILL
+	if ( FREEZE_ON_CHANCE == 2 ) 
+	{
+		if ( $get(PARAM1,hp) > 1500 ) applyeffect PARAM1 effects/effect_frostbite_dmg 10 MY_OWNER $rand(10,MY_BASE_DAMAGE) ACTIVE_SKILL
+		if ( $get(PARAM1,hp) <= 1500 ) applyeffect PARAM1 effects/freeze_solid 5 MY_OWNER $rand(10,20)
+	}
+}

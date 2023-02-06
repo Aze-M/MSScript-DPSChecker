@@ -1,0 +1,79 @@
+#scope server
+{
+	const IS_QUIVER 1
+}
+
+{ game_spawn
+
+	hp 1
+	invincible  2
+	name a|Quiver
+	width 20
+	height 30
+	setmodel	weapons/bows/quiver_floor.mdl
+	setsolid trigger
+	playsound 0 10 player/hitground2.wav
+}
+
+
+{ game_playerused
+	if ( BQ_QUIVER_TYPE equals 'BQ_QUIVER_TYPE' ) local IS_ERROR 1
+	if ( BQ_QUIVER_TYPE startswith PARAM ) local IS_ERROR 1
+	if ( IS_ERROR )
+	{
+		local OUT_MSG  "Quiver type invalid or not set ("
+		stradd OUT_MSG BQ_QUIVER_TYPE
+		stradd OUT_MSG )
+		infomsg PARAM1 "QUIVER ERROR" OUT_MSG
+	}
+	offer PARAM1 BQ_QUIVER_TYPE BQ_BUNDLE_SIZE
+	deleteent ent_me
+}
+
+{ fade_away
+	deleteent ent_me fade
+}
+
+{ game_dynamically_created
+	if ( PARAM1 !startswith PARAM )
+	{
+		callevent set_type PARAM1 PARAM2
+	}
+	callevent 30.0 fade_away
+}
+
+{ game_postspawn
+	setvard NEW_NAME PARAM1
+	if ( NEW_NAME isnot 'default' )	name NEW_NAME
+	if ( PARAM4 startswith PARAM ) local EXIT_SUB 1
+	if !EXIT_SUB
+	setvard NPC_DO_EVENTS PARAM4
+	callevent 0.01 run_addparams
+}
+
+{ run_addparams
+	calleventloop $get_token_amt(NPC_DO_EVENTS) npcatk_do_events
+}
+
+{ npcatk_do_events 
+	local N_EVENT game.script.iteration
+	local EVENT_NAME $get_token(NPC_DO_EVENTS,N_EVENT)
+	add N_EVENT 1
+	if ( N_EVENT <= $get_token_amt(NPC_DO_EVENTS) )	local NEXT_EVENT $get_token(NPC_DO_EVENTS,N_EVENT)
+
+	callevent EVENT_NAME NEXT_EVENT
+}
+
+{ set_type 
+	setvard BQ_CUSTOM 1
+	setvard BQ_QUIVER_TYPE PARAM1
+	if ( PARAM2 !startswith PARAM )
+	{
+		setvard BQ_BUNDLE_SIZE PARAM2
+	}
+	else
+	{
+		setvard BQ_BUNDLE_SIZE 30
+	}
+}
+
