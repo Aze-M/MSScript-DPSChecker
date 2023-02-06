@@ -1,5 +1,0 @@
-#include monsters/base_temporary
-
-{ game_spawn
-	callexternal all npc_suicide no_pets
-}

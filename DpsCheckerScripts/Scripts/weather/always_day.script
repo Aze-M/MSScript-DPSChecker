@@ -1,4 +1,0 @@
-{
-setvarg ALWAYS_DAY 1
-}
-#include monsters/base_temporary

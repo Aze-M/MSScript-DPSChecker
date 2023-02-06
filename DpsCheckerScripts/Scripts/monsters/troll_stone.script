@@ -1,4 +1,0 @@
-{
-	setvar IS_GUARDIAN 1
-}
-#include monsters/troll2

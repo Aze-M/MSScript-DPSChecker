@@ -1,6 +1,0 @@
-#include other/lure
-
-{ game_spawn
-
-	hp 50
-}

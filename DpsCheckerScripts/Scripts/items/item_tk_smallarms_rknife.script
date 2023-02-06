@@ -1,4 +1,0 @@
-#include items/base_ticket 
-{ ticket_spawn
-name Ticket for Rsty Knife
-}

@@ -1,5 +1,0 @@
-#include monsters/morc_shaman_ice
-
-{ [override] make_blizzard
-	
-}

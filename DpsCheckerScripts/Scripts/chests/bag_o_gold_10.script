@@ -1,5 +1,0 @@
-{
-	setvard GOLD_AMT $rand(7,10)
-}
-
-#include chests/bag_o_gold_base

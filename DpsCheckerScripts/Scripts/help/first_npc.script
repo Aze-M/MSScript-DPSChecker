@@ -1,8 +1,0 @@
-
-{ game_targeted_by_player 
-
-	local TEXT "You are looking at "
-	stradd TEXT game.monster.name
-	stradd TEXT ".|To speak to him, change your text speech mode to|local [U] and say 'hello' or 'hail'"
-	helptip PARAM1 help_speak "Help Tip"  TEXT
-}

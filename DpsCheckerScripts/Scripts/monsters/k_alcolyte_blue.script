@@ -1,6 +1,0 @@
-{
-	const OVERRIDE_TYPE 1
-	setvard ALCO_TYPE 4
-}
-
-#include monsters/k_alcolyte

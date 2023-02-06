@@ -1,6 +1,0 @@
-{
-	setvard I_AM_TURNABLE 1
-	const NOT_SUMMONED 1
-}
-
-#include monsters/wraith_summoned

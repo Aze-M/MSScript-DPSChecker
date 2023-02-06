@@ -1,5 +1,0 @@
-{
-	const MONSTER_MODEL monsters/gbear_hipoly.mdl
-}
-
-#include monsters/gbear_black_lpoly

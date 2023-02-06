@@ -1,9 +1,0 @@
-{ game_spawn
-	setmodel null.mdl
-	width 3
-	height 3
-	gravity 0
-	nopush 1
-	invincible 1
-	name_unique blue_goal_ref
-}

@@ -1,9 +1,0 @@
-{
-	const POISON_TYPE 6
-}
-
-#include monsters/skeleton_poison_random
-
-{ npc_spawn
-	roam 0
-}

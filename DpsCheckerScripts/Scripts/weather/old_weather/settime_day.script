@@ -1,5 +1,0 @@
-{
-	setvarg global.mstime.secs 215940
-	setvarg global.mstime.updateall 0
-}
-#include monsters/base_temporary

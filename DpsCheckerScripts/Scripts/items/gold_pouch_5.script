@@ -1,5 +1,0 @@
-{
-	const GOLD_AMT 5
-}
-
-#include items/gold_pouch_base

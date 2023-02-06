@@ -1,8 +1,0 @@
-
-{ game_targeted_by_player 
-
-	local TEXT "You are looking at "
-	stradd TEXT game.monster.name
-	stradd TEXT ".|You can hire him to protect you.|Press 'use' on him and press 'Hire for X gold'."
-	helptip PARAM1 help_hireling "Hired Help"  TEXT
-}

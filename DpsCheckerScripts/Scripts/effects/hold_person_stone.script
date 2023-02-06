@@ -1,5 +1,0 @@
-{
-	const STONE_FX 1
-}
-
-#include effects/hold_person

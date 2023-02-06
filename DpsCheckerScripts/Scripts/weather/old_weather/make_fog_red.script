@@ -1,6 +1,0 @@
-{
-
-	callexternal all game_playercmd_setweather fog_red 0 0
-}
-
-#include monsters/base_temporary

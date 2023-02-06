@@ -1,4 +1,0 @@
-{
-setvarg ALWAYS_NIGHT 1
-}
-#include monsters/base_temporary

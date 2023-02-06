@@ -1,8 +1,0 @@
-
-{ game_targeted_by_player 
-
-	local TEXT "You are looking at "
-	stradd TEXT game.monster.name.full
-	stradd TEXT ".|You can pay him by pressing F11"
-	helptip PARAM1 help_marketsq "Merchant Square"  TEXT
-}

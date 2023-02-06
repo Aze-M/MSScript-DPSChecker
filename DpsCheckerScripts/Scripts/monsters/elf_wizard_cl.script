@@ -1,5 +1,0 @@
-#scope client
-
-{ [server] client_activate
-
-}

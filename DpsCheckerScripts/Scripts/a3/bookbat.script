@@ -1,7 +1,0 @@
-#include keledrosprelude/bat
-
-{ npc_spawn
-
-	name a|Lesser Firebat
-	hp 25
-}

@@ -1,6 +1,0 @@
-{ alarm
-
-Debugprint Door 'opened'!
-
-emitsound ent_me (0,0,0) 10 5 combat
-}

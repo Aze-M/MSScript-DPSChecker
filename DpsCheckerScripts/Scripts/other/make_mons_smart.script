@@ -1,4 +1,0 @@
-{ game_spawn
-	
-	setvarg NO_ADVANCED_SEARCHES 0
-}

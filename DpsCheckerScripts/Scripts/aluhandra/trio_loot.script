@@ -1,9 +1,0 @@
-#include chests/base_treasurechest_array
-
-{ chest_additems
-	callevent add_gold_by_hp 500
-	callevent add_gold_by_hp 500
-	callevent add_epic_item 100 300
-	if ( game.playersnb > 0 ) callevent add_epic_item 100 300
-	if ( game.playersnb >= 1 ) callevent add_epic_item 100 300
-}

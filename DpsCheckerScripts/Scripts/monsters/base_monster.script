@@ -1,8 +1,0 @@
-
-{
-	
-}
-
-#include [server] monsters/base_npc_attack
-#include [server] monsters/base_monster_shared 
-

@@ -1,5 +1,0 @@
-#include monsters/slime_black_small
-
-{ npc_spawn
-	race demon
-}
