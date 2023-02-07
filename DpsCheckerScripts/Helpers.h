@@ -12,6 +12,7 @@
 #include <map>
 #include <random>
 #include <filesystem>
+#include <atomic>
 
 namespace fs = std::filesystem;
 
@@ -27,6 +28,10 @@ struct attack_data_t {
 };
 
 //std::string lookup_info_arr_map(const std::vector<std::string> info_names, const std::map<std::string, std::string> info_map);
+
+fs::path find_file_threaded(std::string file_name, fs::path directory);
+
+void find_file_thread(std::string file_name,const fs::path directory, fs::path& path_storage, std::mutex& path_mutex);
 
 std::string lookup_info(const std::map<std::string, std::string>*& locals_map, const std::map<std::string, std::string>*& consts_map, std::string local_name, const int& attack_nr);
 

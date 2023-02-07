@@ -41,8 +41,13 @@ int main()
 	fs::path directory = fs::current_path();
 	fs::path file_path;
 
+	//trying to prevent recursion skipping cin's
+	if (std::cin.fail()) {
+		std::cin.clear();
+		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+	}
+
 	//request input of script file
-	std::cin.clear();
 	std::cout << "Insert script name (or quit):" << std::endl;
 	std::cin >> filename;
 	std::cin.clear();
@@ -70,7 +75,7 @@ int main()
 	std::cin.ignore();
 
 	//request info on attack_nr
-	std::cout << "Enter charge level (0 for default hits):" << std::endl;
+	std::cout << "Enter charge level (0 for default hits, sometimes inaccurate due to reading algorithm):" << std::endl;
 	std::cin >> attack_nr;
 	if (attack_nr < 0 || std::cin.fail()) {
 		valid_input = false;
@@ -96,7 +101,8 @@ int main()
 	//look for the file
 	std::cout << "Looking for script: " << filename << std::endl;
 
-	file_path = find_file(filename, directory);
+	//file_path = find_file(filename, directory);
+	file_path = find_file_threaded(filename, directory);
 
 	//if no file found just exit
 	if (file_path.empty()) {
@@ -206,7 +212,7 @@ int main()
 			std::cout << "Attempting to load #" << idx + 1 << ". Filename: " << include_split[1] << ".script..." << std::endl;
 
 			//try to find file
-			include_path = find_file(include_split[1], directory);
+			include_path = find_file_threaded(include_split[1], directory);
 
 			include.open(include_path);
 
@@ -356,13 +362,23 @@ int main()
 
 	std::cout << "Enter dummy HP (whole numbers only):" << std::endl;
 	std::cin >> health;
-	std::cin.clear();
-	std::cin.ignore();
+	if (std::cin.fail()) {
+		std::cout << "Invalid input." << std::endl;
+		std::cin.clear();
+		std::cin.ignore();
+		std::cout << "---------------" << std::endl;
+		main();
+	}
 	health_init = health;
 	std::cout << "Enter dummy resistance in decimal (e.g. 0.4 for 60% resistance);" << std::endl;
 	std::cin >> resist;
-	std::cin.clear();
-	std::cin.ignore();
+	if (std::cin.fail()) {
+		std::cout << "Invalid input." << std::endl;
+		std::cin.clear();
+		std::cin.ignore();
+		std::cout << "---------------" << std::endl;
+		main();
+	}
 	std::cout << "---------------" << std::endl;
 
 	//begin grabbing attack stats from locals

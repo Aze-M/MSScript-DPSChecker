@@ -5,8 +5,8 @@ fs::path find_file(std::string filename, fs::path directory) {
 	fs::path file_path;
 	fs::path file_initial = directory;
 
-	for (const fs::directory_entry& file : fs::recursive_directory_iterator(directory)) {
-		file_path = file.path();
+	for (const fs::directory_entry& entry : fs::recursive_directory_iterator(directory)) {
+		file_path = entry.path();
 
 		if (file_path.u8string().find(filename) != std::string::npos) {
 			std::cout << "Found " << filename << " @ " << file_path.u8string() << std::endl;
@@ -19,6 +19,57 @@ fs::path find_file(std::string filename, fs::path directory) {
 	std::cout << "---------------" << std::endl;
 	fs::path emptypath;
 	return emptypath;
+}
+
+//path multithreading
+fs::path find_file_threaded(std::string file_name, fs::path directory) {
+	std::vector<std::thread> threads;
+	fs::path out;
+	std::mutex path_mutex;
+	int thread_count = std::thread::hardware_concurrency();
+
+	for (int idx = 0; idx < thread_count; idx++) {
+		threads.emplace_back(find_file_thread, std::ref(file_name), std::ref(directory), std::ref(out), std::ref(path_mutex));
+	}
+
+	for (auto& thread : threads)
+	{
+		thread.join();
+	}
+
+	if (!out.empty()) {
+		std::cout << "Found " << file_name << " @ " << out.u8string() << std::endl;
+		return out;
+	}
+	else {
+		std::cout << "Could not find specified script file." << std::endl;
+		std::cout << "---------------" << std::endl;
+		fs::path emptypath;
+		return emptypath;
+	}
+}
+
+
+void find_file_thread(std::string file_name, const fs::path directory, fs::path& path_storage, std::mutex& path_mutex) {
+	fs::path file_path;
+	fs::path path_initial = directory;
+
+	for (const fs::directory_entry& entry : fs::directory_iterator(path_initial)) {
+		if (!path_storage.empty()) {
+			break;
+		};
+
+		file_path = entry.path();
+
+		if (entry.is_directory()) {
+			find_file_thread(file_name, entry.path(), path_storage, path_mutex);
+		}
+		else if (file_path.u8string().find(file_name) != std::string::npos) {
+			std::unique_lock<std::mutex> lock(path_mutex);
+			path_storage = file_path;
+			break;
+		}
+	}
 }
 
 //now handled by reading locals for the bound statics.
