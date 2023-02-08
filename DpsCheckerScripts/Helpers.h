@@ -31,19 +31,20 @@ struct attack_data_t {
 
 fs::path find_file_threaded(std::string file_name, fs::path directory);
 
-void find_file_thread(std::string file_name,const fs::path directory, fs::path& path_storage, std::mutex& path_mutex);
+void find_file_thread(std::string file_name, const fs::path directory, fs::path& path_storage, std::mutex& path_mutex);
 
-std::string lookup_info(const std::map<std::string, std::string>*& locals_map, const std::map<std::string, std::string>*& consts_map, std::string local_name, const int& attack_nr);
+std::string lookup_info(const std::map<std::string, std::string>& locals_map, const std::map<std::string, std::string>*& consts_map, std::string local_name, const int& attack_nr);
 
 fs::path find_file(std::string filename, fs::path directory);
 
 std::vector<std::string> split_string(std::string& str_in, char split_at);
 
+std::string find_in_map_ss(const std::string& key_to_find, std::map<std::string, std::string>& map_to_search);
 std::string find_in_map_ss(const std::string& key_to_find, std::map<std::string, std::string>*& map_to_search);
 
 float find_in_map_sf(const std::string& key_to_find, std::map<std::string, float>*& map_to_search);
 
-attack_data_t map_attack_data_melee(std::map<std::string, std::string>*& consts, std::map<std::string, std::string>*& locals, const int skill_level, const int attack_nr);
+attack_data_t map_attack_data_melee(std::map<std::string, std::string>*& consts, std::vector<std::map<std::string, std::string>> attacks_vec, const int skill_level, const int attack_nr);
 
 int do_attack(int& health, float& resist, attack_data_t& attack_data);
 

@@ -23,9 +23,11 @@ int main()
 	std::vector<std::string>* includes = new std::vector<std::string>;
 	std::vector<std::string>* locals = new std::vector<std::string>;
 
+	//vector for third rewrite of script reader
+	std::vector < std::map<std::string, std::string> > attacks_vec;
+
 	//key - value map for consts and locals
 	std::map<std::string, std::string>* consts_map = new std::map<std::string, std::string>;
-	std::map<std::string, std::string>* locals_map = new std::map<std::string, std::string>;
 
 	//const to store attack data.
 	attack_data_t attack_map;
@@ -132,6 +134,25 @@ int main()
 
 			}
 
+			if ((cur_line.find("register_normal") != nfound)) {
+
+				locals->push_back(cur_line);
+
+			}
+
+			if ((cur_line.find("register_charge1") != nfound)) {
+
+				locals->push_back(cur_line);
+
+			}
+
+			if ((cur_line.find("register_charge2") != nfound)) {
+
+				locals->push_back(cur_line);
+
+			}
+
+
 			if ((cur_line.find("local reg.attack") != nfound) || (cur_line.find("registerattack") != nfound)) {
 
 				locals->push_back(cur_line);
@@ -164,25 +185,61 @@ int main()
 
 		std::cout << "Mapping locals from " << filename << std::endl;
 		int reg_increment = 0;
+
+		//create a map for locals, attempt tracking atk type
+		std::map<std::string, std::string> locals_map;
+		int reg_atk = 0;
+
 		//map import locals immediately so they can be reserved.
 		for (int idx = 0; idx < locals->size(); idx++) {
 			std::string cur = locals->at(idx);
 			std::vector cur_split = split_string(cur, ' ');
 
-
+			//filter out empties and brackets and callevent
 			for (int idx_2 = 0; idx_2 < cur_split.size(); idx_2++) {
-				if (cur_split[idx_2].size() == 0) {
+				if (cur_split[idx_2].size() == 0 || cur_split[idx_2] == "{" || cur_split[idx_2] == "callevent") {
 					cur_split.erase(cur_split.begin() + idx_2);
 					idx_2--;
 				}
 			}
 
-			if (cur_split[0] == "registerattack") {
-				reg_increment++;
+			//try to read headers
+			if (cur_split[0] == "register_normal") {
+				reg_atk = 0;
+				continue;
+			}
+			else if (cur_split[0] == "register_charge1") {
+				reg_atk = 1;
+				continue;
+			}
+			else if (cur_split[0] == "register_charge2") {
+				reg_atk = 2;
 				continue;
 			}
 
-			locals_map->insert({ std::to_string(reg_increment) + "_" + cur_split[1] , cur_split[2] });
+			if (cur_split[0] == "registerattack") {
+				if (reg_atk > attacks_vec.size()) {
+					attacks_vec.resize(reg_atk + 1);
+					attacks_vec[reg_atk] = locals_map;
+					locals_map.clear();
+					continue;
+				}
+				else if (attacks_vec.at(reg_atk).size() == 0) {
+					attacks_vec[reg_atk] = locals_map;
+					locals_map.clear();
+					continue;
+				}
+				//fallback in case a header is missing, increment charge value
+				else {
+					reg_atk++;
+					attacks_vec.resize(reg_atk + 1);
+					attacks_vec[reg_atk] = locals_map;
+					locals_map.clear();
+					continue;
+				}
+			}
+
+			locals_map.insert({ cur_split[1] , cur_split[2] });
 
 		};
 
@@ -233,6 +290,24 @@ int main()
 
 					}
 
+					if ((cur_line.find("register_normal") != nfound)) {
+
+						locals->push_back(cur_line);
+
+					}
+
+					if ((cur_line.find("register_charge1") != nfound)) {
+
+						locals->push_back(cur_line);
+
+					}
+
+					if ((cur_line.find("register_charge2") != nfound)) {
+
+						locals->push_back(cur_line);
+
+					}
+
 					if ((cur_line.find("local reg.attack") != nfound) || (cur_line.find("registerattack") != nfound)) {
 
 						locals->push_back(cur_line);
@@ -268,27 +343,59 @@ int main()
 
 				std::cout << "Mapping locals from " << include_split[1] << ".script" << std::endl;
 
-				int reg_increment = 0;
+				//map import locals immediately so they can be reserved.
 				for (int idx = 0; idx < locals->size(); idx++) {
 					std::string cur = locals->at(idx);
 					std::vector cur_split = split_string(cur, ' ');
 
+					//filter out empties and brackets and callevent
 					for (int idx_2 = 0; idx_2 < cur_split.size(); idx_2++) {
-						if (cur_split[idx_2].size() == 0) {
+						if (cur_split[idx_2].size() == 0 || cur_split[idx_2] == "{" || cur_split[idx_2] == "callevent") {
 							cur_split.erase(cur_split.begin() + idx_2);
 							idx_2--;
 						}
 					}
 
-					if (cur_split[0] == "registerattack") {
-						reg_increment++;
+					//try to read headers
+					if (cur_split[0] == "register_normal") {
+						reg_atk = 0;
+						continue;
+					}
+					else if (cur_split[0] == "register_charge1") {
+						reg_atk = 1;
+						continue;
+					}
+					else if (cur_split[0] == "register_charge2") {
+						reg_atk = 2;
 						continue;
 					}
 
-					if (find_in_map_ss(std::to_string(reg_increment) + "_" + cur_split[1], locals_map) == "") {
-						locals_map->insert({ std::to_string(reg_increment) + "_" + cur_split[1], cur_split[2] });
+					if (cur_split[0] == "registerattack") {
+						if (reg_atk > attacks_vec.size()) {
+							attacks_vec.resize(reg_atk + 1);
+							attacks_vec[reg_atk] = locals_map;
+							locals_map.clear();
+							continue;
+						}
+						else if (attacks_vec.at(reg_atk).size() == 0) {
+							attacks_vec[reg_atk] = locals_map;
+							locals_map.clear();
+							continue;
+						}
+						//fallback in case a header is missing, increment charge value
+						else {
+							reg_atk++;
+							attacks_vec.resize(reg_atk + 1);
+							attacks_vec[reg_atk] = locals_map;
+							locals_map.clear();
+							continue;
+						}
 					}
+
+					locals_map.insert({ cur_split[1] , cur_split[2] });
+
 				};
+
 
 				consts->clear();
 				consts->shrink_to_fit();
@@ -383,12 +490,11 @@ int main()
 
 	//begin grabbing attack stats from locals
 	if (weapon_type == "m") {
-		attack_map = map_attack_data_melee(consts_map, locals_map, skill_level, attack_nr);
+		attack_map = map_attack_data_melee(consts_map, attacks_vec, skill_level, attack_nr);
 	}
 	else {
 		std::cout << "Support for non melee not yet implemented" << std::endl;
 		delete consts_map;
-		delete locals_map;
 		main();
 	}
 
@@ -398,7 +504,6 @@ int main()
 		std::cout << "Please make sure your script complies with the inputs given." << std::endl;
 		std::cout << "---------------" << std::endl;
 		delete consts_map;
-		delete locals_map;
 		main();
 	};
 
@@ -427,7 +532,8 @@ int main()
 	std::cout << "---------------" << std::endl;
 
 	delete consts_map;
-	delete locals_map;
+	attacks_vec.clear();
+	attacks_vec.shrink_to_fit();
 	main();
 
 	return 0;

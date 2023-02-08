@@ -88,12 +88,12 @@ std::string lookup_info_vec_map(const std::vector<std::string> info_names, const
 */
 
 //new handling
-std::string lookup_info(std::map<std::string, std::string>*& locals_map, std::map<std::string, std::string>*& consts_map, std::string local_name, const int& attack_nr) {
+std::string lookup_info(std::map<std::string, std::string>& locals_map, std::map<std::string, std::string>*& consts_map, std::string local_name, const int& attack_nr) {
 	std::string out = "";
 
 	std::string bound_const = "";
 
-	bound_const = find_in_map_ss(std::to_string(attack_nr) + "_" + local_name, locals_map);
+	bound_const = find_in_map_ss(local_name, locals_map);
 
 	out = find_in_map_ss(bound_const, consts_map);
 
@@ -116,6 +116,15 @@ std::vector<std::string> split_string(std::string& str_in, char split_at) {
 	return str_out;
 }
 
+std::string find_in_map_ss(const std::string& key_to_find, std::map<std::string, std::string>& map_to_search) {
+	std::string out = "";
+
+	if (auto search = map_to_search.find(key_to_find); search != map_to_search.end()) {
+		out = search->second;
+	}
+	return out;
+}
+
 std::string find_in_map_ss(const std::string& key_to_find, std::map<std::string, std::string>*& map_to_search) {
 	std::string out = "";
 
@@ -124,6 +133,7 @@ std::string find_in_map_ss(const std::string& key_to_find, std::map<std::string,
 	}
 	return out;
 }
+
 
 
 float find_in_map_sf(const std::string& key_to_find, std::map<std::string, float>*& map_to_search) {
@@ -135,9 +145,10 @@ float find_in_map_sf(const std::string& key_to_find, std::map<std::string, float
 	return out;
 }
 
-attack_data_t map_attack_data_melee(std::map<std::string, std::string>*& consts, std::map<std::string, std::string>*& locals, const int skill_level, const int attack_nr) {
+attack_data_t map_attack_data_melee(std::map<std::string, std::string>*& consts, std::vector<std::map<std::string, std::string>> attacks_vec, const int skill_level, const int attack_nr) {
 	// find the values in consts that are needed for attack simulation. map them to given map.
 	int conv_errors = 0; // increment when conversion fails
+	std::map<std::string, std::string> locals = attacks_vec[attack_nr];
 
 	//damage
 	std::string attack_damage_string = lookup_info(locals, consts, "reg.attack.dmg", attack_nr);
