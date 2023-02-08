@@ -148,7 +148,19 @@ float find_in_map_sf(const std::string& key_to_find, std::map<std::string, float
 attack_data_t map_attack_data_melee(std::map<std::string, std::string>*& consts, std::vector<std::map<std::string, std::string>> attacks_vec, const int skill_level, const int attack_nr) {
 	// find the values in consts that are needed for attack simulation. map them to given map.
 	int conv_errors = 0; // increment when conversion fails
-	std::map<std::string, std::string> locals = attacks_vec[attack_nr];
+
+	//init return struct
+	attack_data_t attack_data;
+
+	if (attack_nr > attacks_vec.size()) {
+		std::cout << "Charge level " << attack_nr << " exceeds the amount found (" << attacks_vec.size() << ")." << std::endl;
+		conv_errors++;
+		attack_data.conv_errors = conv_errors;
+		return attack_data;
+	}
+
+	//convenience rebind
+	std::map<std::string, std::string>& locals = attacks_vec[attack_nr];
 
 	//damage
 	std::string attack_damage_string = lookup_info(locals, consts, "reg.attack.dmg", attack_nr);
@@ -231,7 +243,6 @@ attack_data_t map_attack_data_melee(std::map<std::string, std::string>*& consts,
 	//pass on skill_level as is
 
 	//map to struct and return.
-	attack_data_t attack_data;
 
 	attack_data.damage = attack_damage;
 	attack_data.damage_range = attack_damage_range;

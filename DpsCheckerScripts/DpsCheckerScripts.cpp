@@ -371,7 +371,7 @@ int main()
 					}
 
 					if (cur_split[0] == "registerattack") {
-						if (reg_atk > attacks_vec.size()) {
+						if (reg_atk >= attacks_vec.size()) {
 							attacks_vec.resize(reg_atk + 1);
 							attacks_vec[reg_atk] = locals_map;
 							locals_map.clear();
