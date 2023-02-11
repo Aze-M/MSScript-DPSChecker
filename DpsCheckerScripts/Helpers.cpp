@@ -134,8 +134,6 @@ std::string find_in_map_ss(const std::string& key_to_find, std::map<std::string,
 	return out;
 }
 
-
-
 float find_in_map_sf(const std::string& key_to_find, std::map<std::string, float>& map_to_search) {
 	auto search = map_to_search.find(key_to_find);
 	return (search != map_to_search.end()) ? search->second : 0.0;
