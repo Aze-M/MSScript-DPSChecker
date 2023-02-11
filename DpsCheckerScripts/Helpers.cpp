@@ -136,13 +136,9 @@ std::string find_in_map_ss(const std::string& key_to_find, std::map<std::string,
 
 
 
-float find_in_map_sf(const std::string& key_to_find, std::map<std::string, float>*& map_to_search) {
-	float out = 0.0;
-
-	if (auto search = map_to_search->find(key_to_find); search != map_to_search->end()) {
-		out = search->second;
-	}
-	return out;
+float find_in_map_sf(const std::string& key_to_find, std::map<std::string, float>& map_to_search) {
+	auto search = map_to_search.find(key_to_find);
+	return (search != map_to_search.end()) ? search->second : 0.0;
 }
 
 attack_data_t map_attack_data_melee(std::map<std::string, std::string>*& consts, std::vector<std::map<std::string, std::string>> attacks_vec, const int skill_level, const int attack_nr) {
