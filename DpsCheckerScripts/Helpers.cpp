@@ -344,7 +344,7 @@ void do_attack_thread(int& health, float& resist, attack_data_t& attack_data, in
 		damage_fraction = std::max(damage_fraction, 0.001f);
 
 		//calculate damage
-		float damage = (((damage_min + damage_range) * damage_fraction) * damage_charge_multi) * damage_crit_multi;
+		float damage = (((damage_min + damage_range) * damage_charge_multi) * damage_fraction) * damage_crit_multi;
 
 		std::cout << "Damage: " << (damage * resist) << " " + critstring << std::endl;
 
