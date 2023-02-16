@@ -178,7 +178,7 @@ attack_data_t map_attack_data_melee(std::map<std::string, std::string>*& consts,
 		for (int idx = 0; idx < attacks_vec.size(); idx++)
 		{
 			std::string checkstring = lookup_info(attacks_vec[idx], consts, "reg.attack.chargeamt", idx);
-			if (checkstring != "" && stof(checkstring) == attack_nr * 100) {
+			if ((checkstring != "" && stof(checkstring) == attack_nr * 100) || (checkstring == "" && attack_nr == 0)) {
 				attack_nr = idx;
 				std::cout << "Found correct charge level as attack_nr: " << attack_nr << std::endl;
 				std::cout << "---------------" << std::endl;
@@ -311,25 +311,29 @@ attack_data_t map_attack_data_melee(std::map<std::string, std::string>*& consts,
 	//charge multi
 	std::string attack_charge_multi_string = lookup_info(locals, consts, "mult_reg.attack.dmg", attack_nr);
 	int attack_charge_multi;
+	if (attack_nr > 0) {
+		try {
+			attack_charge_multi = stoi(attack_charge_multi_string);
+		}
+		catch (std::exception ex) {
+			conv_errors++;
+			attack_delay_end = 0;
+			std::cout << "Error while converting Charge Attack Multiplier: " << ex.what() << std::endl;
+			if (attack_nr > 0) {
+				std::string confirm = "";
 
-	try {
-		attack_charge_multi = stoi(attack_charge_multi_string);
-	}
-	catch (std::exception ex) {
-		conv_errors++;
-		attack_delay_end = 0;
-		std::cout << "Error while converting Charge Attack Multiplier: " << ex.what() << std::endl;
-		if (attack_nr > 0) {
-			std::string confirm = "";
+				std::cout << "Fallback to attack 0? (y/n)" << std::endl;
+				std::cin >> confirm;
 
-			std::cout << "Fallback to attack 0? (y/n)" << std::endl;
-			std::cin >> confirm;
-
-			if (confirm == "y" && !std::cin.fail()) {
-				attack_charge_multi = 1;
-				conv_errors--;
+				if (confirm == "y" && !std::cin.fail()) {
+					attack_charge_multi = 1;
+					conv_errors--;
+				}
 			}
 		}
+	}
+	else {
+		attack_charge_multi = 1;
 	}
 
 

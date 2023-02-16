@@ -393,12 +393,11 @@ int main()
 						std::string out = cur_split[2];
 						//removie percentage sign so stof doesn't pee itself
 						if (out != "" && out.back() == '%') {
-							out.pop_back();
+							out.pop_back(); 
+							reg_atk = (stoi(out) / 100);
+							locals_map.insert({ cur_split[1] , cur_split[2] });
+							continue;
 						}
-
-						reg_atk = (stoi(out) / 100);
-						locals_map.insert({ cur_split[1] , cur_split[2] });
-						continue;
 					}
 
 
