@@ -44,7 +44,7 @@ std::string find_in_map_ss(const std::string& key_to_find, std::map<std::string,
 
 float find_in_map_sf(const std::string& key_to_find, std::map<std::string, float>& map_to_search);
 
-attack_data_t map_attack_data_melee(std::map<std::string, std::string>*& consts, std::vector<std::map<std::string, std::string>> attacks_vec, const int skill_level, const int attack_nr);
+attack_data_t map_attack_data_melee(std::map<std::string, std::string>*& consts, std::vector<std::map<std::string, std::string>> attacks_vec, const int skill_level, int attack_nr);
 
 int do_attack(int& health, float& resist, attack_data_t& attack_data);
 

@@ -152,12 +152,18 @@ int main()
 
 			}
 
-
 			if ((cur_line.find("local reg.attack") != nfound) || (cur_line.find("registerattack") != nfound)) {
 
 				locals->push_back(cur_line);
 
 			}
+
+			if (cur_line.find("multiply reg.attack") != nfound) {
+
+				locals->push_back(cur_line);
+
+			}
+
 
 		}
 
@@ -203,6 +209,19 @@ int main()
 				}
 			}
 
+			//read charge amt > headers
+			if (cur_split.size() > 1 && cur_split[1] == "reg.attack.chargeamt") {
+				std::string out = cur_split[2];
+				//removie percentage sign so stof doesn't pee itself
+				if (out != "" && out.back() == '%') {
+					out.pop_back();
+				}
+
+				reg_atk = (stoi(out) / 100);
+				locals_map.insert({ cur_split[1] , cur_split[2] });
+				continue;
+			}
+
 			//try to read headers
 			if (cur_split[0] == "register_normal") {
 				reg_atk = 0;
@@ -214,6 +233,12 @@ int main()
 			}
 			else if (cur_split[0] == "register_charge2") {
 				reg_atk = 2;
+				continue;
+			}
+
+			//save multiplier handles
+			if (cur_split[0] == "multiply") {
+				locals_map.insert({ "mult_" + cur_split[1] , cur_split[2] });
 				continue;
 			}
 
@@ -314,6 +339,12 @@ int main()
 
 					}
 
+					if (cur_line.find("multiply reg.attack") != nfound) {
+
+						locals->push_back(cur_line);
+
+					}
+
 				}
 
 				include.close();
@@ -356,6 +387,21 @@ int main()
 						}
 					}
 
+
+					//read charge amt > headers
+					if (cur_split.size() > 1 && cur_split[1] == "reg.attack.chargeamt") {
+						std::string out = cur_split[2];
+						//removie percentage sign so stof doesn't pee itself
+						if (out != "" && out.back() == '%') {
+							out.pop_back();
+						}
+
+						reg_atk = (stoi(out) / 100);
+						locals_map.insert({ cur_split[1] , cur_split[2] });
+						continue;
+					}
+
+
 					//try to read headers
 					if (cur_split[0] == "register_normal") {
 						reg_atk = 0;
@@ -370,6 +416,13 @@ int main()
 						continue;
 					}
 
+					//save multiplier handles
+					if (cur_split[0] == "multiply") {
+						locals_map.insert({ "mult_" + cur_split[1] , cur_split[2] });
+						continue;
+					}
+
+					//if an attack is registered take it with you
 					if (cur_split[0] == "registerattack") {
 						if (reg_atk >= attacks_vec.size()) {
 							attacks_vec.resize(reg_atk + 1);
@@ -384,7 +437,7 @@ int main()
 						}
 						//fallback in case a header is missing, increment charge value
 						else {
-							reg_atk++;
+							reg_atk = attacks_vec.size() + 1;
 							attacks_vec.resize(reg_atk + 1);
 							attacks_vec[reg_atk] = locals_map;
 							locals_map.clear();
@@ -467,6 +520,30 @@ int main()
 
 	std::cout << "---------------" << std::endl;
 
+
+
+	//begin grabbing attack stats from locals
+	if (weapon_type == "m") {
+		attack_map = map_attack_data_melee(consts_map, attacks_vec, skill_level, attack_nr);
+	}
+	else {
+		std::cout << "Support for non melee not yet implemented" << std::endl;
+		delete consts_map;
+		main();
+	}
+
+	if (attack_map.conv_errors > 0) {
+		std::cout << "---------------" << std::endl;
+		std::cout << "Something went wrong, restarting." << std::endl;
+		std::cout << "Please report the failed script if it should be supported." << std::endl;
+		std::cout << "---------------" << std::endl;
+		delete consts_map;
+		main();
+	};
+
+	std::cout << "Mapping successful." << std::endl;
+	std::cout << "---------------" << std::endl;
+
 	std::cout << "Enter dummy HP (whole numbers only):" << std::endl;
 	std::cin >> health;
 	if (std::cin.fail()) {
@@ -487,25 +564,6 @@ int main()
 		main();
 	}
 	std::cout << "---------------" << std::endl;
-
-	//begin grabbing attack stats from locals
-	if (weapon_type == "m") {
-		attack_map = map_attack_data_melee(consts_map, attacks_vec, skill_level, attack_nr);
-	}
-	else {
-		std::cout << "Support for non melee not yet implemented" << std::endl;
-		delete consts_map;
-		main();
-	}
-
-	if (attack_map.conv_errors > 0) {
-		std::cout << "---------------" << std::endl;
-		std::cout << "Something went wrong, restarting." << std::endl;
-		std::cout << "Please make sure your script complies with the inputs given." << std::endl;
-		std::cout << "---------------" << std::endl;
-		delete consts_map;
-		main();
-	};
 
 	std::cout << "Starting charge level " << attack_nr << " simulation.." << std::endl;
 

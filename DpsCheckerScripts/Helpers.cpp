@@ -93,9 +93,29 @@ std::string lookup_info(std::map<std::string, std::string>& locals_map, std::map
 
 	std::string bound_const = "";
 
+	//just hard code charge amt to return the number
+	if (local_name == "reg.attack.chargeamt") {
+		out = find_in_map_ss(local_name, locals_map);
+		//removie percentage sign so stof doesn't pee itself
+		if (out != "" && out.back() == '%') {
+			out.pop_back();
+		}
+		return out;
+	}
+
+	try {
+		//see if the bound var can just be converted into a number
+		float out_var = std::stof(find_in_map_ss(local_name, locals_map));
+		return find_in_map_ss(local_name, locals_map);
+	}
+	catch (std::exception) {
+		//do nothing because it is not a number
+	}
+
 	bound_const = find_in_map_ss(local_name, locals_map);
 
 	out = find_in_map_ss(bound_const, consts_map);
+
 
 	return out;
 }
@@ -139,12 +159,49 @@ float find_in_map_sf(const std::string& key_to_find, std::map<std::string, float
 	return (search != map_to_search.end()) ? search->second : 0.0;
 }
 
-attack_data_t map_attack_data_melee(std::map<std::string, std::string>*& consts, std::vector<std::map<std::string, std::string>> attacks_vec, const int skill_level, const int attack_nr) {
+attack_data_t map_attack_data_melee(std::map<std::string, std::string>*& consts, std::vector<std::map<std::string, std::string>> attacks_vec, const int skill_level, int attack_nr) {
 	// find the values in consts that are needed for attack simulation. map them to given map.
 	int conv_errors = 0; // increment when conversion fails
 
 	//init return struct
 	attack_data_t attack_data;
+
+	//try to find the correct attack if we mapped incorrectly due to headers being wrong. (thanks scripting system)
+	std::string attack_chargeamt_string = lookup_info(attacks_vec[attack_nr], consts, "reg.attack.chargeamt", attack_nr);
+	//this is only used inside the check so it can default to false even if the attack is correct.
+	bool attack_map_correct = false;
+
+	//if there a charge amount and we shouldn't have one? is there none and we should have one? is there one but it is too high or low?
+	if ((attack_chargeamt_string == "" && attack_nr != 0) || (attack_chargeamt_string != "" && stof(attack_chargeamt_string) != attack_nr * 100)) {
+		std::cout << "Could not map charge correctly, attempting to find correct charge level in map" << std::endl;
+		//this is the wrong attack, look through the others to see if we can find the right one;
+		for (int idx = 0; idx < attacks_vec.size(); idx++)
+		{
+			std::string checkstring = lookup_info(attacks_vec[idx], consts, "reg.attack.chargeamt", idx);
+			if (checkstring != "" && stof(checkstring) == attack_nr * 100) {
+				attack_nr = idx;
+				std::cout << "Found correct charge level as attack_nr: " << attack_nr << std::endl;
+				std::cout << "---------------" << std::endl;
+				break;
+				attack_map_correct = true;
+			}
+		}
+
+		//if we are still on the same attack we could not map the correct one.
+		if (!attack_map_correct) {
+			std::cout << "Could not map correct attack, results may be incorrect! Cancel (1) or Continue (0) ?" << std::endl;
+			std::cin >> conv_errors;
+		}
+	};
+
+	if (conv_errors > 0) {
+		attack_data.conv_errors = conv_errors;
+		return attack_data;
+	}
+
+	//convenience rebind
+	std::map<std::string, std::string>& locals = attacks_vec[attack_nr];
+
 
 	if (attack_nr > attacks_vec.size()) {
 		std::cout << "Charge level " << attack_nr << " exceeds the amount found (" << attacks_vec.size() << ")." << std::endl;
@@ -152,9 +209,6 @@ attack_data_t map_attack_data_melee(std::map<std::string, std::string>*& consts,
 		attack_data.conv_errors = conv_errors;
 		return attack_data;
 	}
-
-	//convenience rebind
-	std::map<std::string, std::string>& locals = attacks_vec[attack_nr];
 
 	//damage
 	std::string attack_damage_string = lookup_info(locals, consts, "reg.attack.dmg", attack_nr);
@@ -229,18 +283,63 @@ attack_data_t map_attack_data_melee(std::map<std::string, std::string>*& consts,
 	}
 
 	//crit - base 4%
-	float attack_crit_threshold = 95;
+	float attack_crit_threshold = 0;
+	std::cout << "Please enter intended crit threshold (100 for disabled): " << std::endl;
+	std::cin >> attack_crit_threshold;
+	if (std::cin.fail()) {
+		std::cout << "Invalid Input occured" << std::endl;
+		std::cin.clear();
+		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		conv_errors++;
+	}
 
 	//critmulti - base 1.5
-	float attack_crit_multi = 1.5;
+	float attack_crit_multi = 0;
+	std::cout << "Please enter intended crit multiplier (1 for disabled): " << std::endl;
+	std::cin >> attack_crit_multi;
+	if (std::cin.fail()) {
+		std::cout << "Invalid Input occured" << std::endl;
+		std::cin.clear();
+		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		conv_errors++;
+	}
+
+	std::cout << "---------------" << std::endl;
 
 	//pass on skill_level as is
+
+	//charge multi
+	std::string attack_charge_multi_string = lookup_info(locals, consts, "mult_reg.attack.dmg", attack_nr);
+	int attack_charge_multi;
+
+	try {
+		attack_charge_multi = stoi(attack_charge_multi_string);
+	}
+	catch (std::exception ex) {
+		conv_errors++;
+		attack_delay_end = 0;
+		std::cout << "Error while converting Charge Attack Multiplier: " << ex.what() << std::endl;
+		if (attack_nr > 0) {
+			std::string confirm = "";
+
+			std::cout << "Fallback to attack 0? (y/n)" << std::endl;
+			std::cin >> confirm;
+
+			if (confirm == "y" && !std::cin.fail()) {
+				attack_charge_multi = 1;
+				conv_errors--;
+			}
+		}
+	}
+
+
+
 
 	//map to struct and return.
 
 	attack_data.damage = attack_damage;
 	attack_data.damage_range = attack_damage_range;
-	attack_data.charge_multi = attack_nr + 1;
+	attack_data.charge_multi = attack_charge_multi;
 	attack_data.crit_threshold = attack_crit_threshold;
 	attack_data.crit_multi = attack_crit_multi;
 	attack_data.skill_level = skill_level;
